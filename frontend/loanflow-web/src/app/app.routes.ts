@@ -45,6 +45,11 @@ export const routes: Routes = [
           .then(m => m.ApplicationDetailComponent)
       },
       {
+        path: 'documents',
+        loadComponent: () => import('./features/customer-portal/components/my-documents/my-documents.component')
+          .then(m => m.MyDocumentsComponent)
+      },
+      {
         path: 'documents/upload',
         loadComponent: () => import('./features/customer-portal/components/customer-document-upload/customer-document-upload.component')
           .then(m => m.CustomerDocumentUploadComponent)
