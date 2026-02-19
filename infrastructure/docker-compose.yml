@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # PostgreSQL for Customer and Loan services
+  postgres:
+    image: postgres:16-alpine
+    container_name: loanflow-postgres
+    environment:
+      POSTGRES_USER: loanflow
+      POSTGRES_PASSWORD: loanflow_secret
+      POSTGRES_DB: loanflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U loanflow"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MongoDB for Document service
+  mongodb:
+    image: mongo:7
+    container_name: loanflow-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: loanflow
+      MONGO_INITDB_ROOT_PASSWORD: loanflow_secret
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO for Document storage
+  minio:
+    image: minio/minio:latest
+    container_name: loanflow-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: loanflow
+      MINIO_ROOT_PASSWORD: loanflow_secret
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for caching and session storage
+  redis:
+    image: redis:7-alpine
+    container_name: loanflow-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # RabbitMQ for messaging
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: loanflow-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: loanflow
+      RABBITMQ_DEFAULT_PASS: loanflow_secret
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  mongodb_data:
+  minio_data:
+  redis_data:
+  rabbitmq_data:

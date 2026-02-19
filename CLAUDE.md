@@ -145,25 +145,42 @@
 | customer-service | 8082 | 45 | ✅ Done | ✅ Done |
 | loan-service | 8081 | 27 | ✅ Done | ✅ Done |
 | document-service | 8083 | 49 | ✅ Done | ✅ Done |
+| auth-service | 8085 | 18+ | 🔄 Sprint 3 | 🔄 Sprint 3 |
 | notification-service | 8084 | - | ⏳ Pending | ⏳ Pending |
 | api-gateway | 8080 | - | ⏳ Pending | - |
 
-**Total TDD Tests**: 121
+**Total TDD Tests**: 139+
 
 ---
 
 ## 🚀 QUICK START
 
+### ⚠️ CRITICAL: Java Environment Setup
+**ALWAYS run this before any Maven command:**
+```bash
+export JAVA_HOME=$(/usr/libexec/java_home -v 17 2>/dev/null || echo "$HOME/.sdkman/candidates/java/current")
+```
+
+**Why?** The build uses Java 20 syntax but often Java 17 is available. Without JAVA_HOME set, Lombok/MapStruct annotation processing fails with:
+```
+java.lang.ExceptionInInitializerError: com.sun.tools.javac.code.TypeTag :: UNKNOWN
+```
+
 ### Start UAT Environment
 ```bash
-# Infrastructure
+# 1. ALWAYS set JAVA_HOME first!
+export JAVA_HOME=$(/usr/libexec/java_home -v 17 2>/dev/null || echo "$HOME/.sdkman/candidates/java/current")
+
+# 2. Infrastructure
 cd infrastructure && docker-compose up -d
 
-# Backend (UAT mode - security disabled)
+# 3. Backend (UAT mode - security disabled)
 cd backend/customer-service && mvn spring-boot:run -Dspring-boot.run.profiles=uat &
 cd backend/loan-service && mvn spring-boot:run -Dspring-boot.run.profiles=uat &
+cd backend/document-service && mvn spring-boot:run -Dspring-boot.run.profiles=uat &
+cd backend/auth-service && mvn spring-boot:run -Dspring-boot.run.profiles=uat &
 
-# Frontend
+# 4. Frontend
 cd frontend/loanflow-web && ng serve
 ```
 

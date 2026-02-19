@@ -1,6 +1,16 @@
 import { Routes } from '@angular/router';
+import { authGuard, guestGuard } from './core/auth/guards/auth.guard';
 
 export const routes: Routes = [
+  // Public routes
+  {
+    path: 'login',
+    loadComponent: () => import('./core/auth/components/login/login.component')
+      .then(m => m.LoginComponent),
+    canActivate: [guestGuard]
+  },
+
+  // Protected routes
   {
     path: '',
     redirectTo: 'customers',
@@ -8,6 +18,8 @@ export const routes: Routes = [
   },
   {
     path: 'customers',
+    canActivate: [authGuard],
+    data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER'] },
     children: [
       {
         path: '',
@@ -33,6 +45,8 @@ export const routes: Routes = [
   },
   {
     path: 'loans',
+    canActivate: [authGuard],
+    data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER'] },
     children: [
       {
         path: '',
@@ -58,6 +72,8 @@ export const routes: Routes = [
   },
   {
     path: 'documents',
+    canActivate: [authGuard],
+    data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER'] },
     children: [
       {
         path: '',
@@ -85,5 +101,18 @@ export const routes: Routes = [
           .then(m => m.DocumentViewerComponent)
       }
     ]
+  },
+
+  // Unauthorized page
+  {
+    path: 'unauthorized',
+    loadComponent: () => import('./shared/components/unauthorized/unauthorized.component')
+      .then(m => m.UnauthorizedComponent)
+  },
+
+  // Catch all - redirect to login
+  {
+    path: '**',
+    redirectTo: 'login'
   }
 ];
