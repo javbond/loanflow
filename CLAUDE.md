@@ -75,10 +75,18 @@
 | Issue | Title | Points | Status |
 |-------|-------|--------|--------|
 | #11 | [EPIC-002] Loan Application Management | - | 🔄 Parent |
-| #14 | [US-005] Loan Application Angular UI | 8 | 🔄 In Progress |
-| #15 | [US-006] Document Management Angular UI | 5 | ⏳ Pending |
+| #14 | [US-005] Loan Application Angular UI | 8 | ✅ Done |
+| #15 | [US-006] Document Management Angular UI | 5 | ✅ Done |
 
-**Progress:** `███░░░░░░░` 25% (1/4 components done)
+**Bug Fixes (Sprint 2):**
+| Issue | Description | Status |
+|-------|-------------|--------|
+| #16 | Document Upload UUID mismatch | ✅ Closed |
+| #17 | MinIO credentials mismatch | ✅ Closed |
+| #18 | Document verification verifierId | ✅ Closed |
+| #19 | Documents list not visible | ✅ Closed |
+
+**Progress:** `████████░░` 80% (Loan + Document UI complete, UAT verified)
 
 ### Sprint 1 (Foundation + Customer) - ✅ COMPLETED
 | Issue | Title | Status |
@@ -120,8 +128,8 @@
 | Service | Port | Tests | Backend | Frontend |
 |---------|------|-------|---------|----------|
 | customer-service | 8082 | 45 | ✅ Done | ✅ Done |
-| loan-service | 8081 | 27 | ✅ Done | 🔄 In Progress |
-| document-service | 8083 | 49 | ✅ Done | ⏳ Pending |
+| loan-service | 8081 | 27 | ✅ Done | ✅ Done |
+| document-service | 8083 | 49 | ✅ Done | ✅ Done |
 | notification-service | 8084 | - | ⏳ Pending | ⏳ Pending |
 | api-gateway | 8080 | - | ⏳ Pending | - |
 
