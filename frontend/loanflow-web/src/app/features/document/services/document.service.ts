@@ -96,6 +96,17 @@ export class DocumentService {
   // ============ LIST ============
 
   /**
+   * Get all documents with pagination
+   */
+  getAll(page = 0, size = 20): Observable<PageResponse<Document>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+
+    return this.http.get<PageResponse<Document>>(this.apiUrl, { params });
+  }
+
+  /**
    * Get documents by loan application ID
    */
   getByApplicationId(applicationId: string, page = 0, size = 20): Observable<PageResponse<Document>> {

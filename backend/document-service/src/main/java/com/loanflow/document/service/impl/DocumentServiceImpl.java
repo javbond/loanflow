@@ -127,6 +127,12 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    public Page<DocumentResponse> getAll(Pageable pageable) {
+        return repository.findAll(pageable)
+                .map(mapper::toResponse);
+    }
+
+    @Override
     public Page<DocumentResponse> getByApplicationId(UUID applicationId, Pageable pageable) {
         return repository.findByApplicationId(applicationId, pageable)
                 .map(mapper::toResponse);

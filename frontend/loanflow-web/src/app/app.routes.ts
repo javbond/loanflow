@@ -61,8 +61,8 @@ export const routes: Routes = [
     children: [
       {
         path: '',
-        redirectTo: 'upload',
-        pathMatch: 'full'
+        loadComponent: () => import('./features/document/components/document-list/document-list.component')
+          .then(m => m.DocumentListComponent)
       },
       {
         path: 'upload',

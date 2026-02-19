@@ -66,8 +66,8 @@ export class DocumentViewerComponent implements OnInit {
   showVerificationPanel = false;
   isVerifying = false;
 
-  // Simulated verifier ID (in real app, this comes from auth)
-  currentUserId = 'current-user-id';
+  // Mock verifier ID for UAT (will be replaced with auth user ID in Sprint 3)
+  currentUserId = '00000000-0000-0000-0000-000000000001';
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');

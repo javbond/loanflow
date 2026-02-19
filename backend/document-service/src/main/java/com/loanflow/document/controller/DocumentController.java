@@ -51,6 +51,15 @@ public class DocumentController {
                 .body(ApiResponse.success("Document uploaded successfully", response));
     }
 
+    @GetMapping
+    @Operation(summary = "List all documents with pagination")
+    @PreAuthorize("hasAnyRole('LOAN_OFFICER', 'UNDERWRITER', 'ADMIN')")
+    public ResponseEntity<PageResponse<DocumentResponse>> getAll(
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        Page<DocumentResponse> page = documentService.getAll(pageable);
+        return ResponseEntity.ok(PageResponse.of(page));
+    }
+
     @GetMapping("/{id}")
     @Operation(summary = "Get document by ID")
     @PreAuthorize("hasAnyRole('LOAN_OFFICER', 'UNDERWRITER', 'ADMIN')")

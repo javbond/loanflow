@@ -115,9 +115,8 @@ export class DocumentListComponent implements OnInit {
         );
       }
     } else {
-      // No application ID - this shouldn't happen in normal flow
-      this.loading = false;
-      return;
+      // No application ID - load all documents
+      observable = this.documentService.getAll(this.pageIndex, this.pageSize);
     }
 
     observable.subscribe({

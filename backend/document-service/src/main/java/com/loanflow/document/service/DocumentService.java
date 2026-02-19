@@ -29,6 +29,8 @@ public interface DocumentService {
     String getDownloadUrl(String id);
 
     // List operations
+    Page<DocumentResponse> getAll(Pageable pageable);
+
     Page<DocumentResponse> getByApplicationId(UUID applicationId, Pageable pageable);
 
     Page<DocumentResponse> getByCustomerId(UUID customerId, Pageable pageable);
