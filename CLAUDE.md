@@ -68,12 +68,15 @@
 
 ## 📊 CURRENT SPRINT STATUS
 
-### Sprint 3 (Security & Auth) - ⏳ READY TO START
-**Planned Stories:**
+### Sprint 3 (Security & Auth) - 🔄 IN PROGRESS
+**Milestone**: [Sprint 3](https://github.com/javbond/loanflow/milestone/6)
+**Duration**: 2026-02-20 to 2026-03-06
+
 | Issue | Title | Points | Status |
 |-------|-------|--------|--------|
-| #3 | [US-002] Authentication System | 8 | ⏳ Ready |
-| #4 | [US-003] Role-Based Access Control | 5 | ⏳ Ready |
+| #1 | [EPIC-001] Platform Foundation | - | 🔄 Parent |
+| #3 | [US-002] Authentication System | 8 | 🔄 In Progress |
+| #4 | [US-003] Role-Based Access Control | 5 | ⏳ Pending |
 
 **Progress:** `░░░░░░░░░░` 0%
 
