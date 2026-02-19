@@ -58,6 +58,11 @@ export const routes: Routes = [
         path: 'documents/upload/:appId',
         loadComponent: () => import('./features/customer-portal/components/customer-document-upload/customer-document-upload.component')
           .then(m => m.CustomerDocumentUploadComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./features/customer-portal/components/customer-profile/customer-profile.component')
+          .then(m => m.CustomerProfileComponent)
       }
     ]
   },
