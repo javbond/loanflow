@@ -2,9 +2,9 @@ package com.loanflow.auth.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loanflow.auth.dto.request.LoginRequest;
-import com.loanflow.auth.dto.request.RegisterRequest;
 import com.loanflow.auth.dto.response.AuthResponse;
-import com.loanflow.auth.service.AuthService;
+import com.loanflow.auth.dto.response.TokenInfoResponse;
+import com.loanflow.auth.service.KeycloakAuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,18 +14,24 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Instant;
 import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
-@DisplayName("Auth Controller Tests")
+@DisplayName("Auth Controller Tests - Keycloak OAuth2/OIDC")
 class AuthControllerTest {
 
     @Autowired
@@ -35,91 +41,69 @@ class AuthControllerTest {
     private ObjectMapper objectMapper;
 
     @MockBean
-    private AuthService authService;
+    private KeycloakAuthService keycloakAuthService;
+
+    @MockBean
+    private JwtDecoder jwtDecoder;
 
     private AuthResponse mockAuthResponse;
+    private TokenInfoResponse mockTokenInfo;
 
     @BeforeEach
     void setUp() {
         mockAuthResponse = AuthResponse.builder()
-                .accessToken("test_access_token")
-                .refreshToken("test_refresh_token")
+                .accessToken("keycloak_access_token")
+                .refreshToken("keycloak_refresh_token")
                 .tokenType("Bearer")
                 .expiresIn(3600L)
-                .user(AuthResponse.UserInfo.builder()
-                        .id("user-id")
-                        .email("test@example.com")
-                        .firstName("Test")
-                        .lastName("User")
-                        .fullName("Test User")
-                        .roles(Set.of("CUSTOMER"))
-                        .build())
+                .refreshExpiresIn(604800L)
+                .scope("openid profile email")
+                .build();
+
+        mockTokenInfo = TokenInfoResponse.builder()
+                .subject("user-uuid")
+                .email("test@example.com")
+                .emailVerified(true)
+                .preferredUsername("test@example.com")
+                .givenName("Test")
+                .familyName("User")
+                .fullName("Test User")
+                .roles(Set.of("LOAN_OFFICER"))
+                .issuedAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(3600))
+                .issuer("http://localhost:8180/realms/loanflow")
                 .build();
     }
 
     @Test
-    @DisplayName("POST /api/v1/auth/register - Success")
-    void shouldRegisterSuccessfully() throws Exception {
-        RegisterRequest request = RegisterRequest.builder()
-                .email("newuser@example.com")
-                .password("Password123")
-                .firstName("New")
-                .lastName("User")
-                .build();
-
-        when(authService.register(any(RegisterRequest.class))).thenReturn(mockAuthResponse);
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.accessToken").value("test_access_token"))
-                .andExpect(jsonPath("$.user.email").value("test@example.com"));
-    }
-
-    @Test
-    @DisplayName("POST /api/v1/auth/register - Validation Error")
-    void shouldRejectInvalidRegistration() throws Exception {
-        RegisterRequest request = RegisterRequest.builder()
-                .email("invalid-email")
-                .password("short")
-                .firstName("")
-                .lastName("")
-                .build();
-
-        mockMvc.perform(post("/api/v1/auth/register")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isBadRequest());
-    }
-
-    @Test
-    @DisplayName("POST /api/v1/auth/login - Success")
-    void shouldLoginSuccessfully() throws Exception {
+    @DisplayName("POST /api/v1/auth/login - Success via Keycloak")
+    void shouldLoginSuccessfullyViaKeycloak() throws Exception {
         LoginRequest request = LoginRequest.builder()
                 .email("test@example.com")
                 .password("password")
                 .build();
 
-        when(authService.login(any(LoginRequest.class))).thenReturn(mockAuthResponse);
+        when(keycloakAuthService.login(any(LoginRequest.class))).thenReturn(mockAuthResponse);
 
         mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("test_access_token"))
-                .andExpect(jsonPath("$.tokenType").value("Bearer"));
+                .andExpect(jsonPath("$.accessToken").value("keycloak_access_token"))
+                .andExpect(jsonPath("$.refreshToken").value("keycloak_refresh_token"))
+                .andExpect(jsonPath("$.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.scope").value("openid profile email"));
     }
 
     @Test
     @DisplayName("POST /api/v1/auth/login - Invalid Credentials")
-    void shouldRejectInvalidLogin() throws Exception {
+    void shouldRejectInvalidLoginViaKeycloak() throws Exception {
         LoginRequest request = LoginRequest.builder()
                 .email("test@example.com")
                 .password("wrong_password")
                 .build();
 
-        when(authService.login(any(LoginRequest.class)))
+        when(keycloakAuthService.login(any(LoginRequest.class)))
                 .thenThrow(new BadCredentialsException("Invalid email or password"));
 
         mockMvc.perform(post("/api/v1/auth/login")
@@ -131,20 +115,45 @@ class AuthControllerTest {
     @Test
     @DisplayName("POST /api/v1/auth/refresh - Success")
     void shouldRefreshTokenSuccessfully() throws Exception {
-        when(authService.refreshToken("valid_refresh_token")).thenReturn(mockAuthResponse);
+        when(keycloakAuthService.refreshToken("valid_refresh_token")).thenReturn(mockAuthResponse);
 
         mockMvc.perform(post("/api/v1/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"refreshToken\": \"valid_refresh_token\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.accessToken").value("test_access_token"));
+                .andExpect(jsonPath("$.accessToken").value("keycloak_access_token"));
+    }
+
+    @Test
+    @DisplayName("POST /api/v1/auth/refresh - Missing Token")
+    void shouldRejectMissingRefreshToken() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\": \"\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("GET /api/v1/auth/token-info - Returns 401 without JWT")
+    void shouldReturnUnauthorizedWithoutToken() throws Exception {
+        // Without a valid JWT in the request, the endpoint should return 401
+        // Note: Security filters are disabled but @AuthenticationPrincipal returns null
+        mockMvc.perform(get("/api/v1/auth/token-info"))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
     @DisplayName("POST /api/v1/auth/logout - Success")
     void shouldLogoutSuccessfully() throws Exception {
-        mockMvc.perform(post("/api/v1/auth/logout"))
+        when(keycloakAuthService.getKeycloakLogoutUrl())
+                .thenReturn("http://localhost:8180/realms/loanflow/protocol/openid-connect/logout");
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .with(jwt().jwt(jwt -> jwt.subject("user-uuid")))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"refreshToken\": \"test_refresh_token\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.message").value("Logged out successfully"));
+                .andExpect(jsonPath("$.message").value("Logged out successfully"))
+                .andExpect(jsonPath("$.keycloakLogoutUrl").exists());
     }
 }

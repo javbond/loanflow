@@ -5,10 +5,9 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Set;
-
 /**
- * Authentication response DTO
+ * Keycloak OAuth2 Token Response DTO
+ * PRD Compliant: Returns Keycloak tokens
  */
 @Data
 @Builder
@@ -20,18 +19,6 @@ public class AuthResponse {
     private String refreshToken;
     private String tokenType;
     private Long expiresIn;
-    private UserInfo user;
-
-    @Data
-    @Builder
-    @NoArgsConstructor
-    @AllArgsConstructor
-    public static class UserInfo {
-        private String id;
-        private String email;
-        private String firstName;
-        private String lastName;
-        private String fullName;
-        private Set<String> roles;
-    }
+    private Long refreshExpiresIn;
+    private String scope;
 }

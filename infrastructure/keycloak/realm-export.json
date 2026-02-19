@@ -1,0 +1,186 @@
+{
+  "id": "loanflow",
+  "realm": "loanflow",
+  "enabled": true,
+  "displayName": "LoanFlow",
+  "displayNameHtml": "<b>LoanFlow</b> - Loan Origination System",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "accessTokenLifespan": 3600,
+  "accessTokenLifespanForImplicitFlow": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+  "offlineSessionIdleTimeout": 2592000,
+  "accessCodeLifespan": 60,
+  "accessCodeLifespanUserAction": 300,
+  "accessCodeLifespanLogin": 1800,
+  "roles": {
+    "realm": [
+      {
+        "name": "CUSTOMER",
+        "description": "Loan applicant with limited access"
+      },
+      {
+        "name": "LOAN_OFFICER",
+        "description": "Creates and manages loan applications"
+      },
+      {
+        "name": "UNDERWRITER",
+        "description": "Reviews and approves/rejects loans"
+      },
+      {
+        "name": "SUPERVISOR",
+        "description": "Supervises loan officers and underwriters"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Full system administration access"
+      },
+      {
+        "name": "AUDITOR",
+        "description": "Read-only access for compliance"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "loanflow-backend",
+      "name": "LoanFlow Backend Services",
+      "enabled": true,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "loanflow-backend-secret",
+      "bearerOnly": true,
+      "standardFlowEnabled": false,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "serviceAccountsEnabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "loanflow-web",
+      "name": "LoanFlow Angular Web App",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "redirectUris": [
+        "http://localhost:4200/*",
+        "http://localhost:8080/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200",
+        "http://localhost:8080"
+      ],
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      },
+      "defaultClientScopes": [
+        "web-origins",
+        "profile",
+        "roles",
+        "email"
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "admin@loanflow.com",
+      "email": "admin@loanflow.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "System",
+      "lastName": "Administrator",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "admin123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["ADMIN"]
+    },
+    {
+      "username": "officer@loanflow.com",
+      "email": "officer@loanflow.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Loan",
+      "lastName": "Officer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "officer123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["LOAN_OFFICER"]
+    },
+    {
+      "username": "underwriter@loanflow.com",
+      "email": "underwriter@loanflow.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Senior",
+      "lastName": "Underwriter",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "underwriter123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["UNDERWRITER"]
+    },
+    {
+      "username": "customer@example.com",
+      "email": "customer@example.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Test",
+      "lastName": "Customer",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "customer123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["CUSTOMER"]
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "roles",
+      "protocol": "openid-connect",
+      "attributes": {
+        "include.in.token.scope": "true",
+        "display.on.consent.screen": "true"
+      },
+      "protocolMappers": [
+        {
+          "name": "realm roles",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-realm-role-mapper",
+          "consentRequired": false,
+          "config": {
+            "multivalued": "true",
+            "userinfo.token.claim": "true",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "claim.name": "roles",
+            "jsonType.label": "String"
+          }
+        }
+      ]
+    }
+  ]
+}

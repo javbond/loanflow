@@ -31,8 +31,8 @@ spring:
 # MinIO Configuration
 minio:
   endpoint: http://localhost:9000
-  access-key: minioadmin
-  secret-key: minioadmin
+  access-key: loanflow
+  secret-key: loanflow_secret
   bucket: loanflow-documents
 
 # Document Configuration

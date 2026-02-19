@@ -4,35 +4,28 @@ server:
 spring:
   application:
     name: auth-service
-  datasource:
-    url: jdbc:postgresql://localhost:5432/loanflow_auth
-    username: loanflow
-    password: loanflow_secret
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: false
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-  flyway:
-    enabled: true
-    locations: classpath:db/migration
-    baseline-on-migrate: true
 
-# JWT Configuration
-jwt:
-  secret: loanflow-jwt-secret-key-must-be-at-least-256-bits-long-for-hs256
-  expiration: 3600000        # 1 hour in milliseconds
-  refresh-expiration: 604800000  # 7 days in milliseconds
+  # OAuth2 Resource Server Configuration (Keycloak JWT validation)
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${keycloak.server-url}/realms/${keycloak.realm}
+          jwk-set-uri: ${keycloak.server-url}/realms/${keycloak.realm}/protocol/openid-connect/certs
+
+# Keycloak Configuration
+keycloak:
+  server-url: http://localhost:8180
+  realm: loanflow
+  client-id: loanflow-web
+  # client-secret: only needed for confidential clients
 
 # Logging
 logging:
   level:
     com.loanflow: DEBUG
     org.springframework.security: DEBUG
+    org.springframework.security.oauth2: DEBUG
 
 # OpenAPI
 springdoc:
@@ -53,17 +46,36 @@ management:
       show-details: when-authorized
 
 ---
-# UAT Profile
+# UAT Profile (Security relaxed for testing)
 spring:
   config:
     activate:
       on-profile: uat
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Use same Keycloak for UAT
+          issuer-uri: http://localhost:8180/realms/loanflow
+          jwk-set-uri: http://localhost:8180/realms/loanflow/protocol/openid-connect/certs
 
 logging:
   level:
     com.loanflow: DEBUG
     org.springframework.security: DEBUG
+
+---
+# Docker Profile
+spring:
+  config:
+    activate:
+      on-profile: docker
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://keycloak:8080/realms/loanflow
+          jwk-set-uri: http://keycloak:8080/realms/loanflow/protocol/openid-connect/certs
+
+keycloak:
+  server-url: http://keycloak:8080

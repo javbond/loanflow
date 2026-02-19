@@ -75,10 +75,10 @@
 | Issue | Title | Points | Status |
 |-------|-------|--------|--------|
 | #1 | [EPIC-001] Platform Foundation | - | 🔄 Parent |
-| #3 | [US-002] Authentication System | 8 | 🔄 In Progress |
+| #3 | [US-002] Authentication System (Keycloak) | 8 | 🔄 In Progress |
 | #4 | [US-003] Role-Based Access Control | 5 | ⏳ Pending |
 
-**Progress:** `░░░░░░░░░░` 0%
+**Progress:** `████░░░░░░` 40% (Keycloak OAuth2/OIDC implemented, UAT pending)
 
 ---
 
@@ -145,7 +145,7 @@
 | customer-service | 8082 | 45 | ✅ Done | ✅ Done |
 | loan-service | 8081 | 27 | ✅ Done | ✅ Done |
 | document-service | 8083 | 49 | ✅ Done | ✅ Done |
-| auth-service | 8085 | 18+ | 🔄 Sprint 3 | 🔄 Sprint 3 |
+| auth-service (Keycloak) | 8085 | 10 | 🔄 Keycloak OAuth2 | 🔄 Sprint 3 |
 | notification-service | 8084 | - | ⏳ Pending | ⏳ Pending |
 | api-gateway | 8080 | - | ⏳ Pending | - |
 
@@ -320,13 +320,62 @@ git push origin --delete feature/US-XXX  # if remote exists
 
 ---
 
+## 🚨 MANDATORY PRD COMPLIANCE CHECKLIST
+
+**BEFORE implementing ANY feature, Claude MUST:**
+
+### Step 1: Read PRD Requirements
+```bash
+# Check backlog for task specifications
+cat docs/prd/06-backlog-epics.md | grep -A 10 "US-XXX"
+
+# Check milestones for acceptance criteria
+cat docs/prd/07-milestones-roadmap.md
+
+# Check HLD for architecture decisions
+cat docs/hld/architecture.md  # if exists
+```
+
+### Step 2: Verify Tech Stack Compliance
+**PRD-specified technologies - MUST USE:**
+| Component | Required Technology | NOT Acceptable |
+|-----------|---------------------|----------------|
+| **Authentication** | Keycloak OAuth2/OIDC | Standalone JWT |
+| **Workflow Engine** | Flowable BPMN | Custom state machine |
+| **Decision Engine** | Drools DRL | Hardcoded rules |
+| **Message Queue** | RabbitMQ | Direct HTTP calls |
+| **Object Storage** | MinIO | Local file system |
+| **Cache** | Redis | In-memory maps |
+| **Search** | Elasticsearch | SQL LIKE queries |
+
+### Step 3: Cross-Check Before Coding
+- [ ] Read the specific User Story from `docs/prd/06-backlog-epics.md`
+- [ ] Check GitHub Issue description for task details
+- [ ] Verify tech stack matches PRD requirements
+- [ ] Check HLD/LLD for architecture patterns (if exists)
+- [ ] Confirm acceptance criteria from milestones
+
+### Step 4: If Deviation Needed
+**NEVER deviate without explicit user approval:**
+1. State: "PRD specifies [X], but I'm considering [Y] because..."
+2. Ask user: "Should I follow PRD or use [alternative]?"
+3. Only proceed after explicit user decision
+
+### ⚠️ VIOLATION CONSEQUENCES
+Implementing non-PRD-compliant code wastes development time and requires rework.
+**When in doubt, ASK the user before implementing.**
+
+---
+
 ## 📝 REMEMBER
 
-1. **Read `docs/workflow/SDLC.md`** for full process details
-2. **Check GitHub issues first** before starting work
-3. **Update issues as you go** - don't wait until the end
-4. **On sprint approval** - create ALL GitHub artifacts automatically
-5. **Keep this file updated** after each feature completion
-6. **Bugs → GitHub Issue first**, then fix (never skip issue creation)
-7. **Plan file → Current task only** (clear after completion)
-8. **Git → Feature branch per task**, merge only after UAT approval
+1. **🚨 READ PRD FIRST** - Check `docs/prd/06-backlog-epics.md` before ANY implementation
+2. **Verify tech stack** - Use Keycloak, Flowable, Drools, RabbitMQ as specified
+3. **Read `docs/workflow/SDLC.md`** for full process details
+4. **Check GitHub issues first** before starting work
+5. **Update issues as you go** - don't wait until the end
+6. **On sprint approval** - create ALL GitHub artifacts automatically
+7. **Keep this file updated** after each feature completion
+8. **Bugs → GitHub Issue first**, then fix (never skip issue creation)
+9. **Plan file → Current task only** (clear after completion)
+10. **Git → Feature branch per task**, merge only after UAT approval

@@ -84,9 +84,11 @@ import { LoginRequest } from '../../models/auth.model';
 
         <mat-card-footer>
           <div class="demo-credentials">
-            <p><strong>Demo Credentials:</strong></p>
-            <p>Admin: admin&#64;loanflow.com / Admin&#64;123</p>
-            <p>Officer: officer&#64;loanflow.com / Admin&#64;123</p>
+            <p><strong>Keycloak Demo Credentials:</strong></p>
+            <p>Admin: admin&#64;loanflow.com / admin123</p>
+            <p>Loan Officer: officer&#64;loanflow.com / officer123</p>
+            <p>Underwriter: underwriter&#64;loanflow.com / underwriter123</p>
+            <p>Customer: customer&#64;example.com / customer123</p>
           </div>
         </mat-card-footer>
       </mat-card>
@@ -205,7 +207,8 @@ export class LoginComponent implements OnInit {
     this.authService.login(request).subscribe({
       next: () => {
         this.snackBar.open('Login successful!', 'Close', { duration: 3000 });
-        this.router.navigate([this.returnUrl]);
+        // Redirect based on role
+        this.navigateAfterLogin();
       },
       error: (error) => {
         this.loading = false;
@@ -215,5 +218,30 @@ export class LoginComponent implements OnInit {
         });
       }
     });
+  }
+
+  /**
+   * Navigate to appropriate page based on user role
+   */
+  private navigateAfterLogin(): void {
+    // If there's a specific return URL, use it (but validate access)
+    if (this.returnUrl && this.returnUrl !== '/') {
+      this.router.navigate([this.returnUrl]);
+      return;
+    }
+
+    // Role-based default navigation
+    const user = this.authService.getCurrentUserSync();
+
+    if (user?.roles?.includes('CUSTOMER')) {
+      // Customers go to their portal
+      this.router.navigate(['/my-portal']);
+    } else if (user?.roles?.some(r => ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER', 'SUPERVISOR'].includes(r))) {
+      // Staff members go to customer management
+      this.router.navigate(['/customers']);
+    } else {
+      // Default fallback
+      this.router.navigate(['/dashboard']);
+    }
   }
 }

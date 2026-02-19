@@ -31,13 +31,20 @@ export const authGuard: CanActivateFn = (route: ActivatedRouteSnapshot) => {
 
 /**
  * Guest guard - only allow non-authenticated users (for login page)
+ * Redirects authenticated users to their role-appropriate dashboard
  */
 export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
 
   if (authService.isAuthenticated()) {
-    router.navigate(['/']);
+    // Redirect based on role
+    const user = authService.getCurrentUserSync();
+    if (user?.roles?.includes('CUSTOMER')) {
+      router.navigate(['/my-portal']);
+    } else {
+      router.navigate(['/customers']);
+    }
     return false;
   }
 

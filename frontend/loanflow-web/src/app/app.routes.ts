@@ -10,7 +10,24 @@ export const routes: Routes = [
     canActivate: [guestGuard]
   },
 
-  // Protected routes
+  // Dashboard route - redirects based on role
+  {
+    path: 'dashboard',
+    canActivate: [authGuard],
+    loadComponent: () => import('./features/dashboard/components/customer-dashboard/customer-dashboard.component')
+      .then(m => m.CustomerDashboardComponent)
+  },
+
+  // Customer portal - accessible by CUSTOMER role
+  {
+    path: 'my-portal',
+    canActivate: [authGuard],
+    data: { roles: ['CUSTOMER'] },
+    loadComponent: () => import('./features/dashboard/components/customer-dashboard/customer-dashboard.component')
+      .then(m => m.CustomerDashboardComponent)
+  },
+
+  // Protected routes - Staff Only
   {
     path: '',
     redirectTo: 'customers',
