@@ -34,9 +34,13 @@ import { UserInfo } from '../../../../core/auth/models/auth.model';
 
       <!-- Quick Actions -->
       <div class="quick-actions">
-        <button mat-raised-button color="primary" routerLink="/my-portal/apply" class="apply-btn">
+        <button mat-raised-button color="primary" routerLink="/my-portal/apply" class="action-btn">
           <mat-icon>add_circle</mat-icon>
           Apply for a Loan
+        </button>
+        <button mat-raised-button color="accent" routerLink="/my-portal/documents/upload" class="action-btn">
+          <mat-icon>cloud_upload</mat-icon>
+          Upload Documents
         </button>
       </div>
 
@@ -142,15 +146,18 @@ import { UserInfo } from '../../../../core/auth/models/auth.model';
     }
 
     .quick-actions {
+      display: flex;
+      gap: 16px;
       margin-bottom: 24px;
+      flex-wrap: wrap;
     }
 
-    .apply-btn {
+    .action-btn {
       font-size: 1rem;
       padding: 12px 24px;
     }
 
-    .apply-btn mat-icon {
+    .action-btn mat-icon {
       margin-right: 8px;
     }
 

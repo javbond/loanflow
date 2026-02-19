@@ -272,4 +272,40 @@ export class DocumentService {
     }
     return null;
   }
+
+  // ==================== CUSTOMER PORTAL METHODS ====================
+  // Issue: #27 [US-025] Customer Document Upload
+
+  /**
+   * Get my documents (Customer Portal)
+   */
+  getMyDocuments(page = 0, size = 20): Observable<PageResponse<Document>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', 'createdAt,desc');
+    return this.http.get<PageResponse<Document>>(`${this.apiUrl}/my-documents`, { params });
+  }
+
+  /**
+   * Get my documents for specific application (Customer Portal)
+   */
+  getMyDocumentsByApplication(applicationId: string, page = 0, size = 20): Observable<PageResponse<Document>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString());
+    return this.http.get<PageResponse<Document>>(
+      `${this.apiUrl}/my-documents/application/${applicationId}`,
+      { params }
+    );
+  }
+
+  /**
+   * Get download URL for my document (Customer Portal)
+   */
+  getMyDocumentDownloadUrl(id: string): Observable<string> {
+    return this.http.get<ApiResponse<string>>(`${this.apiUrl}/my-documents/${id}/download-url`).pipe(
+      map(response => response.data)
+    );
+  }
 }

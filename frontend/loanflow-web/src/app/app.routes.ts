@@ -33,6 +33,16 @@ export const routes: Routes = [
         path: 'apply',
         loadComponent: () => import('./features/customer-portal/components/loan-application-form/loan-application-form.component')
           .then(m => m.CustomerLoanApplicationFormComponent)
+      },
+      {
+        path: 'documents/upload',
+        loadComponent: () => import('./features/customer-portal/components/customer-document-upload/customer-document-upload.component')
+          .then(m => m.CustomerDocumentUploadComponent)
+      },
+      {
+        path: 'documents/upload/:appId',
+        loadComponent: () => import('./features/customer-portal/components/customer-document-upload/customer-document-upload.component')
+          .then(m => m.CustomerDocumentUploadComponent)
       }
     ]
   },

@@ -20,6 +20,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -177,5 +179,47 @@ public class DocumentController {
             @PathVariable UUID applicationId) {
         long count = documentService.getPendingVerificationCount(applicationId);
         return ResponseEntity.ok(ApiResponse.success(count));
+    }
+
+    // ==================== CUSTOMER PORTAL ENDPOINTS ====================
+    // Issue: #27 [US-025] Customer Document Upload
+
+    @GetMapping("/my-documents")
+    @Operation(summary = "Get current customer's documents (Customer Portal)")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<PageResponse<DocumentResponse>> getMyDocuments(
+            @AuthenticationPrincipal Jwt jwt,
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        String email = jwt.getClaimAsString("email");
+        log.info("Customer {} fetching their documents", email);
+        Page<DocumentResponse> page = documentService.getByCustomerEmail(email, pageable);
+        return ResponseEntity.ok(PageResponse.of(page));
+    }
+
+    @GetMapping("/my-documents/application/{applicationId}")
+    @Operation(summary = "Get customer's documents for specific application (Customer Portal)")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<PageResponse<DocumentResponse>> getMyDocumentsByApplication(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable UUID applicationId,
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        String email = jwt.getClaimAsString("email");
+        log.info("Customer {} fetching documents for application {}", email, applicationId);
+        // TODO: Add ownership verification via loan-service
+        Page<DocumentResponse> page = documentService.getByApplicationId(applicationId, pageable);
+        return ResponseEntity.ok(PageResponse.of(page));
+    }
+
+    @GetMapping("/my-documents/{id}/download-url")
+    @Operation(summary = "Get download URL for customer's document (Customer Portal)")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<String>> getMyDocumentDownloadUrl(
+            @AuthenticationPrincipal Jwt jwt,
+            @PathVariable String id) {
+        String email = jwt.getClaimAsString("email");
+        log.info("Customer {} requesting download URL for document {}", email, id);
+        // TODO: Add ownership verification
+        String url = documentService.getDownloadUrl(id);
+        return ResponseEntity.ok(ApiResponse.success(url));
     }
 }

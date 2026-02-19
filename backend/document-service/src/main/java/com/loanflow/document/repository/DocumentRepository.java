@@ -27,6 +27,8 @@ public interface DocumentRepository extends MongoRepository<Document, String> {
 
     Page<Document> findByCustomerId(UUID customerId, Pageable pageable);
 
+    Page<Document> findByCustomerEmail(String customerEmail, Pageable pageable);
+
     Page<Document> findByApplicationIdAndStatus(UUID applicationId, DocumentStatus status, Pageable pageable);
 
     Page<Document> findByApplicationIdAndCategory(UUID applicationId, DocumentCategory category, Pageable pageable);

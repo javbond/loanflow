@@ -62,6 +62,10 @@ public class Document {
     @Field("customer_id")
     private UUID customerId;
 
+    @Indexed
+    @Field("customer_email")
+    private String customerEmail;
+
     @Field("document_type")
     private DocumentType documentType;
 

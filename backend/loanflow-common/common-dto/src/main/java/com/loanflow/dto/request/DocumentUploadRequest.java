@@ -24,6 +24,8 @@ public class DocumentUploadRequest {
 
     private UUID customerId;
 
+    private String customerEmail; // For Customer Portal uploads
+
     @NotBlank(message = "Document type is required")
     private String documentType;
 
