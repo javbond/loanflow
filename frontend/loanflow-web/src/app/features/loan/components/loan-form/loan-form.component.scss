@@ -1,0 +1,164 @@
+.loan-form-container {
+  padding: 24px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+mat-card-header {
+  margin-bottom: 24px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+.form-section {
+  padding: 16px 0;
+}
+
+.form-row {
+  margin-bottom: 16px;
+
+  &.two-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  &.three-cols {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 16px;
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.selected-customer-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #e3f2fd;
+  border-radius: 8px;
+  margin-bottom: 16px;
+
+  mat-icon {
+    color: #1976d2;
+  }
+
+  div {
+    display: flex;
+    flex-direction: column;
+
+    strong {
+      font-size: 14px;
+    }
+
+    span {
+      font-size: 12px;
+      color: rgba(0, 0, 0, 0.6);
+    }
+  }
+}
+
+.emi-card {
+  background: linear-gradient(135deg, #1976d2, #1565c0);
+  color: white;
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  margin-bottom: 24px;
+
+  .emi-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    opacity: 0.9;
+  }
+
+  .emi-amount {
+    font-size: 32px;
+    font-weight: 600;
+    margin: 8px 0;
+  }
+
+  .emi-note {
+    font-size: 12px;
+    opacity: 0.8;
+  }
+}
+
+.step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.review-section {
+  padding: 16px 0;
+
+  h3 {
+    margin-bottom: 24px;
+    color: #1976d2;
+  }
+}
+
+.review-card {
+  background: #fafafa;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+
+  h4 {
+    margin: 0 0 12px 0;
+    color: rgba(0, 0, 0, 0.7);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+}
+
+.review-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+
+  div {
+    font-size: 14px;
+
+    strong {
+      color: rgba(0, 0, 0, 0.6);
+    }
+  }
+}
+
+mat-card-actions {
+  padding: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .loan-form-container {
+    padding: 16px;
+  }
+
+  .form-row {
+    &.two-cols,
+    &.three-cols {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .review-grid {
+    grid-template-columns: 1fr;
+  }
+}

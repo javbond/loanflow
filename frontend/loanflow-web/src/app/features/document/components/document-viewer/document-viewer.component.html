@@ -1,0 +1,296 @@
+<div class="viewer-container">
+  @if (loading) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+  } @else if (!document) {
+    <mat-card class="error-card">
+      <mat-card-content>
+        <mat-icon>error_outline</mat-icon>
+        <h3>Document Not Found</h3>
+        <p>The requested document could not be found.</p>
+        <button mat-raised-button color="primary" (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon>
+          Go Back
+        </button>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <!-- Header -->
+    <div class="header">
+      <button mat-icon-button (click)="goBack()" matTooltip="Back to list">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-info">
+        <h1>{{ document.documentNumber }}</h1>
+        <span class="doc-type">{{ getTypeInfo(document.documentType)?.label }}</span>
+      </div>
+      <div class="header-actions">
+        <button mat-button (click)="downloadDocument()">
+          <mat-icon>download</mat-icon>
+          Download
+        </button>
+        @if (canVerify()) {
+          <button mat-raised-button color="primary" (click)="toggleVerificationPanel()">
+            <mat-icon>verified</mat-icon>
+            Verify
+          </button>
+        }
+        <button mat-icon-button color="warn" (click)="deleteDocument()" matTooltip="Delete document">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <div class="content-grid">
+      <!-- Left: Preview or Placeholder -->
+      <div class="preview-section">
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Preview</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            @if (canPreview() && previewUrl) {
+              @if (isImage()) {
+                <div class="preview-container image-preview">
+                  <img [src]="previewUrl" alt="Document preview">
+                </div>
+              } @else if (isPdf()) {
+                <div class="preview-container pdf-preview">
+                  <iframe [src]="previewUrl" type="application/pdf"></iframe>
+                </div>
+              }
+            } @else {
+              <div class="no-preview">
+                <mat-icon>insert_drive_file</mat-icon>
+                <p>Preview not available for this file type</p>
+                <button mat-raised-button color="primary" (click)="downloadDocument()">
+                  <mat-icon>download</mat-icon>
+                  Download to View
+                </button>
+              </div>
+            }
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- Right: Document Details -->
+      <div class="details-section">
+        <!-- Status Card -->
+        <mat-card class="status-card">
+          <mat-card-content>
+            <div class="status-display">
+              <mat-chip [ngClass]="getStatusChipClass(document.status)" class="large-chip">
+                <mat-icon>{{ getStatusInfo(document.status)?.icon }}</mat-icon>
+                {{ getStatusInfo(document.status)?.label }}
+              </mat-chip>
+
+              @if (document.expiringSoon && !document.expired) {
+                <div class="warning-badge">
+                  <mat-icon>warning</mat-icon>
+                  Expiring Soon
+                </div>
+              }
+              @if (document.expired) {
+                <div class="error-badge">
+                  <mat-icon>error</mat-icon>
+                  Expired
+                </div>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Verification Panel -->
+        @if (showVerificationPanel && canVerify()) {
+          <mat-card class="verification-card">
+            <mat-card-header>
+              <mat-card-title>Verify Document</mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <form [formGroup]="verificationForm">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Remarks (required for rejection)</mat-label>
+                  <textarea matInput formControlName="remarks" rows="3"
+                            placeholder="Enter verification remarks..."></textarea>
+                </mat-form-field>
+
+                <div class="verification-actions">
+                  <button mat-raised-button color="primary"
+                          (click)="approveDocument()"
+                          [disabled]="isVerifying">
+                    @if (isVerifying) {
+                      <mat-spinner diameter="20"></mat-spinner>
+                    } @else {
+                      <mat-icon>check_circle</mat-icon>
+                      Approve
+                    }
+                  </button>
+                  <button mat-raised-button color="warn"
+                          (click)="rejectDocument()"
+                          [disabled]="isVerifying || !verificationForm.value.remarks">
+                    <mat-icon>cancel</mat-icon>
+                    Reject
+                  </button>
+                  <button mat-button (click)="toggleVerificationPanel()">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </mat-card-content>
+          </mat-card>
+        }
+
+        <!-- Document Information -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Document Information</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-list>
+              <mat-list-item>
+                <mat-icon matListItemIcon>description</mat-icon>
+                <span matListItemTitle>Document Type</span>
+                <span matListItemLine>{{ getTypeInfo(document.documentType)?.label }}</span>
+              </mat-list-item>
+
+              <mat-list-item>
+                <mat-icon matListItemIcon>folder</mat-icon>
+                <span matListItemTitle>Category</span>
+                <span matListItemLine>{{ getCategoryInfo(document.category)?.label }}</span>
+              </mat-list-item>
+
+              <mat-list-item>
+                <mat-icon matListItemIcon>insert_drive_file</mat-icon>
+                <span matListItemTitle>File Name</span>
+                <span matListItemLine>{{ document.originalFileName }}</span>
+              </mat-list-item>
+
+              <mat-list-item>
+                <mat-icon matListItemIcon>data_usage</mat-icon>
+                <span matListItemTitle>File Size</span>
+                <span matListItemLine>{{ document.formattedFileSize }}</span>
+              </mat-list-item>
+
+              <mat-list-item>
+                <mat-icon matListItemIcon>file_present</mat-icon>
+                <span matListItemTitle>Content Type</span>
+                <span matListItemLine>{{ document.contentType }}</span>
+              </mat-list-item>
+
+              @if (document.expiryDate) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon [class.error-icon]="document.expired">event</mat-icon>
+                  <span matListItemTitle>Expiry Date</span>
+                  <span matListItemLine [class.error-text]="document.expired">
+                    {{ document.expiryDate | date:'mediumDate' }}
+                  </span>
+                </mat-list-item>
+              }
+
+              @if (document.description) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon>notes</mat-icon>
+                  <span matListItemTitle>Description</span>
+                  <span matListItemLine>{{ document.description }}</span>
+                </mat-list-item>
+              }
+            </mat-list>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Audit Information -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Audit Trail</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-list>
+              <mat-list-item>
+                <mat-icon matListItemIcon>cloud_upload</mat-icon>
+                <span matListItemTitle>Uploaded</span>
+                <span matListItemLine>{{ document.uploadedAt | date:'medium' }}</span>
+              </mat-list-item>
+
+              @if (document.verifiedAt) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon>verified</mat-icon>
+                  <span matListItemTitle>Verified</span>
+                  <span matListItemLine>{{ document.verifiedAt | date:'medium' }}</span>
+                </mat-list-item>
+              }
+
+              @if (document.verificationRemarks) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon>comment</mat-icon>
+                  <span matListItemTitle>Verification Remarks</span>
+                  <span matListItemLine>{{ document.verificationRemarks }}</span>
+                </mat-list-item>
+              }
+
+              <mat-list-item>
+                <mat-icon matListItemIcon>history</mat-icon>
+                <span matListItemTitle>Version</span>
+                <span matListItemLine>{{ document.version }}</span>
+              </mat-list-item>
+
+              @if (document.previousVersionId) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon>content_copy</mat-icon>
+                  <span matListItemTitle>Previous Version</span>
+                  <span matListItemLine>
+                    <a [routerLink]="['/documents', document.previousVersionId]">
+                      View previous version
+                    </a>
+                  </span>
+                </mat-list-item>
+              }
+            </mat-list>
+          </mat-card-content>
+        </mat-card>
+
+        <!-- Related Links -->
+        <mat-card>
+          <mat-card-header>
+            <mat-card-title>Related</mat-card-title>
+          </mat-card-header>
+          <mat-card-content>
+            <mat-list>
+              <mat-list-item>
+                <mat-icon matListItemIcon>assignment</mat-icon>
+                <span matListItemTitle>Loan Application</span>
+                <span matListItemLine>
+                  <a [routerLink]="['/loans', document.applicationId]">
+                    View Application
+                  </a>
+                </span>
+              </mat-list-item>
+
+              @if (document.customerId) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon>person</mat-icon>
+                  <span matListItemTitle>Customer</span>
+                  <span matListItemLine>
+                    <a [routerLink]="['/customers', document.customerId]">
+                      View Customer
+                    </a>
+                  </span>
+                </mat-list-item>
+              }
+
+              <mat-list-item>
+                <mat-icon matListItemIcon>folder_shared</mat-icon>
+                <span matListItemTitle>All Documents</span>
+                <span matListItemLine>
+                  <a [routerLink]="['/documents/application', document.applicationId]">
+                    View All Documents
+                  </a>
+                </span>
+              </mat-list-item>
+            </mat-list>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  }
+</div>

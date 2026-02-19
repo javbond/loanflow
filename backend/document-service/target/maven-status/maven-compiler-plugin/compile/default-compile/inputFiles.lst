@@ -1,0 +1,12 @@
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/DocumentServiceApplication.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/service/impl/DocumentServiceImpl.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/domain/enums/DocumentType.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/service/DocumentService.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/domain/enums/DocumentStatus.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/controller/DocumentController.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/service/impl/MinioStorageService.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/domain/entity/Document.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/repository/DocumentRepository.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/service/StorageService.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/domain/enums/DocumentCategory.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/document-service/src/main/java/com/loanflow/document/mapper/DocumentMapper.java

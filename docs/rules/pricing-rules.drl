@@ -1,0 +1,389 @@
+package com.loanflow.rules.pricing;
+
+import com.loanflow.model.LoanApplication;
+import com.loanflow.model.Applicant;
+import com.loanflow.model.EmploymentDetails;
+import com.loanflow.model.CreditReport;
+import com.loanflow.model.Collateral;
+import com.loanflow.model.PricingResult;
+import com.loanflow.model.enums.EmploymentType;
+import com.loanflow.model.enums.EmployerCategory;
+
+// ==============================================================================
+// GLOBAL VARIABLES
+// ==============================================================================
+global org.slf4j.Logger logger;
+global com.loanflow.service.RbiRateService rbiRateService;
+
+// ==============================================================================
+// BASE RATE RULES
+// ==============================================================================
+rule "Base Rate - Personal Loan"
+    salience 1000
+    when
+        $app : LoanApplication(productCode == "PL")
+        $result : PricingResult(applicationId == $app.id)
+    then
+        double baseRate = rbiRateService.getRepoRate() + 3.50; // MCLR + spread
+        $result.setBaseRate(baseRate);
+        $result.setProductSpread(3.50);
+        update($result);
+end
+
+rule "Base Rate - Home Loan"
+    salience 1000
+    when
+        $app : LoanApplication(productCode == "HL")
+        $result : PricingResult(applicationId == $app.id)
+    then
+        double baseRate = rbiRateService.getRepoRate() + 2.50;
+        $result.setBaseRate(baseRate);
+        $result.setProductSpread(2.50);
+        update($result);
+end
+
+rule "Base Rate - Vehicle Loan"
+    salience 1000
+    when
+        $app : LoanApplication(productCode == "VL")
+        $result : PricingResult(applicationId == $app.id)
+    then
+        double baseRate = rbiRateService.getRepoRate() + 3.00;
+        $result.setBaseRate(baseRate);
+        $result.setProductSpread(3.00);
+        update($result);
+end
+
+rule "Base Rate - Gold Loan"
+    salience 1000
+    when
+        $app : LoanApplication(productCode == "GL")
+        $result : PricingResult(applicationId == $app.id)
+    then
+        double baseRate = rbiRateService.getRepoRate() + 1.50;
+        $result.setBaseRate(baseRate);
+        $result.setProductSpread(1.50);
+        update($result);
+end
+
+// ==============================================================================
+// CREDIT SCORE BASED PRICING ADJUSTMENT
+// ==============================================================================
+rule "Credit Score Premium - Excellent (750+)"
+    salience 900
+    when
+        $app : LoanApplication()
+        $applicant : Applicant(applicationId == $app.id, applicantType == "PRIMARY")
+        $credit : CreditReport(applicantId == $applicant.id, creditScore >= 750)
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addDiscount("CREDIT_SCORE_EXCELLENT", -0.50);
+        $result.setRiskTier("A");
+        update($result);
+end
+
+rule "Credit Score Premium - Good (700-749)"
+    salience 900
+    when
+        $app : LoanApplication()
+        $applicant : Applicant(applicationId == $app.id, applicantType == "PRIMARY")
+        $credit : CreditReport(applicantId == $applicant.id, creditScore >= 700 && creditScore < 750)
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addDiscount("CREDIT_SCORE_GOOD", -0.25);
+        $result.setRiskTier("B");
+        update($result);
+end
+
+rule "Credit Score Premium - Fair (650-699)"
+    salience 900
+    when
+        $app : LoanApplication()
+        $applicant : Applicant(applicationId == $app.id, applicantType == "PRIMARY")
+        $credit : CreditReport(applicantId == $applicant.id, creditScore >= 650 && creditScore < 700)
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addPremium("CREDIT_SCORE_FAIR", 0.50);
+        $result.setRiskTier("C");
+        update($result);
+end
+
+rule "Credit Score Premium - Below Average (550-649)"
+    salience 900
+    when
+        $app : LoanApplication()
+        $applicant : Applicant(applicationId == $app.id, applicantType == "PRIMARY")
+        $credit : CreditReport(applicantId == $applicant.id, creditScore >= 550 && creditScore < 650)
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addPremium("CREDIT_SCORE_BELOW_AVG", 1.50);
+        $result.setRiskTier("D");
+        update($result);
+end
+
+// ==============================================================================
+// EMPLOYER CATEGORY DISCOUNTS
+// ==============================================================================
+rule "Employer Discount - Government"
+    salience 850
+    when
+        $app : LoanApplication()
+        $applicant : Applicant(applicationId == $app.id, applicantType == "PRIMARY")
+        $emp : EmploymentDetails(
+            applicantId == $applicant.id,
+            employerCategory == EmployerCategory.GOVERNMENT
+        )
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addDiscount("GOVT_EMPLOYEE", -0.50);
+        update($result);
+end
+
+rule "Employer Discount - PSU"
+    salience 850
+    when
+        $app : LoanApplication()
+        $applicant : Applicant(applicationId == $app.id, applicantType == "PRIMARY")
+        $emp : EmploymentDetails(
+            applicantId == $applicant.id,
+            employerCategory == EmployerCategory.PSU
+        )
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addDiscount("PSU_EMPLOYEE", -0.35);
+        update($result);
+end
+
+rule "Employer Discount - MNC/Listed Company"
+    salience 850
+    when
+        $app : LoanApplication()
+        $applicant : Applicant(applicationId == $app.id, applicantType == "PRIMARY")
+        $emp : EmploymentDetails(
+            applicantId == $applicant.id,
+            employerCategory in (EmployerCategory.MNC, EmployerCategory.LISTED_COMPANY)
+        )
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addDiscount("PREMIUM_EMPLOYER", -0.25);
+        update($result);
+end
+
+// ==============================================================================
+// LOAN AMOUNT BASED PRICING
+// ==============================================================================
+rule "Large Loan Discount - HL Above 1Cr"
+    salience 800
+    when
+        $app : LoanApplication(productCode == "HL", requestedAmount >= 10000000)
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addDiscount("LARGE_TICKET_HL", -0.25);
+        update($result);
+end
+
+rule "Large Loan Discount - PL Above 25L"
+    salience 800
+    when
+        $app : LoanApplication(productCode == "PL", requestedAmount >= 2500000)
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addDiscount("LARGE_TICKET_PL", -0.15);
+        update($result);
+end
+
+// ==============================================================================
+// LTV BASED PRICING (SECURED LOANS)
+// ==============================================================================
+rule "LTV Premium - HL Above 75%"
+    salience 750
+    when
+        $app : LoanApplication(productCode == "HL")
+        $collateral : Collateral(applicationId == $app.id)
+        $result : PricingResult(applicationId == $app.id)
+        eval($app.getRequestedAmount() / $collateral.getMarketValue() > 0.75)
+    then
+        $result.addPremium("HIGH_LTV_HL", 0.25);
+        update($result);
+end
+
+rule "LTV Discount - HL Below 60%"
+    salience 750
+    when
+        $app : LoanApplication(productCode == "HL")
+        $collateral : Collateral(applicationId == $app.id)
+        $result : PricingResult(applicationId == $app.id)
+        eval($app.getRequestedAmount() / $collateral.getMarketValue() < 0.60)
+    then
+        $result.addDiscount("LOW_LTV_HL", -0.15);
+        update($result);
+end
+
+// ==============================================================================
+// TENURE BASED PRICING
+// ==============================================================================
+rule "Short Tenure Discount - PL Under 24 Months"
+    salience 700
+    when
+        $app : LoanApplication(productCode == "PL", tenureMonths <= 24)
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addDiscount("SHORT_TENURE", -0.25);
+        update($result);
+end
+
+rule "Long Tenure Premium - HL Above 25 Years"
+    salience 700
+    when
+        $app : LoanApplication(productCode == "HL", tenureMonths > 300)
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addPremium("LONG_TENURE", 0.10);
+        update($result);
+end
+
+// ==============================================================================
+// EXISTING CUSTOMER DISCOUNTS
+// ==============================================================================
+rule "Existing Customer - Salary Account Holder"
+    salience 600
+    when
+        $app : LoanApplication()
+        $applicant : Applicant(
+            applicationId == $app.id,
+            applicantType == "PRIMARY",
+            hasSalaryAccount == true
+        )
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addDiscount("SALARY_ACCOUNT", -0.35);
+        update($result);
+end
+
+rule "Existing Customer - Good Track Record"
+    salience 600
+    when
+        $app : LoanApplication()
+        $applicant : Applicant(
+            applicationId == $app.id,
+            applicantType == "PRIMARY",
+            existingCustomer == true,
+            existingLoanDpd == 0
+        )
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addDiscount("EXISTING_CUSTOMER_GOOD", -0.20);
+        update($result);
+end
+
+// ==============================================================================
+// WOMEN BORROWER DISCOUNT (PSL INCENTIVE)
+// ==============================================================================
+rule "Women Borrower Discount"
+    salience 550
+    when
+        $app : LoanApplication()
+        $applicant : Applicant(
+            applicationId == $app.id,
+            applicantType == "PRIMARY",
+            gender == "FEMALE"
+        )
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.addDiscount("WOMEN_BORROWER", -0.05);
+        update($result);
+end
+
+// ==============================================================================
+// PROCESSING FEE RULES
+// ==============================================================================
+rule "Processing Fee - Personal Loan"
+    salience 500
+    when
+        $app : LoanApplication(productCode == "PL")
+        $result : PricingResult(applicationId == $app.id)
+    then
+        double fee = Math.max($app.getRequestedAmount() * 0.02, 2000);
+        fee = Math.min(fee, 25000);
+        $result.setProcessingFee(fee);
+        $result.setProcessingFeePercent(2.0);
+        update($result);
+end
+
+rule "Processing Fee - Home Loan"
+    salience 500
+    when
+        $app : LoanApplication(productCode == "HL")
+        $result : PricingResult(applicationId == $app.id)
+    then
+        double fee = Math.max($app.getRequestedAmount() * 0.005, 5000);
+        fee = Math.min(fee, 15000);
+        $result.setProcessingFee(fee);
+        $result.setProcessingFeePercent(0.50);
+        update($result);
+end
+
+rule "Processing Fee - Vehicle Loan"
+    salience 500
+    when
+        $app : LoanApplication(productCode == "VL")
+        $result : PricingResult(applicationId == $app.id)
+    then
+        double fee = Math.max($app.getRequestedAmount() * 0.015, 1500);
+        fee = Math.min(fee, 15000);
+        $result.setProcessingFee(fee);
+        $result.setProcessingFeePercent(1.50);
+        update($result);
+end
+
+rule "Processing Fee Waiver - Premium Customer"
+    salience 400
+    when
+        $app : LoanApplication()
+        $applicant : Applicant(
+            applicationId == $app.id,
+            applicantType == "PRIMARY",
+            customerSegment == "PREMIUM"
+        )
+        $result : PricingResult(applicationId == $app.id)
+    then
+        $result.setProcessingFeeWaiver($result.getProcessingFee() * 0.50);
+        update($result);
+end
+
+// ==============================================================================
+// FINAL RATE CALCULATION
+// ==============================================================================
+rule "Calculate Final Interest Rate"
+    salience 10
+    no-loop true
+    when
+        $app : LoanApplication()
+        $result : PricingResult(applicationId == $app.id, baseRate > 0)
+    then
+        double finalRate = $result.getBaseRate();
+
+        // Apply all discounts
+        for (Map.Entry<String, Double> discount : $result.getDiscounts().entrySet()) {
+            finalRate += discount.getValue();
+        }
+
+        // Apply all premiums
+        for (Map.Entry<String, Double> premium : $result.getPremiums().entrySet()) {
+            finalRate += premium.getValue();
+        }
+
+        // Apply floor and cap
+        double minRate = $result.getProductMinRate();
+        double maxRate = $result.getProductMaxRate();
+        finalRate = Math.max(minRate, Math.min(finalRate, maxRate));
+
+        $result.setFinalInterestRate(finalRate);
+        $result.calculateEmi();
+
+        logger.info("Final pricing for {}: Base={}, Discounts={}, Premiums={}, Final={}",
+            $app.getApplicationNumber(), $result.getBaseRate(),
+            $result.getTotalDiscounts(), $result.getTotalPremiums(), finalRate);
+
+        update($result);
+end

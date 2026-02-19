@@ -1,0 +1,1855 @@
+openapi: 3.0.3
+info:
+  title: LoanFlow - Loan Origination System API
+  description: |
+    Enterprise-grade Loan Origination System API for Indian Banks.
+
+    ## Authentication
+    All endpoints require JWT Bearer token obtained via Keycloak OAuth2.
+
+    ## Rate Limiting
+    - Standard: 100 requests/minute
+    - Bulk operations: 10 requests/minute
+
+    ## Versioning
+    API version is included in the URL path (e.g., /api/v1/)
+  version: 1.0.0
+  contact:
+    name: LoanFlow API Support
+    email: api-support@loanflow.com
+  license:
+    name: Proprietary
+    url: https://loanflow.com/license
+
+servers:
+  - url: https://api.loanflow.com/api/v1
+    description: Production
+  - url: https://staging-api.loanflow.com/api/v1
+    description: Staging
+  - url: http://localhost:8080/api/v1
+    description: Local Development
+
+tags:
+  - name: Applications
+    description: Loan application management
+  - name: Applicants
+    description: Applicant information
+  - name: Documents
+    description: Document upload and verification
+  - name: Underwriting
+    description: Credit assessment and decisions
+  - name: Compliance
+    description: KYC, credit bureau, regulatory
+  - name: Products
+    description: Loan product configuration
+  - name: Notifications
+    description: Notification management
+
+security:
+  - bearerAuth: []
+
+paths:
+  # ============================================
+  # LOAN APPLICATIONS
+  # ============================================
+  /applications:
+    get:
+      tags: [Applications]
+      summary: List loan applications
+      operationId: listApplications
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - $ref: '#/components/parameters/SortParam'
+        - name: status
+          in: query
+          schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/ApplicationStatus'
+        - name: branchCode
+          in: query
+          schema:
+            type: string
+        - name: productCode
+          in: query
+          schema:
+            type: string
+        - name: fromDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: toDate
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    post:
+      tags: [Applications]
+      summary: Create new loan application
+      operationId: createApplication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApplicationRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /applications/{applicationId}:
+    get:
+      tags: [Applications]
+      summary: Get application by ID
+      operationId: getApplication
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationDetailResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    put:
+      tags: [Applications]
+      summary: Update application
+      operationId: updateApplication
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApplicationRequest'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /applications/{applicationId}/submit:
+    post:
+      tags: [Applications]
+      summary: Submit application for processing
+      operationId: submitApplication
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      responses:
+        '200':
+          description: Application submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicationResponse'
+        '400':
+          description: Validation errors
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /applications/{applicationId}/withdraw:
+    post:
+      tags: [Applications]
+      summary: Withdraw application
+      operationId: withdrawApplication
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        '200':
+          description: Application withdrawn
+
+  /applications/{applicationId}/status-history:
+    get:
+      tags: [Applications]
+      summary: Get application status history
+      operationId: getStatusHistory
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/StatusHistoryItem'
+
+  # ============================================
+  # APPLICANTS
+  # ============================================
+  /applications/{applicationId}/applicants:
+    get:
+      tags: [Applicants]
+      summary: List applicants for an application
+      operationId: listApplicants
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApplicantResponse'
+
+    post:
+      tags: [Applicants]
+      summary: Add applicant to application
+      operationId: addApplicant
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateApplicantRequest'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicantResponse'
+
+  /applications/{applicationId}/applicants/{applicantId}:
+    get:
+      tags: [Applicants]
+      summary: Get applicant details
+      operationId: getApplicant
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+        - $ref: '#/components/parameters/ApplicantIdParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApplicantDetailResponse'
+
+    put:
+      tags: [Applicants]
+      summary: Update applicant
+      operationId: updateApplicant
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+        - $ref: '#/components/parameters/ApplicantIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateApplicantRequest'
+      responses:
+        '200':
+          description: Success
+
+    delete:
+      tags: [Applicants]
+      summary: Remove applicant
+      operationId: removeApplicant
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+        - $ref: '#/components/parameters/ApplicantIdParam'
+      responses:
+        '204':
+          description: Deleted
+
+  # ============================================
+  # DOCUMENTS
+  # ============================================
+  /applications/{applicationId}/documents:
+    get:
+      tags: [Documents]
+      summary: List documents for application
+      operationId: listDocuments
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+        - name: category
+          in: query
+          schema:
+            $ref: '#/components/schemas/DocumentCategory'
+        - name: status
+          in: query
+          schema:
+            $ref: '#/components/schemas/DocumentStatus'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DocumentResponse'
+
+    post:
+      tags: [Documents]
+      summary: Upload document
+      operationId: uploadDocument
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, documentTypeCode]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                documentTypeCode:
+                  type: string
+                applicantId:
+                  type: string
+                  format: uuid
+                documentDate:
+                  type: string
+                  format: date
+                referenceNumber:
+                  type: string
+      responses:
+        '201':
+          description: Uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentResponse'
+        '400':
+          description: Invalid file or type
+
+  /applications/{applicationId}/documents/{documentId}:
+    get:
+      tags: [Documents]
+      summary: Get document metadata
+      operationId: getDocument
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+        - $ref: '#/components/parameters/DocumentIdParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentDetailResponse'
+
+    delete:
+      tags: [Documents]
+      summary: Delete document
+      operationId: deleteDocument
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+        - $ref: '#/components/parameters/DocumentIdParam'
+      responses:
+        '204':
+          description: Deleted
+
+  /applications/{applicationId}/documents/{documentId}/download:
+    get:
+      tags: [Documents]
+      summary: Download document file
+      operationId: downloadDocument
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+        - $ref: '#/components/parameters/DocumentIdParam'
+      responses:
+        '200':
+          description: File content
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
+
+  /applications/{applicationId}/documents/{documentId}/verify:
+    post:
+      tags: [Documents]
+      summary: Verify document
+      operationId: verifyDocument
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+        - $ref: '#/components/parameters/DocumentIdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyDocumentRequest'
+      responses:
+        '200':
+          description: Verified
+
+  /applications/{applicationId}/documents/checklist:
+    get:
+      tags: [Documents]
+      summary: Get document checklist
+      operationId: getDocumentChecklist
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DocumentChecklistResponse'
+
+  # ============================================
+  # UNDERWRITING
+  # ============================================
+  /underwriting/queue:
+    get:
+      tags: [Underwriting]
+      summary: Get underwriting queue
+      operationId: getUnderwritingQueue
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: assignedTo
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [HIGH, MEDIUM, LOW]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnderwritingQueueResponse'
+
+  /underwriting/{applicationId}/assess:
+    post:
+      tags: [Underwriting]
+      summary: Perform credit assessment
+      operationId: performAssessment
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      responses:
+        '200':
+          description: Assessment completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditAssessmentResponse'
+
+  /underwriting/{applicationId}/decision:
+    post:
+      tags: [Underwriting]
+      summary: Submit underwriting decision
+      operationId: submitDecision
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UnderwritingDecisionRequest'
+      responses:
+        '200':
+          description: Decision recorded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnderwritingDecisionResponse'
+
+  /underwriting/{applicationId}/offer:
+    post:
+      tags: [Underwriting]
+      summary: Generate loan offer
+      operationId: generateOffer
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateOfferRequest'
+      responses:
+        '201':
+          description: Offer generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanOfferResponse'
+
+  /underwriting/{applicationId}/offer/{offerId}/accept:
+    post:
+      tags: [Underwriting]
+      summary: Accept loan offer
+      operationId: acceptOffer
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Offer accepted
+
+  # ============================================
+  # COMPLIANCE
+  # ============================================
+  /compliance/{applicationId}/kyc:
+    get:
+      tags: [Compliance]
+      summary: Get KYC status
+      operationId: getKycStatus
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KycStatusResponse'
+
+  /compliance/{applicationId}/kyc/initiate:
+    post:
+      tags: [Compliance]
+      summary: Initiate e-KYC verification
+      operationId: initiateEkyc
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitiateEkycRequest'
+      responses:
+        '200':
+          description: e-KYC initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EkycInitiateResponse'
+
+  /compliance/{applicationId}/credit-report:
+    get:
+      tags: [Compliance]
+      summary: Get credit bureau report
+      operationId: getCreditReport
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+        - name: applicantId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: bureau
+          in: query
+          schema:
+            type: string
+            enum: [CIBIL, EXPERIAN, EQUIFAX, CRIF]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditReportResponse'
+
+  /compliance/{applicationId}/credit-report/fetch:
+    post:
+      tags: [Compliance]
+      summary: Fetch fresh credit report
+      operationId: fetchCreditReport
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FetchCreditReportRequest'
+      responses:
+        '202':
+          description: Request accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AsyncOperationResponse'
+
+  /compliance/{applicationId}/cersai:
+    get:
+      tags: [Compliance]
+      summary: Get CERSAI registration status
+      operationId: getCersaiStatus
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CersaiStatusResponse'
+
+  /compliance/{applicationId}/cersai/register:
+    post:
+      tags: [Compliance]
+      summary: Register charge with CERSAI
+      operationId: registerCersai
+      parameters:
+        - $ref: '#/components/parameters/ApplicationIdParam'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CersaiRegisterRequest'
+      responses:
+        '202':
+          description: Registration initiated
+
+  # ============================================
+  # LOAN PRODUCTS
+  # ============================================
+  /products:
+    get:
+      tags: [Products]
+      summary: List loan products
+      operationId: listProducts
+      parameters:
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [RETAIL, CORPORATE, PRIORITY_SECTOR, AGRICULTURE]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [ACTIVE, INACTIVE]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LoanProductResponse'
+
+  /products/{productCode}:
+    get:
+      tags: [Products]
+      summary: Get product details
+      operationId: getProduct
+      parameters:
+        - name: productCode
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoanProductDetailResponse'
+
+  /products/{productCode}/eligibility:
+    post:
+      tags: [Products]
+      summary: Check product eligibility
+      operationId: checkEligibility
+      parameters:
+        - name: productCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EligibilityCheckRequest'
+      responses:
+        '200':
+          description: Eligibility result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EligibilityCheckResponse'
+
+  /products/{productCode}/emi-calculator:
+    post:
+      tags: [Products]
+      summary: Calculate EMI
+      operationId: calculateEmi
+      parameters:
+        - name: productCode
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmiCalculatorRequest'
+      responses:
+        '200':
+          description: EMI calculation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EmiCalculatorResponse'
+
+  # ============================================
+  # NOTIFICATIONS
+  # ============================================
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications
+      operationId: listNotifications
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/SizeParam'
+        - name: applicationId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: channel
+          in: query
+          schema:
+            type: string
+            enum: [EMAIL, SMS, PUSH, WHATSAPP]
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, SENT, DELIVERED, FAILED]
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+
+  /notifications/send:
+    post:
+      tags: [Notifications]
+      summary: Send notification
+      operationId: sendNotification
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendNotificationRequest'
+      responses:
+        '202':
+          description: Notification queued
+
+components:
+  # ============================================
+  # SECURITY SCHEMES
+  # ============================================
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token from Keycloak
+
+  # ============================================
+  # PARAMETERS
+  # ============================================
+  parameters:
+    ApplicationIdParam:
+      name: applicationId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    ApplicantIdParam:
+      name: applicantId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    DocumentIdParam:
+      name: documentId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+
+    SizeParam:
+      name: size
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+
+    SortParam:
+      name: sort
+      in: query
+      schema:
+        type: string
+        example: createdAt,desc
+
+  # ============================================
+  # RESPONSES
+  # ============================================
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  # ============================================
+  # SCHEMAS
+  # ============================================
+  schemas:
+    # --- ENUMS ---
+    ApplicationStatus:
+      type: string
+      enum:
+        - DRAFT
+        - SUBMITTED
+        - DOCUMENTS_PENDING
+        - UNDER_VERIFICATION
+        - CREDIT_CHECK
+        - POLICY_EVALUATION
+        - UNDER_REVIEW
+        - PENDING_APPROVAL
+        - APPROVED
+        - CONDITIONALLY_APPROVED
+        - REJECTED
+        - WITHDRAWN
+        - DISBURSEMENT_PENDING
+        - PARTIALLY_DISBURSED
+        - DISBURSED
+        - CANCELLED
+
+    ApplicantType:
+      type: string
+      enum: [PRIMARY, CO_APPLICANT, GUARANTOR]
+
+    DocumentCategory:
+      type: string
+      enum: [KYC, INCOME, COLLATERAL, LEGAL, OTHER]
+
+    DocumentStatus:
+      type: string
+      enum: [PENDING, VERIFIED, REJECTED, EXPIRED]
+
+    EmploymentType:
+      type: string
+      enum:
+        - SALARIED
+        - SELF_EMPLOYED_PROFESSIONAL
+        - SELF_EMPLOYED_BUSINESS
+        - AGRICULTURIST
+        - RETIRED
+
+    Gender:
+      type: string
+      enum: [MALE, FEMALE, OTHER]
+
+    MaritalStatus:
+      type: string
+      enum: [SINGLE, MARRIED, DIVORCED, WIDOWED]
+
+    # --- COMMON ---
+    ErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        path:
+          type: string
+        traceId:
+          type: string
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        status:
+          type: integer
+        error:
+          type: string
+        message:
+          type: string
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              message:
+                type: string
+              rejectedValue:
+                type: string
+
+    PageInfo:
+      type: object
+      properties:
+        page:
+          type: integer
+        size:
+          type: integer
+        totalElements:
+          type: integer
+          format: int64
+        totalPages:
+          type: integer
+        first:
+          type: boolean
+        last:
+          type: boolean
+
+    AsyncOperationResponse:
+      type: object
+      properties:
+        operationId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [ACCEPTED, PROCESSING, COMPLETED, FAILED]
+        message:
+          type: string
+        statusUrl:
+          type: string
+          format: uri
+
+    # --- APPLICATION ---
+    CreateApplicationRequest:
+      type: object
+      required: [productCode, requestedAmount, tenureMonths, branchCode]
+      properties:
+        productCode:
+          type: string
+          example: PL
+        requestedAmount:
+          type: number
+          format: double
+          minimum: 10000
+          example: 500000
+        tenureMonths:
+          type: integer
+          minimum: 6
+          maximum: 360
+          example: 36
+        branchCode:
+          type: string
+          example: MUM001
+        purpose:
+          type: string
+          maxLength: 500
+        channel:
+          type: string
+          enum: [BRANCH, ONLINE, MOBILE, DSA, API]
+          default: BRANCH
+
+    UpdateApplicationRequest:
+      type: object
+      properties:
+        requestedAmount:
+          type: number
+          format: double
+        tenureMonths:
+          type: integer
+        purpose:
+          type: string
+
+    ApplicationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        applicationNumber:
+          type: string
+          example: LF20250201000123
+        productCode:
+          type: string
+        productName:
+          type: string
+        requestedAmount:
+          type: number
+          format: double
+        approvedAmount:
+          type: number
+          format: double
+        tenureMonths:
+          type: integer
+        status:
+          $ref: '#/components/schemas/ApplicationStatus'
+        branchCode:
+          type: string
+        channel:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    ApplicationDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApplicationResponse'
+        - type: object
+          properties:
+            applicants:
+              type: array
+              items:
+                $ref: '#/components/schemas/ApplicantResponse'
+            documents:
+              type: array
+              items:
+                $ref: '#/components/schemas/DocumentResponse'
+            collaterals:
+              type: array
+              items:
+                $ref: '#/components/schemas/CollateralResponse'
+            offers:
+              type: array
+              items:
+                $ref: '#/components/schemas/LoanOfferResponse'
+            decision:
+              type: string
+            decisionDate:
+              type: string
+              format: date-time
+            decisionRemarks:
+              type: string
+            riskGrade:
+              type: string
+
+    ApplicationListResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            $ref: '#/components/schemas/ApplicationResponse'
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    StatusHistoryItem:
+      type: object
+      properties:
+        fromStatus:
+          type: string
+        toStatus:
+          type: string
+        remarks:
+          type: string
+        changedAt:
+          type: string
+          format: date-time
+        changedBy:
+          type: string
+
+    # --- APPLICANT ---
+    CreateApplicantRequest:
+      type: object
+      required: [applicantType, firstName, lastName, dateOfBirth, pan, mobileNumber]
+      properties:
+        applicantType:
+          $ref: '#/components/schemas/ApplicantType'
+        relationshipWithPrimary:
+          type: string
+        salutation:
+          type: string
+          enum: [Mr, Mrs, Ms, Dr]
+        firstName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        middleName:
+          type: string
+        lastName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        dateOfBirth:
+          type: string
+          format: date
+        gender:
+          $ref: '#/components/schemas/Gender'
+        maritalStatus:
+          $ref: '#/components/schemas/MaritalStatus'
+        pan:
+          type: string
+          pattern: '^[A-Z]{5}[0-9]{4}[A-Z]{1}$'
+        mobileNumber:
+          type: string
+          pattern: '^[6-9][0-9]{9}$'
+        email:
+          type: string
+          format: email
+        monthlyIncome:
+          type: number
+          format: double
+        employmentType:
+          $ref: '#/components/schemas/EmploymentType'
+
+    UpdateApplicantRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        mobileNumber:
+          type: string
+        monthlyIncome:
+          type: number
+
+    ApplicantResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        applicantType:
+          $ref: '#/components/schemas/ApplicantType'
+        fullName:
+          type: string
+        dateOfBirth:
+          type: string
+          format: date
+        pan:
+          type: string
+        mobileNumber:
+          type: string
+        email:
+          type: string
+        monthlyIncome:
+          type: number
+        employmentType:
+          type: string
+        kycVerified:
+          type: boolean
+
+    ApplicantDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApplicantResponse'
+        - type: object
+          properties:
+            addresses:
+              type: array
+              items:
+                $ref: '#/components/schemas/AddressResponse'
+            employmentDetails:
+              $ref: '#/components/schemas/EmploymentResponse'
+
+    AddressResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        addressType:
+          type: string
+        addressLine1:
+          type: string
+        addressLine2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        isVerified:
+          type: boolean
+
+    EmploymentResponse:
+      type: object
+      properties:
+        employmentType:
+          type: string
+        employerName:
+          type: string
+        designation:
+          type: string
+        yearsInCurrentJob:
+          type: integer
+        grossMonthlyIncome:
+          type: number
+        netMonthlyIncome:
+          type: number
+
+    # --- DOCUMENT ---
+    DocumentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        documentTypeCode:
+          type: string
+        documentTypeName:
+          type: string
+        category:
+          $ref: '#/components/schemas/DocumentCategory'
+        fileName:
+          type: string
+        fileSizeBytes:
+          type: integer
+          format: int64
+        verificationStatus:
+          $ref: '#/components/schemas/DocumentStatus'
+        ocrStatus:
+          type: string
+        uploadedAt:
+          type: string
+          format: date-time
+
+    DocumentDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/DocumentResponse'
+        - type: object
+          properties:
+            extractedData:
+              type: object
+            confidenceScore:
+              type: number
+            verifications:
+              type: array
+              items:
+                type: object
+                properties:
+                  verificationType:
+                    type: string
+                  status:
+                    type: string
+                  verifiedAt:
+                    type: string
+                    format: date-time
+
+    VerifyDocumentRequest:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [VERIFIED, REJECTED]
+        remarks:
+          type: string
+
+    DocumentChecklistResponse:
+      type: object
+      properties:
+        mandatory:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentChecklistItem'
+        optional:
+          type: array
+          items:
+            $ref: '#/components/schemas/DocumentChecklistItem'
+        completionPercentage:
+          type: number
+
+    DocumentChecklistItem:
+      type: object
+      properties:
+        documentTypeCode:
+          type: string
+        documentTypeName:
+          type: string
+        category:
+          type: string
+        isMandatory:
+          type: boolean
+        isUploaded:
+          type: boolean
+        isVerified:
+          type: boolean
+        uploadedDocumentId:
+          type: string
+          format: uuid
+
+    # --- COLLATERAL ---
+    CollateralResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        collateralType:
+          type: string
+        marketValue:
+          type: number
+        forcedSaleValue:
+          type: number
+        valuationDate:
+          type: string
+          format: date
+        status:
+          type: string
+
+    # --- UNDERWRITING ---
+    UnderwritingQueueResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            type: object
+            properties:
+              applicationId:
+                type: string
+                format: uuid
+              applicationNumber:
+                type: string
+              applicantName:
+                type: string
+              productName:
+                type: string
+              requestedAmount:
+                type: number
+              creditScore:
+                type: integer
+              submittedAt:
+                type: string
+                format: date-time
+              pendingDays:
+                type: integer
+              priority:
+                type: string
+              assignedTo:
+                type: string
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    CreditAssessmentResponse:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+        creditScore:
+          type: integer
+        riskGrade:
+          type: string
+        debtToIncomeRatio:
+          type: number
+        eligibleAmount:
+          type: number
+        recommendedTenure:
+          type: integer
+        recommendedInterestRate:
+          type: number
+        policyResults:
+          type: array
+          items:
+            type: object
+            properties:
+              policyName:
+                type: string
+              result:
+                type: string
+              remarks:
+                type: string
+        recommendation:
+          type: string
+          enum: [APPROVE, REJECT, REFER]
+
+    UnderwritingDecisionRequest:
+      type: object
+      required: [decision]
+      properties:
+        decision:
+          type: string
+          enum: [APPROVED, REJECTED, REFERRED]
+        approvedAmount:
+          type: number
+        interestRate:
+          type: number
+        tenureMonths:
+          type: integer
+        conditions:
+          type: array
+          items:
+            type: string
+        remarks:
+          type: string
+        rejectionReasons:
+          type: array
+          items:
+            type: string
+
+    UnderwritingDecisionResponse:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+        decision:
+          type: string
+        decisionDate:
+          type: string
+          format: date-time
+        nextAction:
+          type: string
+
+    GenerateOfferRequest:
+      type: object
+      properties:
+        offeredAmount:
+          type: number
+        interestRate:
+          type: number
+        tenureMonths:
+          type: integer
+        processingFeeWaiver:
+          type: number
+        conditions:
+          type: array
+          items:
+            type: string
+        validityDays:
+          type: integer
+          default: 7
+
+    LoanOfferResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        offerNumber:
+          type: string
+        offeredAmount:
+          type: number
+        interestRate:
+          type: number
+        tenureMonths:
+          type: integer
+        emi:
+          type: number
+        processingFee:
+          type: number
+        netDisbursement:
+          type: number
+        status:
+          type: string
+        validUntil:
+          type: string
+          format: date-time
+        conditions:
+          type: array
+          items:
+            type: string
+
+    # --- COMPLIANCE ---
+    KycStatusResponse:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+        overallStatus:
+          type: string
+        applicants:
+          type: array
+          items:
+            type: object
+            properties:
+              applicantId:
+                type: string
+                format: uuid
+              applicantName:
+                type: string
+              kycType:
+                type: string
+              status:
+                type: string
+              ckycNumber:
+                type: string
+              verifiedAt:
+                type: string
+                format: date-time
+
+    InitiateEkycRequest:
+      type: object
+      required: [applicantId, kycType]
+      properties:
+        applicantId:
+          type: string
+          format: uuid
+        kycType:
+          type: string
+          enum: [EKYC_AADHAAR, EKYC_PAN, VIDEO_KYC]
+        aadhaarNumber:
+          type: string
+          description: Last 4 digits only
+
+    EkycInitiateResponse:
+      type: object
+      properties:
+        transactionId:
+          type: string
+        redirectUrl:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+
+    CreditReportResponse:
+      type: object
+      properties:
+        applicantId:
+          type: string
+          format: uuid
+        bureau:
+          type: string
+        creditScore:
+          type: integer
+        scoreVersion:
+          type: string
+        fetchedAt:
+          type: string
+          format: date-time
+        summary:
+          type: object
+          properties:
+            totalAccounts:
+              type: integer
+            activeAccounts:
+              type: integer
+            overdueAccounts:
+              type: integer
+            totalOutstanding:
+              type: number
+            enquiryCount90Days:
+              type: integer
+
+    FetchCreditReportRequest:
+      type: object
+      required: [applicantId, bureau]
+      properties:
+        applicantId:
+          type: string
+          format: uuid
+        bureau:
+          type: string
+          enum: [CIBIL, EXPERIAN, EQUIFAX, CRIF]
+        inquiryType:
+          type: string
+          enum: [SOFT, HARD]
+          default: SOFT
+
+    CersaiStatusResponse:
+      type: object
+      properties:
+        applicationId:
+          type: string
+          format: uuid
+        registrations:
+          type: array
+          items:
+            type: object
+            properties:
+              collateralId:
+                type: string
+                format: uuid
+              registrationType:
+                type: string
+              status:
+                type: string
+              cersaiRegistrationNumber:
+                type: string
+              registrationDate:
+                type: string
+                format: date
+
+    CersaiRegisterRequest:
+      type: object
+      required: [collateralId]
+      properties:
+        collateralId:
+          type: string
+          format: uuid
+        registrationType:
+          type: string
+          enum: [CREATION, MODIFICATION]
+
+    # --- PRODUCTS ---
+    LoanProductResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        minAmount:
+          type: number
+        maxAmount:
+          type: number
+        minTenureMonths:
+          type: integer
+        maxTenureMonths:
+          type: integer
+        minInterestRate:
+          type: number
+        maxInterestRate:
+          type: number
+        isSecured:
+          type: boolean
+
+    LoanProductDetailResponse:
+      allOf:
+        - $ref: '#/components/schemas/LoanProductResponse'
+        - type: object
+          properties:
+            description:
+              type: string
+            processingFeePercent:
+              type: number
+            requiredDocuments:
+              type: array
+              items:
+                type: string
+            eligibilityCriteria:
+              type: array
+              items:
+                type: object
+                properties:
+                  criterion:
+                    type: string
+                  description:
+                    type: string
+
+    EligibilityCheckRequest:
+      type: object
+      properties:
+        age:
+          type: integer
+        employmentType:
+          type: string
+        monthlyIncome:
+          type: number
+        existingEmi:
+          type: number
+        requestedAmount:
+          type: number
+
+    EligibilityCheckResponse:
+      type: object
+      properties:
+        eligible:
+          type: boolean
+        maxEligibleAmount:
+          type: number
+        recommendedTenure:
+          type: integer
+        indicativeInterestRate:
+          type: number
+        indicativeEmi:
+          type: number
+        remarks:
+          type: array
+          items:
+            type: string
+
+    EmiCalculatorRequest:
+      type: object
+      required: [principal, tenureMonths]
+      properties:
+        principal:
+          type: number
+          minimum: 10000
+        tenureMonths:
+          type: integer
+          minimum: 6
+        interestRate:
+          type: number
+          description: Optional, uses product default if not provided
+
+    EmiCalculatorResponse:
+      type: object
+      properties:
+        principal:
+          type: number
+        tenureMonths:
+          type: integer
+        interestRate:
+          type: number
+        emi:
+          type: number
+        totalInterest:
+          type: number
+        totalPayment:
+          type: number
+        amortizationSchedule:
+          type: array
+          items:
+            type: object
+            properties:
+              month:
+                type: integer
+              emi:
+                type: number
+              principal:
+                type: number
+              interest:
+                type: number
+              balance:
+                type: number
+
+    # --- NOTIFICATIONS ---
+    NotificationListResponse:
+      type: object
+      properties:
+        content:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              channel:
+                type: string
+              recipient:
+                type: string
+              subject:
+                type: string
+              status:
+                type: string
+              sentAt:
+                type: string
+                format: date-time
+        page:
+          $ref: '#/components/schemas/PageInfo'
+
+    SendNotificationRequest:
+      type: object
+      required: [templateCode, channel, recipient]
+      properties:
+        templateCode:
+          type: string
+        channel:
+          type: string
+          enum: [EMAIL, SMS, PUSH, WHATSAPP]
+        recipient:
+          type: string
+        applicationId:
+          type: string
+          format: uuid
+        variables:
+          type: object
+          additionalProperties:
+            type: string

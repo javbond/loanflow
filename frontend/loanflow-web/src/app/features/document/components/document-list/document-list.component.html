@@ -1,0 +1,206 @@
+<div class="document-list-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>
+        @if (applicationId) {
+          Documents for Application
+        } @else {
+          All Documents
+        }
+      </mat-card-title>
+      <mat-card-subtitle>
+        Manage loan application documents
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="filters">
+          <!-- Status Filter -->
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Filter by Status</mat-label>
+            <mat-select [(ngModel)]="selectedStatus" (selectionChange)="onStatusFilterChange()">
+              <mat-option value="">All Statuses</mat-option>
+              @for (status of statuses; track status.value) {
+                <mat-option [value]="status.value">
+                  <mat-icon>{{ status.icon }}</mat-icon>
+                  {{ status.label }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Category Filter -->
+          <mat-form-field appearance="outline" class="filter-field">
+            <mat-label>Filter by Category</mat-label>
+            <mat-select [(ngModel)]="selectedCategory" (selectionChange)="onCategoryFilterChange()">
+              <mat-option value="">All Categories</mat-option>
+              @for (category of categories; track category.value) {
+                <mat-option [value]="category.value">{{ category.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          @if (selectedStatus || selectedCategory) {
+            <button mat-button color="primary" (click)="clearFilters()">
+              <mat-icon>clear</mat-icon>
+              Clear Filters
+            </button>
+          }
+        </div>
+
+        <button mat-raised-button color="primary" (click)="uploadDocument()">
+          <mat-icon>cloud_upload</mat-icon>
+          Upload Document
+        </button>
+      </div>
+
+      <!-- Loading Spinner -->
+      @if (loading) {
+        <div class="loading-container">
+          <mat-spinner diameter="50"></mat-spinner>
+        </div>
+      } @else if (documents.length === 0) {
+        <!-- Empty State -->
+        <div class="empty-state">
+          <mat-icon>folder_open</mat-icon>
+          <h3>No Documents Found</h3>
+          <p>
+            @if (selectedStatus || selectedCategory) {
+              No documents match your filter criteria.
+            } @else {
+              No documents have been uploaded yet.
+            }
+          </p>
+          <button mat-raised-button color="primary" (click)="uploadDocument()">
+            <mat-icon>cloud_upload</mat-icon>
+            Upload First Document
+          </button>
+        </div>
+      } @else {
+        <!-- Documents Table -->
+        <div class="table-container">
+          <table mat-table [dataSource]="documents">
+            <!-- Document Number Column -->
+            <ng-container matColumnDef="documentNumber">
+              <th mat-header-cell *matHeaderCellDef>Document #</th>
+              <td mat-cell *matCellDef="let doc">
+                <a class="doc-link" (click)="viewDocument(doc)">{{ doc.documentNumber }}</a>
+              </td>
+            </ng-container>
+
+            <!-- Document Type Column -->
+            <ng-container matColumnDef="documentType">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <td mat-cell *matCellDef="let doc">
+                <div class="type-cell">
+                  <span class="type-label">{{ getDocumentTypeLabel(doc.documentType) }}</span>
+                  <span class="category-badge">{{ doc.category }}</span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- File Name Column -->
+            <ng-container matColumnDef="fileName">
+              <th mat-header-cell *matHeaderCellDef>File Name</th>
+              <td mat-cell *matCellDef="let doc">
+                <div class="file-cell">
+                  <mat-icon class="file-icon">
+                    @switch (doc.contentType) {
+                      @case ('application/pdf') { picture_as_pdf }
+                      @case ('image/jpeg') { image }
+                      @case ('image/png') { image }
+                      @default { insert_drive_file }
+                    }
+                  </mat-icon>
+                  <span class="file-name" [matTooltip]="doc.originalFileName">
+                    {{ doc.originalFileName }}
+                  </span>
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- File Size Column -->
+            <ng-container matColumnDef="fileSize">
+              <th mat-header-cell *matHeaderCellDef>Size</th>
+              <td mat-cell *matCellDef="let doc">{{ doc.formattedFileSize }}</td>
+            </ng-container>
+
+            <!-- Status Column -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let doc">
+                <div class="status-cell">
+                  <mat-chip [ngClass]="getStatusChipClass(doc.status)">
+                    <mat-icon>{{ getStatusInfo(doc.status)?.icon }}</mat-icon>
+                    {{ getStatusInfo(doc.status)?.label }}
+                  </mat-chip>
+                  @if (isExpiringSoon(doc) && !isExpired(doc)) {
+                    <mat-icon class="warning-icon" matTooltip="Expiring soon!">warning</mat-icon>
+                  }
+                  @if (isExpired(doc)) {
+                    <mat-icon class="error-icon" matTooltip="Document expired">error</mat-icon>
+                  }
+                </div>
+              </td>
+            </ng-container>
+
+            <!-- Uploaded At Column -->
+            <ng-container matColumnDef="uploadedAt">
+              <th mat-header-cell *matHeaderCellDef>Uploaded</th>
+              <td mat-cell *matCellDef="let doc">
+                {{ doc.uploadedAt | date:'medium' }}
+              </td>
+            </ng-container>
+
+            <!-- Actions Column -->
+            <ng-container matColumnDef="actions">
+              <th mat-header-cell *matHeaderCellDef>Actions</th>
+              <td mat-cell *matCellDef="let doc">
+                <button mat-icon-button [matMenuTriggerFor]="menu" matTooltip="More actions">
+                  <mat-icon>more_vert</mat-icon>
+                </button>
+                <mat-menu #menu="matMenu">
+                  <button mat-menu-item (click)="viewDocument(doc)">
+                    <mat-icon>visibility</mat-icon>
+                    <span>View Details</span>
+                  </button>
+                  <button mat-menu-item (click)="downloadDocument(doc)">
+                    <mat-icon>download</mat-icon>
+                    <span>Download</span>
+                  </button>
+                  @if (canVerify(doc)) {
+                    <button mat-menu-item [routerLink]="['/documents', doc.id]" [queryParams]="{action: 'verify'}">
+                      <mat-icon>verified</mat-icon>
+                      <span>Verify</span>
+                    </button>
+                  }
+                  <mat-divider></mat-divider>
+                  <button mat-menu-item (click)="deleteDocument(doc)" class="delete-action">
+                    <mat-icon color="warn">delete</mat-icon>
+                    <span>Delete</span>
+                  </button>
+                </mat-menu>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                (click)="viewDocument(row)" class="clickable-row"></tr>
+          </table>
+        </div>
+
+        <!-- Paginator -->
+        <mat-paginator
+          [length]="totalElements"
+          [pageSize]="pageSize"
+          [pageIndex]="pageIndex"
+          [pageSizeOptions]="pageSizeOptions"
+          (page)="onPageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

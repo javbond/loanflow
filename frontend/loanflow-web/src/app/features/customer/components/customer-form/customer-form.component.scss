@@ -1,0 +1,79 @@
+.customer-form-container {
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #1976d2;
+    margin: 24px 0 16px 0;
+    font-size: 18px;
+
+    mat-icon {
+      color: #1976d2;
+    }
+  }
+
+  .form-row {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 8px;
+
+    mat-form-field {
+      flex: 1;
+    }
+
+    .full-width {
+      flex: 1 1 100%;
+    }
+  }
+
+  mat-divider {
+    margin: 24px 0;
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 16px;
+    margin-top: 32px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    mat-spinner {
+      margin-right: 8px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .customer-form-container {
+    .form-row {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+}

@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
+                  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
+                  xmlns:flowable="http://flowable.org/bpmn"
+                  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
+                  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
+                  id="Definitions_LoanOrigination"
+                  targetNamespace="http://loanflow.com/bpmn">
+
+  <!-- ================================================================== -->
+  <!-- MAIN LOAN ORIGINATION PROCESS -->
+  <!-- ================================================================== -->
+  <bpmn:process id="loan-origination-process" name="Loan Origination Process" isExecutable="true">
+
+    <!-- START EVENT -->
+    <bpmn:startEvent id="start" name="Application Submitted">
+      <bpmn:outgoing>flow_to_document_verification</bpmn:outgoing>
+    </bpmn:startEvent>
+
+    <!-- ================================================================== -->
+    <!-- STAGE 1: DOCUMENT VERIFICATION -->
+    <!-- ================================================================== -->
+    <bpmn:subProcess id="subprocess_document_verification" name="Document Verification">
+      <bpmn:incoming>flow_to_document_verification</bpmn:incoming>
+      <bpmn:outgoing>flow_to_kyc</bpmn:outgoing>
+
+      <bpmn:startEvent id="doc_start"/>
+
+      <!-- Check Document Completeness -->
+      <bpmn:serviceTask id="task_check_documents" name="Check Document Completeness"
+                        flowable:delegateExpression="${documentCheckDelegate}">
+        <bpmn:extensionElements>
+          <flowable:field name="applicationId">
+            <flowable:expression>${applicationId}</flowable:expression>
+          </flowable:field>
+        </bpmn:extensionElements>
+      </bpmn:serviceTask>
+
+      <!-- Gateway: Documents Complete? -->
+      <bpmn:exclusiveGateway id="gw_docs_complete" name="Documents Complete?"/>
+
+      <!-- Wait for Documents -->
+      <bpmn:userTask id="task_collect_documents" name="Collect Pending Documents"
+                     flowable:candidateGroups="LOAN_OFFICER">
+        <bpmn:extensionElements>
+          <flowable:taskListener event="create" delegateExpression="${notifyDocumentsPendingListener}"/>
+        </bpmn:extensionElements>
+      </bpmn:userTask>
+
+      <!-- OCR Processing -->
+      <bpmn:serviceTask id="task_ocr_extraction" name="OCR Document Extraction"
+                        flowable:delegateExpression="${ocrExtractionDelegate}"/>
+
+      <!-- Manual Document Verification -->
+      <bpmn:userTask id="task_verify_documents" name="Verify Documents"
+                     flowable:candidateGroups="DOCUMENT_VERIFIER"
+                     flowable:dueDate="${dueDateCalculator.calculate(execution, 'P1D')}">
+        <bpmn:extensionElements>
+          <flowable:formProperty id="verificationStatus" type="enum" required="true">
+            <flowable:value id="VERIFIED" name="Verified"/>
+            <flowable:value id="REJECTED" name="Rejected"/>
+          </flowable:formProperty>
+          <flowable:formProperty id="remarks" type="string"/>
+        </bpmn:extensionElements>
+      </bpmn:userTask>
+
+      <!-- Gateway: Docs Verified? -->
+      <bpmn:exclusiveGateway id="gw_docs_verified"/>
+
+      <bpmn:endEvent id="doc_end"/>
+
+      <!-- Flows -->
+      <bpmn:sequenceFlow id="f1" sourceRef="doc_start" targetRef="task_check_documents"/>
+      <bpmn:sequenceFlow id="f2" sourceRef="task_check_documents" targetRef="gw_docs_complete"/>
+      <bpmn:sequenceFlow id="f3" sourceRef="gw_docs_complete" targetRef="task_collect_documents">
+        <bpmn:conditionExpression>${!documentsComplete}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="f4" sourceRef="gw_docs_complete" targetRef="task_ocr_extraction">
+        <bpmn:conditionExpression>${documentsComplete}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="f5" sourceRef="task_collect_documents" targetRef="task_check_documents"/>
+      <bpmn:sequenceFlow id="f6" sourceRef="task_ocr_extraction" targetRef="task_verify_documents"/>
+      <bpmn:sequenceFlow id="f7" sourceRef="task_verify_documents" targetRef="gw_docs_verified"/>
+      <bpmn:sequenceFlow id="f8" sourceRef="gw_docs_verified" targetRef="doc_end">
+        <bpmn:conditionExpression>${verificationStatus == 'VERIFIED'}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+      <bpmn:sequenceFlow id="f9" sourceRef="gw_docs_verified" targetRef="task_collect_documents">
+        <bpmn:conditionExpression>${verificationStatus == 'REJECTED'}</bpmn:conditionExpression>
+      </bpmn:sequenceFlow>
+    </bpmn:subProcess>
+
+    <!-- ================================================================== -->
+    <!-- STAGE 2: KYC VERIFICATION (PARALLEL) -->
+    <!-- ================================================================== -->
+    <bpmn:parallelGateway id="gw_kyc_fork" name="KYC Checks Fork"/>
+
+    <!-- e-KYC Aadhaar -->
+    <bpmn:serviceTask id="task_ekyc_aadhaar" name="e-KYC Aadhaar Verification"
+                      flowable:delegateExpression="${aadhaarEkycDelegate}"
+                      flowable:async="true">
+      <bpmn:extensionElements>
+        <flowable:failedJobRetryTimeCycle>R3/PT5M</flowable:failedJobRetryTimeCycle>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+
+    <!-- PAN Verification -->
+    <bpmn:serviceTask id="task_pan_verification" name="PAN Verification"
+                      flowable:delegateExpression="${panVerificationDelegate}"
+                      flowable:async="true"/>
+
+    <!-- CKYC Lookup -->
+    <bpmn:serviceTask id="task_ckyc_lookup" name="CKYC Lookup"
+                      flowable:delegateExpression="${ckycLookupDelegate}"
+                      flowable:async="true"/>
+
+    <bpmn:parallelGateway id="gw_kyc_join" name="KYC Checks Join"/>
+
+    <!-- Gateway: KYC Passed? -->
+    <bpmn:exclusiveGateway id="gw_kyc_result"/>
+
+    <!-- KYC Failed - Manual Review -->
+    <bpmn:userTask id="task_kyc_manual_review" name="KYC Manual Review"
+                   flowable:candidateGroups="COMPLIANCE_OFFICER"/>
+
+    <!-- ================================================================== -->
+    <!-- STAGE 3: CREDIT BUREAU CHECK -->
+    <!-- ================================================================== -->
+    <bpmn:serviceTask id="task_credit_bureau" name="Fetch Credit Bureau Report"
+                      flowable:delegateExpression="${creditBureauDelegate}"
+                      flowable:async="true">
+      <bpmn:extensionElements>
+        <flowable:field name="bureau">
+          <flowable:string>CIBIL</flowable:string>
+        </flowable:field>
+        <flowable:failedJobRetryTimeCycle>R3/PT10M</flowable:failedJobRetryTimeCycle>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+
+    <!-- Gateway: Credit Score Check -->
+    <bpmn:exclusiveGateway id="gw_credit_score"/>
+
+    <!-- Auto-Reject for very low score -->
+    <bpmn:serviceTask id="task_auto_reject" name="Auto Reject Application"
+                      flowable:delegateExpression="${autoRejectDelegate}"/>
+
+    <!-- ================================================================== -->
+    <!-- STAGE 4: POLICY EVALUATION -->
+    <!-- ================================================================== -->
+    <bpmn:serviceTask id="task_policy_evaluation" name="Evaluate Policies"
+                      flowable:delegateExpression="${policyEvaluationDelegate}">
+      <bpmn:documentation>
+        Evaluates dynamic policies from MongoDB and Drools rules
+      </bpmn:documentation>
+    </bpmn:serviceTask>
+
+    <!-- Gateway: Policy Result -->
+    <bpmn:exclusiveGateway id="gw_policy_result"/>
+
+    <!-- ================================================================== -->
+    <!-- STAGE 5: UNDERWRITING -->
+    <!-- ================================================================== -->
+    <bpmn:userTask id="task_underwriting" name="Underwriting Review"
+                   flowable:candidateGroups="UNDERWRITER"
+                   flowable:dueDate="${dueDateCalculator.calculate(execution, 'P2D')}">
+      <bpmn:extensionElements>
+        <flowable:taskListener event="assignment" delegateExpression="${underwritingAssignmentListener}"/>
+        <flowable:formProperty id="decision" type="enum" required="true">
+          <flowable:value id="APPROVE" name="Approve"/>
+          <flowable:value id="REJECT" name="Reject"/>
+          <flowable:value id="REFER" name="Refer to Senior"/>
+        </flowable:formProperty>
+        <flowable:formProperty id="approvedAmount" type="long"/>
+        <flowable:formProperty id="interestRate" type="double"/>
+        <flowable:formProperty id="remarks" type="string"/>
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+
+    <!-- Gateway: Underwriting Decision -->
+    <bpmn:exclusiveGateway id="gw_underwriting_decision"/>
+
+    <!-- Refer to Senior -->
+    <bpmn:userTask id="task_senior_underwriting" name="Senior Underwriter Review"
+                   flowable:candidateGroups="SENIOR_UNDERWRITER"/>
+
+    <!-- ================================================================== -->
+    <!-- STAGE 6: APPROVAL MATRIX -->
+    <!-- ================================================================== -->
+    <bpmn:serviceTask id="task_determine_approver" name="Determine Approval Authority"
+                      flowable:delegateExpression="${approvalMatrixDelegate}"/>
+
+    <bpmn:exclusiveGateway id="gw_approval_level"/>
+
+    <!-- Branch Manager Approval -->
+    <bpmn:userTask id="task_branch_manager_approval" name="Branch Manager Approval"
+                   flowable:candidateGroups="BRANCH_MANAGER"/>
+
+    <!-- Regional Manager Approval -->
+    <bpmn:userTask id="task_regional_manager_approval" name="Regional Manager Approval"
+                   flowable:candidateGroups="REGIONAL_MANAGER"/>
+
+    <!-- Zonal Manager Approval -->
+    <bpmn:userTask id="task_zonal_approval" name="Zonal Manager Approval"
+                   flowable:candidateGroups="ZONAL_MANAGER"/>
+
+    <bpmn:exclusiveGateway id="gw_approval_decision"/>
+
+    <!-- ================================================================== -->
+    <!-- STAGE 7: OFFER GENERATION -->
+    <!-- ================================================================== -->
+    <bpmn:serviceTask id="task_generate_offer" name="Generate Loan Offer"
+                      flowable:delegateExpression="${loanOfferGeneratorDelegate}"/>
+
+    <!-- Customer Accepts Offer -->
+    <bpmn:userTask id="task_offer_acceptance" name="Offer Acceptance"
+                   flowable:assignee="${applicantUserId}"
+                   flowable:dueDate="${dueDateCalculator.calculate(execution, 'P7D')}">
+      <bpmn:extensionElements>
+        <flowable:taskListener event="create" delegateExpression="${sendOfferNotificationListener}"/>
+      </bpmn:extensionElements>
+    </bpmn:userTask>
+
+    <bpmn:exclusiveGateway id="gw_offer_accepted"/>
+
+    <!-- Offer Expired -->
+    <bpmn:boundaryEvent id="boundary_offer_timeout" attachedToRef="task_offer_acceptance" cancelActivity="true">
+      <bpmn:timerEventDefinition>
+        <bpmn:timeDuration>P7D</bpmn:timeDuration>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+
+    <!-- ================================================================== -->
+    <!-- STAGE 8: PRE-DISBURSEMENT -->
+    <!-- ================================================================== -->
+    <bpmn:subProcess id="subprocess_pre_disbursement" name="Pre-Disbursement Checks">
+      <bpmn:startEvent id="predisb_start"/>
+
+      <!-- CERSAI Registration -->
+      <bpmn:serviceTask id="task_cersai_registration" name="CERSAI Registration"
+                        flowable:delegateExpression="${cersaiRegistrationDelegate}">
+        <bpmn:extensionElements>
+          <flowable:executionListener event="end" delegateExpression="${cersaiResponseListener}"/>
+        </bpmn:extensionElements>
+      </bpmn:serviceTask>
+
+      <!-- Legal Verification (for secured loans) -->
+      <bpmn:userTask id="task_legal_verification" name="Legal Verification"
+                     flowable:candidateGroups="LEGAL_TEAM"/>
+
+      <!-- Insurance -->
+      <bpmn:serviceTask id="task_insurance" name="Process Insurance"
+                        flowable:delegateExpression="${insuranceDelegate}"/>
+
+      <bpmn:endEvent id="predisb_end"/>
+    </bpmn:subProcess>
+
+    <!-- ================================================================== -->
+    <!-- STAGE 9: DISBURSEMENT -->
+    <!-- ================================================================== -->
+    <bpmn:serviceTask id="task_disbursement" name="Disburse Loan"
+                      flowable:delegateExpression="${disbursementDelegate}">
+      <bpmn:extensionElements>
+        <flowable:field name="accountNumber">
+          <flowable:expression>${disbursementAccountNumber}</flowable:expression>
+        </flowable:field>
+      </bpmn:extensionElements>
+    </bpmn:serviceTask>
+
+    <!-- Send Welcome Kit -->
+    <bpmn:serviceTask id="task_welcome_kit" name="Send Welcome Kit"
+                      flowable:delegateExpression="${welcomeKitDelegate}"/>
+
+    <!-- ================================================================== -->
+    <!-- END EVENTS -->
+    <!-- ================================================================== -->
+    <bpmn:endEvent id="end_disbursed" name="Loan Disbursed">
+      <bpmn:extensionElements>
+        <flowable:executionListener event="end" delegateExpression="${loanDisbursedEventPublisher}"/>
+      </bpmn:extensionElements>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="end_rejected" name="Application Rejected">
+      <bpmn:extensionElements>
+        <flowable:executionListener event="end" delegateExpression="${applicationRejectedEventPublisher}"/>
+      </bpmn:extensionElements>
+    </bpmn:endEvent>
+
+    <bpmn:endEvent id="end_withdrawn" name="Application Withdrawn"/>
+
+    <bpmn:endEvent id="end_expired" name="Offer Expired"/>
+
+    <!-- ================================================================== -->
+    <!-- SEQUENCE FLOWS -->
+    <!-- ================================================================== -->
+    <bpmn:sequenceFlow id="flow_to_document_verification" sourceRef="start" targetRef="subprocess_document_verification"/>
+    <bpmn:sequenceFlow id="flow_to_kyc" sourceRef="subprocess_document_verification" targetRef="gw_kyc_fork"/>
+
+    <!-- KYC Parallel Flows -->
+    <bpmn:sequenceFlow id="flow_kyc_fork_1" sourceRef="gw_kyc_fork" targetRef="task_ekyc_aadhaar"/>
+    <bpmn:sequenceFlow id="flow_kyc_fork_2" sourceRef="gw_kyc_fork" targetRef="task_pan_verification"/>
+    <bpmn:sequenceFlow id="flow_kyc_fork_3" sourceRef="gw_kyc_fork" targetRef="task_ckyc_lookup"/>
+    <bpmn:sequenceFlow id="flow_kyc_join_1" sourceRef="task_ekyc_aadhaar" targetRef="gw_kyc_join"/>
+    <bpmn:sequenceFlow id="flow_kyc_join_2" sourceRef="task_pan_verification" targetRef="gw_kyc_join"/>
+    <bpmn:sequenceFlow id="flow_kyc_join_3" sourceRef="task_ckyc_lookup" targetRef="gw_kyc_join"/>
+    <bpmn:sequenceFlow id="flow_kyc_to_result" sourceRef="gw_kyc_join" targetRef="gw_kyc_result"/>
+    <bpmn:sequenceFlow id="flow_kyc_passed" sourceRef="gw_kyc_result" targetRef="task_credit_bureau">
+      <bpmn:conditionExpression>${kycPassed}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_kyc_failed" sourceRef="gw_kyc_result" targetRef="task_kyc_manual_review">
+      <bpmn:conditionExpression>${!kycPassed}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_kyc_manual_to_credit" sourceRef="task_kyc_manual_review" targetRef="task_credit_bureau"/>
+
+    <!-- Credit Bureau Flows -->
+    <bpmn:sequenceFlow id="flow_credit_to_gateway" sourceRef="task_credit_bureau" targetRef="gw_credit_score"/>
+    <bpmn:sequenceFlow id="flow_credit_auto_reject" sourceRef="gw_credit_score" targetRef="task_auto_reject">
+      <bpmn:conditionExpression>${creditScore &lt; 500}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_credit_to_policy" sourceRef="gw_credit_score" targetRef="task_policy_evaluation">
+      <bpmn:conditionExpression>${creditScore >= 500}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_auto_reject_end" sourceRef="task_auto_reject" targetRef="end_rejected"/>
+
+    <!-- Policy Evaluation Flows -->
+    <bpmn:sequenceFlow id="flow_policy_to_gateway" sourceRef="task_policy_evaluation" targetRef="gw_policy_result"/>
+    <bpmn:sequenceFlow id="flow_policy_to_underwriting" sourceRef="gw_policy_result" targetRef="task_underwriting">
+      <bpmn:conditionExpression>${policyResult == 'ELIGIBLE'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_policy_reject" sourceRef="gw_policy_result" targetRef="end_rejected">
+      <bpmn:conditionExpression>${policyResult == 'INELIGIBLE'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <!-- Underwriting Flows -->
+    <bpmn:sequenceFlow id="flow_underwriting_to_gateway" sourceRef="task_underwriting" targetRef="gw_underwriting_decision"/>
+    <bpmn:sequenceFlow id="flow_uw_approve" sourceRef="gw_underwriting_decision" targetRef="task_determine_approver">
+      <bpmn:conditionExpression>${decision == 'APPROVE'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_uw_reject" sourceRef="gw_underwriting_decision" targetRef="end_rejected">
+      <bpmn:conditionExpression>${decision == 'REJECT'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_uw_refer" sourceRef="gw_underwriting_decision" targetRef="task_senior_underwriting">
+      <bpmn:conditionExpression>${decision == 'REFER'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_senior_to_approval" sourceRef="task_senior_underwriting" targetRef="task_determine_approver"/>
+
+    <!-- Approval Matrix Flows -->
+    <bpmn:sequenceFlow id="flow_determine_to_level" sourceRef="task_determine_approver" targetRef="gw_approval_level"/>
+    <bpmn:sequenceFlow id="flow_branch_approval" sourceRef="gw_approval_level" targetRef="task_branch_manager_approval">
+      <bpmn:conditionExpression>${approvalLevel == 'BRANCH'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_regional_approval" sourceRef="gw_approval_level" targetRef="task_regional_manager_approval">
+      <bpmn:conditionExpression>${approvalLevel == 'REGIONAL'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_zonal_approval" sourceRef="gw_approval_level" targetRef="task_zonal_approval">
+      <bpmn:conditionExpression>${approvalLevel == 'ZONAL'}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_branch_to_decision" sourceRef="task_branch_manager_approval" targetRef="gw_approval_decision"/>
+    <bpmn:sequenceFlow id="flow_regional_to_decision" sourceRef="task_regional_manager_approval" targetRef="gw_approval_decision"/>
+    <bpmn:sequenceFlow id="flow_zonal_to_decision" sourceRef="task_zonal_approval" targetRef="gw_approval_decision"/>
+    <bpmn:sequenceFlow id="flow_approval_yes" sourceRef="gw_approval_decision" targetRef="task_generate_offer">
+      <bpmn:conditionExpression>${approved}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_approval_no" sourceRef="gw_approval_decision" targetRef="end_rejected">
+      <bpmn:conditionExpression>${!approved}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+
+    <!-- Offer Flows -->
+    <bpmn:sequenceFlow id="flow_offer_to_acceptance" sourceRef="task_generate_offer" targetRef="task_offer_acceptance"/>
+    <bpmn:sequenceFlow id="flow_acceptance_to_gateway" sourceRef="task_offer_acceptance" targetRef="gw_offer_accepted"/>
+    <bpmn:sequenceFlow id="flow_offer_accepted" sourceRef="gw_offer_accepted" targetRef="subprocess_pre_disbursement">
+      <bpmn:conditionExpression>${offerAccepted}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_offer_declined" sourceRef="gw_offer_accepted" targetRef="end_withdrawn">
+      <bpmn:conditionExpression>${!offerAccepted}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="flow_offer_timeout" sourceRef="boundary_offer_timeout" targetRef="end_expired"/>
+
+    <!-- Pre-Disbursement to Disbursement -->
+    <bpmn:sequenceFlow id="flow_predisb_to_disb" sourceRef="subprocess_pre_disbursement" targetRef="task_disbursement"/>
+
+    <!-- Disbursement Flows -->
+    <bpmn:sequenceFlow id="flow_disb_to_welcome" sourceRef="task_disbursement" targetRef="task_welcome_kit"/>
+    <bpmn:sequenceFlow id="flow_welcome_to_end" sourceRef="task_welcome_kit" targetRef="end_disbursed"/>
+
+  </bpmn:process>
+
+  <!-- ================================================================== -->
+  <!-- SIGNAL DEFINITIONS -->
+  <!-- ================================================================== -->
+  <bpmn:signal id="signal_application_withdrawn" name="ApplicationWithdrawn"/>
+  <bpmn:signal id="signal_document_uploaded" name="DocumentUploaded"/>
+
+  <!-- ================================================================== -->
+  <!-- MESSAGE DEFINITIONS -->
+  <!-- ================================================================== -->
+  <bpmn:message id="msg_kyc_response" name="KYCResponseReceived"/>
+  <bpmn:message id="msg_credit_response" name="CreditReportReceived"/>
+  <bpmn:message id="msg_cersai_response" name="CERSAIResponseReceived"/>
+
+</bpmn:definitions>

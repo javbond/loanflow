@@ -1,0 +1,196 @@
+<div class="upload-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Upload Document</mat-card-title>
+      <mat-card-subtitle>Upload documents for loan application</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="uploadForm" (ngSubmit)="onSubmit()">
+        <!-- Loan Application Search -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Search Loan Application</mat-label>
+            <input matInput
+                   [formControl]="loanSearchControl"
+                   [matAutocomplete]="loanAuto"
+                   placeholder="Type loan number (e.g., LN-2026-...)">
+            @if (isSearchingLoans) {
+              <mat-icon matSuffix class="spin">sync</mat-icon>
+            } @else if (selectedLoan) {
+              <mat-icon matSuffix color="primary">check_circle</mat-icon>
+            } @else {
+              <mat-icon matSuffix>search</mat-icon>
+            }
+            @if (uploadForm.get('applicationId')?.hasError('required') && uploadForm.get('applicationId')?.touched) {
+              <mat-error>Please select a loan application</mat-error>
+            }
+            <mat-hint>Search by loan number to select an application</mat-hint>
+          </mat-form-field>
+          <mat-autocomplete #loanAuto="matAutocomplete"
+                            [displayWith]="displayLoanFn"
+                            (optionSelected)="onLoanSelected($event.option.value)">
+            @for (loan of loanSearchResults; track loan.id) {
+              <mat-option [value]="loan">
+                <div class="loan-option">
+                  <span class="loan-number">{{ loan.applicationNumber }}</span>
+                  <span class="loan-details">{{ loan.customerName }} • ₹{{ loan.requestedAmount | number }}</span>
+                </div>
+              </mat-option>
+            }
+            @if (loanSearchResults.length === 0 && loanSearchControl.value && !isSearchingLoans) {
+              <mat-option disabled>No loans found</mat-option>
+            }
+          </mat-autocomplete>
+        </div>
+
+        <!-- Selected Loan Display -->
+        @if (selectedLoan) {
+          <div class="selected-loan-card">
+            <div class="loan-info">
+              <mat-icon>assignment</mat-icon>
+              <div class="loan-details-block">
+                <strong>{{ selectedLoan.applicationNumber }}</strong>
+                <span>{{ selectedLoan.customerName }} • {{ selectedLoan.loanType }} • ₹{{ selectedLoan.requestedAmount | number }}</span>
+              </div>
+            </div>
+            <button mat-icon-button type="button" (click)="clearLoanSelection()" matTooltip="Clear selection">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        }
+
+        <!-- Hidden Application ID field -->
+        <input type="hidden" formControlName="applicationId">
+        <input type="hidden" formControlName="customerId">
+
+        <!-- Category Selection -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Document Category</mat-label>
+            <mat-select formControlName="category">
+              @for (category of categories; track category.value) {
+                <mat-option [value]="category.value">
+                  {{ category.label }}
+                  @if (category.mandatory) {
+                    <span class="mandatory-badge">Required</span>
+                  }
+                </mat-option>
+              }
+            </mat-select>
+            <mat-icon matSuffix>folder</mat-icon>
+            @if (uploadForm.get('category')?.hasError('required') && uploadForm.get('category')?.touched) {
+              <mat-error>Category is required</mat-error>
+            }
+          </mat-form-field>
+        </div>
+
+        <!-- Document Type Selection -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Document Type</mat-label>
+            <mat-select formControlName="documentType" [disabled]="!uploadForm.get('category')?.value">
+              @for (type of filteredDocumentTypes; track type.value) {
+                <mat-option [value]="type.value">
+                  {{ type.label }}
+                  @if (type.expiryMonths) {
+                    <span class="expiry-note">(Valid for {{ type.expiryMonths }} months)</span>
+                  }
+                </mat-option>
+              }
+            </mat-select>
+            <mat-icon matSuffix>description</mat-icon>
+            @if (uploadForm.get('documentType')?.hasError('required') && uploadForm.get('documentType')?.touched) {
+              <mat-error>Document type is required</mat-error>
+            }
+            @if (!uploadForm.get('category')?.value) {
+              <mat-hint>Select a category first</mat-hint>
+            }
+          </mat-form-field>
+        </div>
+
+        <!-- Description (Optional) -->
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description (Optional)</mat-label>
+            <textarea matInput formControlName="description"
+                      rows="2" placeholder="Add notes about this document"></textarea>
+            <mat-icon matSuffix>notes</mat-icon>
+          </mat-form-field>
+        </div>
+
+        <mat-divider></mat-divider>
+
+        <!-- File Drop Zone -->
+        <div class="file-upload-section">
+          <h3>Select File</h3>
+
+          @if (!selectedFile) {
+            <div class="drop-zone"
+                 [class.drag-over]="isDragOver"
+                 (dragover)="onDragOver($event)"
+                 (dragleave)="onDragLeave($event)"
+                 (drop)="onDrop($event)"
+                 (click)="fileInput.click()">
+              <mat-icon class="upload-icon">cloud_upload</mat-icon>
+              <p class="drop-text">Drag & drop your file here</p>
+              <p class="drop-subtext">or click to browse</p>
+              <div class="file-constraints">
+                <mat-chip-set>
+                  <mat-chip>Max {{ maxFileSizeDisplay }}</mat-chip>
+                  @for (ext of allowedExtensions; track ext) {
+                    <mat-chip>{{ ext }}</mat-chip>
+                  }
+                </mat-chip-set>
+              </div>
+            </div>
+            <input type="file" #fileInput hidden
+                   [accept]="allowedExtensions.join(',')"
+                   (change)="onFileSelect($event)">
+          } @else {
+            <!-- Selected File Preview -->
+            <div class="selected-file">
+              <div class="file-info">
+                <mat-icon class="file-icon">{{ getFileIcon(selectedFile) }}</mat-icon>
+                <div class="file-details">
+                  <span class="file-name">{{ selectedFile.name }}</span>
+                  <span class="file-size">{{ formatSize(selectedFile.size) }}</span>
+                </div>
+              </div>
+              <button mat-icon-button color="warn" (click)="removeFile()" [disabled]="isUploading">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+
+            <!-- Upload Progress -->
+            @if (isUploading) {
+              <div class="upload-progress">
+                <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+                <span class="progress-text">{{ uploadProgress }}%</span>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Actions -->
+        <div class="form-actions">
+          <button mat-button type="button" routerLink="/documents">
+            Cancel
+          </button>
+          @if (isUploading) {
+            <button mat-raised-button color="primary" type="button" disabled>
+              <mat-icon class="spin">sync</mat-icon>
+              Uploading...
+            </button>
+          } @else {
+            <button mat-raised-button color="primary" type="submit"
+                    [disabled]="uploadForm.invalid || !selectedFile">
+              <mat-icon>cloud_upload</mat-icon>
+              Upload Document
+            </button>
+          }
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

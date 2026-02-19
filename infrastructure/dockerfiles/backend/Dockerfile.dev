@@ -1,0 +1,12 @@
+# Development Dockerfile with hot reload
+FROM eclipse-temurin:21-jdk-alpine
+WORKDIR /app
+RUN apk add --no-cache maven
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+COPY src ./src
+
+ENV JAVA_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005 \
+    -Dspring.devtools.restart.enabled=true"
+EXPOSE 8080 5005
+CMD ["mvn", "spring-boot:run"]

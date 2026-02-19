@@ -1,0 +1,13 @@
+com/loanflow/loan/service/LoanApplicationServiceTest$CreateTests.class
+com/loanflow/loan/domain/LoanApplicationTest$ValidationTests.class
+com/loanflow/loan/domain/LoanApplicationTest$StatusTransitionTests.class
+com/loanflow/loan/domain/LoanApplicationTest.class
+com/loanflow/loan/service/LoanApplicationServiceTest$ListTests.class
+com/loanflow/loan/service/LoanApplicationServiceTest$GetTests.class
+com/loanflow/loan/domain/LoanApplicationTest$CreationTests.class
+com/loanflow/loan/domain/LoanApplicationTest$RejectionTests.class
+com/loanflow/loan/domain/LoanApplicationTest$ApprovalTests.class
+com/loanflow/loan/service/LoanApplicationServiceTest$SubmitTests.class
+com/loanflow/loan/service/LoanApplicationServiceTest.class
+com/loanflow/loan/service/LoanApplicationServiceTest$DecisionTests.class
+com/loanflow/loan/domain/LoanApplicationTest$EmiCalculationTests.class

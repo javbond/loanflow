@@ -1,0 +1,156 @@
+<div class="customer-detail-container">
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div *ngIf="!loading && customer">
+    <!-- Header Card -->
+    <mat-card class="header-card">
+      <mat-card-header>
+        <div mat-card-avatar class="customer-avatar">
+          <mat-icon>person</mat-icon>
+        </div>
+        <mat-card-title>{{ customer.fullName || (customer.firstName + ' ' + customer.lastName) }}</mat-card-title>
+        <mat-card-subtitle>{{ customer.customerNumber }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="status-chips">
+          <mat-chip [color]="getStatusColor(customer.status)" selected>
+            {{ customer.status }}
+          </mat-chip>
+          <mat-chip [color]="getStatusColor(customer.kycStatus)" selected>
+            KYC: {{ customer.kycStatus }}
+          </mat-chip>
+        </div>
+      </mat-card-content>
+      <mat-card-actions align="end">
+        <button mat-button routerLink="/customers">
+          <mat-icon>arrow_back</mat-icon>
+          Back
+        </button>
+        <button mat-raised-button color="primary" [routerLink]="['/customers', customer.id, 'edit']">
+          <mat-icon>edit</mat-icon>
+          Edit
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <div class="details-grid">
+      <!-- Personal Information -->
+      <mat-card>
+        <mat-card-header>
+          <mat-icon mat-card-avatar>person</mat-icon>
+          <mat-card-title>Personal Information</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-list>
+            <mat-list-item>
+              <span matListItemTitle>Email</span>
+              <span matListItemLine>{{ customer.email }}</span>
+            </mat-list-item>
+            <mat-divider></mat-divider>
+            <mat-list-item>
+              <span matListItemTitle>Mobile</span>
+              <span matListItemLine>{{ customer.mobileNumber }}</span>
+            </mat-list-item>
+            <mat-divider></mat-divider>
+            <mat-list-item>
+              <span matListItemTitle>Date of Birth</span>
+              <span matListItemLine>{{ customer.dateOfBirth }} (Age: {{ customer.age }})</span>
+            </mat-list-item>
+            <mat-divider></mat-divider>
+            <mat-list-item>
+              <span matListItemTitle>Gender</span>
+              <span matListItemLine>{{ customer.gender }}</span>
+            </mat-list-item>
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- KYC Information -->
+      <mat-card>
+        <mat-card-header>
+          <mat-icon mat-card-avatar>verified_user</mat-icon>
+          <mat-card-title>KYC Information</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-list>
+            <mat-list-item>
+              <span matListItemTitle>PAN Number</span>
+              <span matListItemLine>
+                {{ customer.panNumber }}
+                <mat-chip *ngIf="customer.panVerified" color="primary" selected class="verified-chip">
+                  <mat-icon>check</mat-icon> Verified
+                </mat-chip>
+              </span>
+            </mat-list-item>
+            <mat-divider></mat-divider>
+            <mat-list-item>
+              <span matListItemTitle>Aadhaar Number</span>
+              <span matListItemLine>
+                {{ customer.aadhaarNumber }}
+                <mat-chip *ngIf="customer.aadhaarVerified" color="primary" selected class="verified-chip">
+                  <mat-icon>check</mat-icon> Verified
+                </mat-chip>
+              </span>
+            </mat-list-item>
+          </mat-list>
+
+          <div class="kyc-actions" *ngIf="customer.kycStatus !== 'VERIFIED'">
+            <button mat-stroked-button color="primary"
+                    *ngIf="!customer.panVerified"
+                    (click)="verifyKyc('pan')">
+              <mat-icon>verified</mat-icon>
+              Verify PAN
+            </button>
+            <button mat-stroked-button color="primary"
+                    *ngIf="!customer.aadhaarVerified"
+                    (click)="verifyKyc('aadhaar')">
+              <mat-icon>verified</mat-icon>
+              Verify Aadhaar
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Address Information -->
+      <mat-card *ngIf="customer.currentAddress">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>home</mat-icon>
+          <mat-card-title>Current Address</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="address-text">
+            {{ customer.currentAddress.addressLine1 }}<br>
+            <span *ngIf="customer.currentAddress.addressLine2">{{ customer.currentAddress.addressLine2 }}<br></span>
+            <span *ngIf="customer.currentAddress.landmark">Near {{ customer.currentAddress.landmark }}<br></span>
+            {{ customer.currentAddress.city }}, {{ customer.currentAddress.state }} - {{ customer.currentAddress.pinCode }}<br>
+            {{ customer.currentAddress.country }}
+          </p>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Timestamps -->
+      <mat-card>
+        <mat-card-header>
+          <mat-icon mat-card-avatar>schedule</mat-icon>
+          <mat-card-title>Activity</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-list>
+            <mat-list-item>
+              <span matListItemTitle>Created</span>
+              <span matListItemLine>{{ customer.createdAt | date:'medium' }}</span>
+            </mat-list-item>
+            <mat-divider></mat-divider>
+            <mat-list-item>
+              <span matListItemTitle>Last Updated</span>
+              <span matListItemLine>{{ customer.updatedAt | date:'medium' }}</span>
+            </mat-list-item>
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,15 @@
+com/loanflow/document/controller/DocumentController.class
+com/loanflow/document/domain/enums/DocumentStatus.class
+com/loanflow/document/service/DocumentService.class
+com/loanflow/document/domain/enums/DocumentType$1.class
+com/loanflow/document/repository/DocumentRepository.class
+com/loanflow/document/service/StorageService.class
+com/loanflow/document/domain/enums/DocumentCategory.class
+com/loanflow/document/mapper/DocumentMapperImpl.class
+com/loanflow/document/service/impl/DocumentServiceImpl.class
+com/loanflow/document/service/impl/MinioStorageService.class
+com/loanflow/document/domain/entity/Document.class
+com/loanflow/document/mapper/DocumentMapper.class
+com/loanflow/document/DocumentServiceApplication.class
+com/loanflow/document/domain/entity/Document$DocumentBuilder.class
+com/loanflow/document/domain/enums/DocumentType.class

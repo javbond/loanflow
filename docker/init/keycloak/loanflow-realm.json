@@ -1,0 +1,134 @@
+{
+  "id": "loanflow",
+  "realm": "loanflow",
+  "displayName": "LoanFlow",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "resetPasswordAllowed": true,
+  "bruteForceProtected": true,
+  "failureFactor": 5,
+  "accessTokenLifespan": 900,
+  "ssoSessionIdleTimeout": 1800,
+  "ssoSessionMaxLifespan": 36000,
+
+  "roles": {
+    "realm": [
+      { "name": "LOAN_OFFICER", "description": "Create and manage loan applications" },
+      { "name": "SENIOR_LOAN_OFFICER", "description": "Senior loan officer with elevated limits", "composite": true, "composites": { "realm": ["LOAN_OFFICER"] } },
+      { "name": "UNDERWRITER", "description": "Review and approve/decline loans" },
+      { "name": "SENIOR_UNDERWRITER", "description": "Senior underwriter with higher limits", "composite": true, "composites": { "realm": ["UNDERWRITER"] } },
+      { "name": "CREDIT_ANALYST", "description": "Credit analysis and risk assessment" },
+      { "name": "COMPLIANCE_OFFICER", "description": "Regulatory compliance monitoring" },
+      { "name": "BRANCH_MANAGER", "description": "Branch operations management", "composite": true, "composites": { "realm": ["LOAN_OFFICER", "UNDERWRITER"] } },
+      { "name": "ADMIN", "description": "System administrator", "composite": true, "composites": { "realm": ["BRANCH_MANAGER", "COMPLIANCE_OFFICER"] } },
+      { "name": "AUDITOR", "description": "Read-only audit access" }
+    ]
+  },
+
+  "clients": [
+    {
+      "clientId": "loanflow-backend",
+      "name": "LoanFlow Backend",
+      "enabled": true,
+      "bearerOnly": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "protocol": "openid-connect"
+    },
+    {
+      "clientId": "loanflow-web",
+      "name": "LoanFlow Web App",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "protocol": "openid-connect",
+      "rootUrl": "http://localhost:4200",
+      "redirectUris": ["http://localhost:4200/*", "http://localhost:8080/*"],
+      "webOrigins": ["http://localhost:4200", "http://localhost:8080", "+"],
+      "attributes": { "pkce.code.challenge.method": "S256" }
+    },
+    {
+      "clientId": "loanflow-swagger",
+      "name": "LoanFlow Swagger",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "protocol": "openid-connect",
+      "redirectUris": ["http://localhost:8080/*"],
+      "webOrigins": ["*"]
+    }
+  ],
+
+  "users": [
+    {
+      "username": "admin",
+      "email": "admin@loanflow.local",
+      "firstName": "System",
+      "lastName": "Admin",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "admin123", "temporary": false }],
+      "realmRoles": ["ADMIN"],
+      "attributes": { "employeeId": ["EMP001"], "branchCode": ["HQ"] }
+    },
+    {
+      "username": "loan.officer1",
+      "email": "officer1@loanflow.local",
+      "firstName": "John",
+      "lastName": "Smith",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "password123", "temporary": false }],
+      "realmRoles": ["LOAN_OFFICER"],
+      "attributes": { "employeeId": ["EMP101"], "branchCode": ["MUM001"], "approvalLimit": ["500000"] }
+    },
+    {
+      "username": "underwriter1",
+      "email": "underwriter1@loanflow.local",
+      "firstName": "Sarah",
+      "lastName": "Johnson",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "password123", "temporary": false }],
+      "realmRoles": ["UNDERWRITER"],
+      "attributes": { "employeeId": ["EMP201"], "branchCode": ["HQ"], "approvalLimit": ["2500000"] }
+    },
+    {
+      "username": "senior.underwriter1",
+      "email": "sr.underwriter@loanflow.local",
+      "firstName": "Michael",
+      "lastName": "Brown",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "password123", "temporary": false }],
+      "realmRoles": ["SENIOR_UNDERWRITER"],
+      "attributes": { "employeeId": ["EMP202"], "branchCode": ["HQ"], "approvalLimit": ["10000000"] }
+    },
+    {
+      "username": "branch.manager",
+      "email": "manager@loanflow.local",
+      "firstName": "Emily",
+      "lastName": "Davis",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "password123", "temporary": false }],
+      "realmRoles": ["BRANCH_MANAGER"],
+      "attributes": { "employeeId": ["EMP301"], "branchCode": ["MUM001"], "approvalLimit": ["5000000"] }
+    },
+    {
+      "username": "compliance1",
+      "email": "compliance@loanflow.local",
+      "firstName": "Robert",
+      "lastName": "Wilson",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "password123", "temporary": false }],
+      "realmRoles": ["COMPLIANCE_OFFICER"],
+      "attributes": { "employeeId": ["EMP401"], "branchCode": ["HQ"] }
+    }
+  ]
+}

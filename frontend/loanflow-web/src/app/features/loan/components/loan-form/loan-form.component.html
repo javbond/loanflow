@@ -1,0 +1,308 @@
+<div class="loan-form-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>{{ isEditMode ? 'Edit' : 'New' }} Loan Application</mat-card-title>
+      <mat-card-subtitle>Fill in the loan application details</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (loading) {
+        <div class="loading-container">
+          <mat-spinner diameter="50"></mat-spinner>
+        </div>
+      } @else {
+        <mat-stepper linear #stepper>
+          <!-- Step 1: Loan Details -->
+          <mat-step [stepControl]="loanForm" label="Loan Details">
+            <form [formGroup]="loanForm" class="form-section">
+              <!-- Customer Selection -->
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Search Customer</mat-label>
+                  <input matInput
+                         formControlName="customerSearch"
+                         [matAutocomplete]="customerAuto"
+                         placeholder="Search by name, PAN, or mobile">
+                  <mat-icon matSuffix>search</mat-icon>
+                  <mat-autocomplete #customerAuto="matAutocomplete" (optionSelected)="selectCustomer($event.option.value)">
+                    @for (customer of filteredCustomers; track customer.id) {
+                      <mat-option [value]="customer">
+                        {{ customer.firstName }} {{ customer.lastName }} - {{ customer.panNumber }}
+                      </mat-option>
+                    }
+                  </mat-autocomplete>
+                  @if (loanForm.get('customerId')?.hasError('required') && loanForm.get('customerId')?.touched) {
+                    <mat-error>Customer is required</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              @if (selectedCustomer) {
+                <div class="selected-customer-card">
+                  <mat-icon>person</mat-icon>
+                  <div>
+                    <strong>{{ selectedCustomer.firstName }} {{ selectedCustomer.lastName }}</strong>
+                    <span>PAN: {{ selectedCustomer.panNumber }} | Mobile: {{ selectedCustomer.mobileNumber }}</span>
+                  </div>
+                </div>
+              }
+
+              <!-- Loan Type -->
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Loan Type</mat-label>
+                  <mat-select formControlName="loanType">
+                    @for (type of loanTypes; track type.value) {
+                      <mat-option [value]="type.value">
+                        {{ type.label }} ({{ type.baseRate }}% p.a., max {{ type.maxTenureYears }} years)
+                      </mat-option>
+                    }
+                  </mat-select>
+                  @if (loanForm.get('loanType')?.hasError('required') && loanForm.get('loanType')?.touched) {
+                    <mat-error>Loan type is required</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <!-- Amount and Tenure -->
+              <div class="form-row two-cols">
+                <mat-form-field appearance="outline">
+                  <mat-label>Requested Amount (INR)</mat-label>
+                  <input matInput type="number" formControlName="requestedAmount" placeholder="500000">
+                  <mat-icon matPrefix>currency_rupee</mat-icon>
+                  @if (loanForm.get('requestedAmount')?.hasError('required')) {
+                    <mat-error>Amount is required</mat-error>
+                  }
+                  @if (loanForm.get('requestedAmount')?.hasError('min')) {
+                    <mat-error>Minimum amount is ₹10,000</mat-error>
+                  }
+                  @if (loanForm.get('requestedAmount')?.hasError('max')) {
+                    <mat-error>Maximum amount is ₹10 Crore</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Tenure (Months)</mat-label>
+                  <input matInput type="number" formControlName="tenureMonths" placeholder="36">
+                  <mat-icon matSuffix>calendar_month</mat-icon>
+                  @if (loanForm.get('tenureMonths')?.hasError('required')) {
+                    <mat-error>Tenure is required</mat-error>
+                  }
+                  @if (loanForm.get('tenureMonths')?.hasError('min')) {
+                    <mat-error>Minimum tenure is 6 months</mat-error>
+                  }
+                  @if (loanForm.get('tenureMonths')?.hasError('max')) {
+                    <mat-error>Maximum tenure is {{ selectedLoanType?.maxTenureYears }} years</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <!-- EMI Calculator -->
+              @if (calculatedEmi > 0) {
+                <div class="emi-card">
+                  <div class="emi-label">Estimated Monthly EMI</div>
+                  <div class="emi-amount">{{ formatCurrency(calculatedEmi) }}</div>
+                  <div class="emi-note">&#64; {{ selectedLoanType?.baseRate }}% p.a.</div>
+                </div>
+              }
+
+              <!-- Purpose -->
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Purpose of Loan</mat-label>
+                  <textarea matInput formControlName="purpose" rows="3"
+                            placeholder="Describe the purpose of this loan"></textarea>
+                  @if (loanForm.get('purpose')?.hasError('required')) {
+                    <mat-error>Purpose is required</mat-error>
+                  }
+                </mat-form-field>
+              </div>
+
+              <!-- Branch Code -->
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Branch Code</mat-label>
+                  <input matInput formControlName="branchCode" placeholder="MUM001">
+                </mat-form-field>
+              </div>
+
+              <div class="step-actions">
+                <button mat-raised-button color="primary" matStepperNext [disabled]="loanForm.invalid">
+                  Next <mat-icon>arrow_forward</mat-icon>
+                </button>
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- Step 2: Employment Details -->
+          <mat-step [stepControl]="employmentForm" label="Employment">
+            <form [formGroup]="employmentForm" class="form-section">
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>Employment Type</mat-label>
+                  <mat-select formControlName="employmentType">
+                    @for (type of employmentTypes; track type.value) {
+                      <mat-option [value]="type.value">{{ type.label }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              @if (employmentForm.get('employmentType')?.value === 'SALARIED') {
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Employer Name</mat-label>
+                    <input matInput formControlName="employerName" placeholder="Company name">
+                  </mat-form-field>
+                </div>
+              } @else {
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Business Name</mat-label>
+                    <input matInput formControlName="businessName" placeholder="Business/Firm name">
+                  </mat-form-field>
+                </div>
+              }
+
+              <div class="form-row two-cols">
+                <mat-form-field appearance="outline">
+                  <mat-label>Monthly Income (INR)</mat-label>
+                  <input matInput type="number" formControlName="monthlyIncome" placeholder="50000">
+                  <mat-icon matPrefix>currency_rupee</mat-icon>
+                  @if (employmentForm.get('monthlyIncome')?.hasError('required')) {
+                    <mat-error>Income is required</mat-error>
+                  }
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Years of Experience</mat-label>
+                  <input matInput type="number" formControlName="yearsOfExperience" placeholder="5">
+                </mat-form-field>
+              </div>
+
+              <div class="step-actions">
+                <button mat-button matStepperPrevious>
+                  <mat-icon>arrow_back</mat-icon> Back
+                </button>
+                <button mat-raised-button color="primary" matStepperNext [disabled]="employmentForm.invalid">
+                  Next <mat-icon>arrow_forward</mat-icon>
+                </button>
+              </div>
+            </form>
+          </mat-step>
+
+          <!-- Step 3: Property Details (for secured loans) -->
+          @if (isSecuredLoan()) {
+            <mat-step [stepControl]="propertyForm" label="Property">
+              <form [formGroup]="propertyForm" class="form-section">
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Property Type</mat-label>
+                    <mat-select formControlName="propertyType">
+                      @for (type of propertyTypes; track type.value) {
+                        <mat-option [value]="type.value">{{ type.label }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="full-width">
+                    <mat-label>Property Address</mat-label>
+                    <textarea matInput formControlName="address" rows="2"
+                              placeholder="Complete property address"></textarea>
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row three-cols">
+                  <mat-form-field appearance="outline">
+                    <mat-label>City</mat-label>
+                    <input matInput formControlName="city" placeholder="Mumbai">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>State</mat-label>
+                    <input matInput formControlName="state" placeholder="Maharashtra">
+                  </mat-form-field>
+
+                  <mat-form-field appearance="outline">
+                    <mat-label>PIN Code</mat-label>
+                    <input matInput formControlName="pinCode" placeholder="400001">
+                    @if (propertyForm.get('pinCode')?.hasError('pattern')) {
+                      <mat-error>Invalid PIN code</mat-error>
+                    }
+                  </mat-form-field>
+                </div>
+
+                <div class="form-row">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Estimated Value (INR)</mat-label>
+                    <input matInput type="number" formControlName="estimatedValue" placeholder="5000000">
+                    <mat-icon matPrefix>currency_rupee</mat-icon>
+                  </mat-form-field>
+                </div>
+
+                <div class="step-actions">
+                  <button mat-button matStepperPrevious>
+                    <mat-icon>arrow_back</mat-icon> Back
+                  </button>
+                  <button mat-raised-button color="primary" matStepperNext>
+                    Review <mat-icon>arrow_forward</mat-icon>
+                  </button>
+                </div>
+              </form>
+            </mat-step>
+          }
+
+          <!-- Final Step: Review & Submit -->
+          <mat-step label="Review">
+            <div class="review-section">
+              <h3>Review Application</h3>
+
+              <div class="review-card">
+                <h4>Loan Details</h4>
+                <div class="review-grid">
+                  <div><strong>Customer:</strong> {{ selectedCustomer?.firstName }} {{ selectedCustomer?.lastName }}</div>
+                  <div><strong>Loan Type:</strong> {{ selectedLoanType?.label }}</div>
+                  <div><strong>Amount:</strong> {{ formatCurrency(loanForm.get('requestedAmount')?.value) }}</div>
+                  <div><strong>Tenure:</strong> {{ loanForm.get('tenureMonths')?.value }} months</div>
+                  <div><strong>Interest Rate:</strong> {{ selectedLoanType?.baseRate }}% p.a.</div>
+                  <div><strong>EMI:</strong> {{ formatCurrency(calculatedEmi) }}</div>
+                </div>
+              </div>
+
+              <div class="review-card">
+                <h4>Employment Details</h4>
+                <div class="review-grid">
+                  <div><strong>Type:</strong> {{ employmentForm.get('employmentType')?.value }}</div>
+                  <div><strong>Monthly Income:</strong> {{ formatCurrency(employmentForm.get('monthlyIncome')?.value) }}</div>
+                  <div><strong>Experience:</strong> {{ employmentForm.get('yearsOfExperience')?.value }} years</div>
+                </div>
+              </div>
+
+              <div class="step-actions">
+                <button mat-button matStepperPrevious>
+                  <mat-icon>arrow_back</mat-icon> Back
+                </button>
+                <button mat-raised-button color="primary"
+                        (click)="onSubmit()"
+                        [disabled]="submitting">
+                  @if (submitting) {
+                    <mat-spinner diameter="20"></mat-spinner>
+                  } @else {
+                    <mat-icon>save</mat-icon>
+                    {{ isEditMode ? 'Update' : 'Submit' }} Application
+                  }
+                </button>
+              </div>
+            </div>
+          </mat-step>
+        </mat-stepper>
+      }
+    </mat-card-content>
+
+    <mat-card-actions align="end">
+      <button mat-button routerLink="/loans">Cancel</button>
+    </mat-card-actions>
+  </mat-card>
+</div>

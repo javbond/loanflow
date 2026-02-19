@@ -1,0 +1,104 @@
+# ============================================
+# LoanFlow - Claude Code Ignore File
+# ============================================
+# This file tells Claude Code which files/folders
+# to ignore when loading context to save tokens.
+# ============================================
+
+# ==== Build Outputs & Dependencies ====
+**/target/
+**/node_modules/
+**/dist/
+**/build/
+**/.angular/
+**/.gradle/
+
+# ==== IDE & Editor Files ====
+**/.idea/
+**/.vscode/
+**/*.iml
+**/*.ipr
+**/*.iws
+.project
+.classpath
+.settings/
+
+# ==== Logs & Temp Files ====
+**/*.log
+**/logs/
+**/*.tmp
+**/*.temp
+**/*.swp
+**/*.bak
+
+# ==== Compiled Files ====
+**/*.class
+**/*.jar
+**/*.war
+**/*.ear
+**/*.dll
+**/*.exe
+**/*.so
+**/*.dylib
+
+# ==== Generated Files ====
+**/generated/
+**/generated-sources/
+**/generated-test-sources/
+
+# ==== MapStruct Generated Implementations ====
+**/*MapperImpl.java
+
+# ==== Test Coverage & Reports ====
+**/coverage/
+**/test-results/
+**/surefire-reports/
+**/jacoco/
+**/.nyc_output/
+
+# ==== Docker & DevOps ====
+# Keep docker-compose but ignore volumes
+**/docker-volumes/
+**/pgdata/
+**/mongodb-data/
+
+# ==== Large Binary Assets ====
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.gif
+**/*.ico
+**/*.svg
+**/*.pdf
+**/*.zip
+**/*.tar.gz
+
+# ==== Lock Files ====
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ==== Environment & Secrets ====
+**/.env
+**/.env.*
+**/secrets/
+**/*.pem
+**/*.key
+
+# ==== Angular Specific ====
+**/.angular/cache/
+**/browser-esbuild/
+**/.sass-cache/
+
+# ==== Maven/Gradle Wrappers ====
+.mvn/wrapper/
+gradlew
+gradlew.bat
+
+# ==== Documentation (keep essential only) ====
+# Uncomment to ignore docs if not needed:
+# **/docs/**/*.md
+
+# ==== Git ====
+.git/
+.gitattributes

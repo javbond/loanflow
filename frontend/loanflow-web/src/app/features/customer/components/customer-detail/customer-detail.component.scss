@@ -1,0 +1,79 @@
+.customer-detail-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    padding: 60px;
+  }
+
+  .header-card {
+    margin-bottom: 24px;
+
+    .customer-avatar {
+      background-color: #1976d2;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      mat-icon {
+        color: white;
+        font-size: 24px;
+      }
+    }
+
+    .status-chips {
+      display: flex;
+      gap: 8px;
+      margin-top: 16px;
+    }
+  }
+
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 24px;
+
+    mat-card {
+      mat-card-header {
+        mat-icon[mat-card-avatar] {
+          background-color: #e3f2fd;
+          color: #1976d2;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+        }
+      }
+    }
+  }
+
+  .verified-chip {
+    font-size: 11px;
+    height: 24px;
+    margin-left: 8px;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  .kyc-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .address-text {
+    line-height: 1.8;
+    color: #333;
+  }
+}

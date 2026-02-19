@@ -1,0 +1,121 @@
+<div class="loan-list-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>Loan Applications</mat-card-title>
+      <mat-card-subtitle>Manage loan applications</mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <mat-form-field appearance="outline" class="status-filter">
+          <mat-label>Filter by Status</mat-label>
+          <mat-select [(ngModel)]="statusFilter" (selectionChange)="onStatusFilterChange()">
+            <mat-option value="">All Statuses</mat-option>
+            @for (status of loanStatuses; track status.value) {
+              <mat-option [value]="status.value">{{ status.label }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <span class="spacer"></span>
+
+        <button mat-raised-button color="primary" routerLink="/loans/new">
+          <mat-icon>add</mat-icon>
+          New Application
+        </button>
+      </div>
+
+      <!-- Loading Spinner -->
+      @if (loading) {
+        <div class="loading-container">
+          <mat-spinner diameter="50"></mat-spinner>
+        </div>
+      }
+
+      <!-- Data Table -->
+      @if (!loading) {
+        <table mat-table [dataSource]="dataSource" class="loan-table">
+          <!-- Application Number Column -->
+          <ng-container matColumnDef="applicationNumber">
+            <th mat-header-cell *matHeaderCellDef>Application #</th>
+            <td mat-cell *matCellDef="let loan">
+              <a [routerLink]="['/loans', loan.id]" class="app-number">
+                {{ loan.applicationNumber || 'N/A' }}
+              </a>
+            </td>
+          </ng-container>
+
+          <!-- Customer Name Column -->
+          <ng-container matColumnDef="customerName">
+            <th mat-header-cell *matHeaderCellDef>Customer</th>
+            <td mat-cell *matCellDef="let loan">{{ loan.customerName || '-' }}</td>
+          </ng-container>
+
+          <!-- Loan Type Column -->
+          <ng-container matColumnDef="loanType">
+            <th mat-header-cell *matHeaderCellDef>Type</th>
+            <td mat-cell *matCellDef="let loan">{{ formatLoanType(loan.loanType) }}</td>
+          </ng-container>
+
+          <!-- Requested Amount Column -->
+          <ng-container matColumnDef="requestedAmount">
+            <th mat-header-cell *matHeaderCellDef>Amount</th>
+            <td mat-cell *matCellDef="let loan">{{ formatAmount(loan.requestedAmount) }}</td>
+          </ng-container>
+
+          <!-- Status Column -->
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>Status</th>
+            <td mat-cell *matCellDef="let loan">
+              <mat-chip [color]="getStatusColor(loan.status)" selected>
+                {{ getStatusLabel(loan.status) }}
+              </mat-chip>
+            </td>
+          </ng-container>
+
+          <!-- Created Date Column -->
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef>Created</th>
+            <td mat-cell *matCellDef="let loan">{{ formatDate(loan.createdAt) }}</td>
+          </ng-container>
+
+          <!-- Actions Column -->
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef>Actions</th>
+            <td mat-cell *matCellDef="let loan">
+              <button mat-icon-button [routerLink]="['/loans', loan.id]" matTooltip="View Details">
+                <mat-icon>visibility</mat-icon>
+              </button>
+              @if (loan.status === 'DRAFT' || loan.status === 'RETURNED') {
+                <button mat-icon-button [routerLink]="['/loans', loan.id, 'edit']" matTooltip="Edit">
+                  <mat-icon>edit</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+          <!-- No Data Row -->
+          <tr class="mat-row" *matNoDataRow>
+            <td class="mat-cell no-data" [attr.colspan]="displayedColumns.length">
+              No loan applications found
+            </td>
+          </tr>
+        </table>
+
+        <!-- Paginator -->
+        <mat-paginator
+          [length]="totalElements"
+          [pageSize]="pageSize"
+          [pageIndex]="pageIndex"
+          [pageSizeOptions]="[5, 10, 25, 50]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

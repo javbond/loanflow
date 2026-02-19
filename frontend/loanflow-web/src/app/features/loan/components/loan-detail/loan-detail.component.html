@@ -1,0 +1,207 @@
+<div class="loan-detail-container">
+  @if (loading) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+  } @else if (loan) {
+    <!-- Header Card -->
+    <mat-card class="header-card">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="app-number">{{ loan.applicationNumber }}</div>
+          <div class="customer-name">{{ loan.customerName || 'Customer' }}</div>
+        </div>
+        <div class="header-right">
+          <mat-chip [color]="getStatusColor(loan.status)" selected class="status-chip">
+            {{ getStatusLabel(loan.status) }}
+          </mat-chip>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        @if (isEditable()) {
+          <button mat-raised-button [routerLink]="['/loans', loan.id, 'edit']">
+            <mat-icon>edit</mat-icon> Edit
+          </button>
+        }
+        @if (canSubmit()) {
+          <button mat-raised-button color="primary" (click)="submitApplication()" [disabled]="actionLoading">
+            <mat-icon>send</mat-icon> Submit
+          </button>
+        }
+        @if (canApprove()) {
+          <button mat-raised-button color="primary" (click)="approveApplication()" [disabled]="actionLoading">
+            <mat-icon>check_circle</mat-icon> Approve
+          </button>
+        }
+        @if (canReject()) {
+          <button mat-raised-button color="warn" (click)="rejectApplication()" [disabled]="actionLoading">
+            <mat-icon>cancel</mat-icon> Reject
+          </button>
+        }
+        <button mat-button routerLink="/loans">
+          <mat-icon>arrow_back</mat-icon> Back to List
+        </button>
+      </div>
+    </mat-card>
+
+    <!-- Details Tabs -->
+    <mat-card>
+      <mat-tab-group>
+        <!-- Loan Details Tab -->
+        <mat-tab label="Loan Details">
+          <div class="tab-content">
+            <div class="details-grid">
+              <div class="detail-item">
+                <span class="label">Loan Type</span>
+                <span class="value">{{ getLoanTypeLabel(loan.loanType) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Requested Amount</span>
+                <span class="value amount">{{ formatAmount(loan.requestedAmount) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Approved Amount</span>
+                <span class="value amount">{{ formatAmount(loan.approvedAmount) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Interest Rate</span>
+                <span class="value">{{ loan.interestRate || '-' }}% p.a.</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Tenure</span>
+                <span class="value">{{ loan.tenureMonths }} months</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">EMI Amount</span>
+                <span class="value amount">{{ formatAmount(loan.emiAmount) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Purpose</span>
+                <span class="value">{{ loan.purpose || '-' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Branch Code</span>
+                <span class="value">{{ loan.branchCode || '-' }}</span>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Credit Info Tab -->
+        <mat-tab label="Credit Info">
+          <div class="tab-content">
+            <div class="details-grid">
+              <div class="detail-item">
+                <span class="label">CIBIL Score</span>
+                <span class="value" [class.good]="(loan.cibilScore || 0) >= 750" [class.bad]="(loan.cibilScore || 0) < 650">
+                  {{ loan.cibilScore || 'Not Available' }}
+                </span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Risk Category</span>
+                <span class="value">{{ loan.riskCategory || '-' }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Processing Fee</span>
+                <span class="value">{{ formatAmount(loan.processingFee) }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="label">Expected Disbursement</span>
+                <span class="value">{{ loan.expectedDisbursementDate || '-' }}</span>
+              </div>
+            </div>
+          </div>
+        </mat-tab>
+
+        <!-- Timeline Tab -->
+        <mat-tab label="Timeline">
+          <div class="tab-content">
+            <mat-list>
+              <mat-list-item>
+                <mat-icon matListItemIcon>add_circle</mat-icon>
+                <div matListItemTitle>Application Created</div>
+                <div matListItemLine>{{ formatDate(loan.createdAt) }}</div>
+              </mat-list-item>
+
+              @if (loan.submittedAt) {
+                <mat-divider></mat-divider>
+                <mat-list-item>
+                  <mat-icon matListItemIcon>send</mat-icon>
+                  <div matListItemTitle>Submitted</div>
+                  <div matListItemLine>{{ formatDate(loan.submittedAt) }}</div>
+                </mat-list-item>
+              }
+
+              @if (loan.updatedAt && loan.updatedAt !== loan.createdAt) {
+                <mat-divider></mat-divider>
+                <mat-list-item>
+                  <mat-icon matListItemIcon>update</mat-icon>
+                  <div matListItemTitle>Last Updated</div>
+                  <div matListItemLine>{{ formatDate(loan.updatedAt) }}</div>
+                </mat-list-item>
+              }
+            </mat-list>
+
+            @if (loan.workflowHistory && loan.workflowHistory.length > 0) {
+              <h4>Workflow History</h4>
+              <mat-list>
+                @for (history of loan.workflowHistory; track history.timestamp) {
+                  <mat-list-item>
+                    <mat-icon matListItemIcon>history</mat-icon>
+                    <div matListItemTitle>{{ history.fromStage }} → {{ history.toStage }}</div>
+                    <div matListItemLine>{{ history.action }} by {{ history.performedBy }} - {{ formatDate(history.timestamp) }}</div>
+                  </mat-list-item>
+                  <mat-divider></mat-divider>
+                }
+              </mat-list>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Documents Tab -->
+        <mat-tab label="Documents">
+          <div class="tab-content">
+            @if (loan.documents && loan.documents.length > 0) {
+              <mat-list>
+                @for (doc of loan.documents; track doc.documentId) {
+                  <mat-list-item>
+                    <mat-icon matListItemIcon>description</mat-icon>
+                    <div matListItemTitle>{{ doc.fileName }}</div>
+                    <div matListItemLine>{{ doc.documentType }} - {{ doc.status }}</div>
+                  </mat-list-item>
+                  <mat-divider></mat-divider>
+                }
+              </mat-list>
+            } @else {
+              <div class="no-data">
+                <mat-icon>folder_open</mat-icon>
+                <p>No documents uploaded yet</p>
+                <button mat-raised-button color="primary" routerLink="/documents">
+                  Upload Documents
+                </button>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Actions Tab -->
+        <mat-tab label="Actions">
+          <div class="tab-content">
+            <h4>Available Status Transitions</h4>
+            <div class="action-buttons">
+              @for (status of getNextStatuses(); track status) {
+                <button mat-stroked-button (click)="transitionStatus(status)" [disabled]="actionLoading">
+                  {{ getStatusLabel(status) }}
+                </button>
+              }
+              @if (getNextStatuses().length === 0) {
+                <p class="no-actions">No actions available for current status</p>
+              }
+            </div>
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card>
+  }
+</div>

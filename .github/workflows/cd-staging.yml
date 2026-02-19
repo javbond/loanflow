@@ -1,0 +1,38 @@
+name: CD - Staging
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://staging.loanflow.example.com
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure Kubernetes
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_STAGING }}" | base64 -d > ~/.kube/config
+
+      - name: Deploy to Staging
+        run: |
+          kubectl apply -f k8s/staging/ -n loanflow-staging
+          kubectl rollout status deployment -n loanflow-staging --timeout=300s
+
+  smoke-tests:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Health Check
+        run: |
+          curl -f https://staging.loanflow.example.com/api/health || exit 1

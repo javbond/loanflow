@@ -1,0 +1,122 @@
+<div class="customer-list-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>people</mat-icon>
+        Customer Management
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Search and Actions Bar -->
+      <div class="toolbar">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search customers</mat-label>
+          <input matInput [(ngModel)]="searchQuery" (keyup.enter)="onSearch()" placeholder="Name, PAN, Mobile...">
+          <button mat-icon-button matSuffix *ngIf="searchQuery" (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+          <button mat-icon-button matSuffix (click)="onSearch()">
+            <mat-icon>search</mat-icon>
+          </button>
+        </mat-form-field>
+
+        <button mat-raised-button color="primary" routerLink="/customers/new">
+          <mat-icon>add</mat-icon>
+          New Customer
+        </button>
+      </div>
+
+      <!-- Loading Spinner -->
+      <div class="loading-container" *ngIf="loading">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+
+      <!-- Customer Table -->
+      <table mat-table [dataSource]="dataSource" *ngIf="!loading" class="customer-table">
+
+        <!-- Customer Number Column -->
+        <ng-container matColumnDef="customerNumber">
+          <th mat-header-cell *matHeaderCellDef>Customer #</th>
+          <td mat-cell *matCellDef="let customer">
+            <a [routerLink]="['/customers', customer.id]" class="customer-link">
+              {{ customer.customerNumber }}
+            </a>
+          </td>
+        </ng-container>
+
+        <!-- Full Name Column -->
+        <ng-container matColumnDef="fullName">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let customer">{{ customer.fullName || (customer.firstName + ' ' + customer.lastName) }}</td>
+        </ng-container>
+
+        <!-- Email Column -->
+        <ng-container matColumnDef="email">
+          <th mat-header-cell *matHeaderCellDef>Email</th>
+          <td mat-cell *matCellDef="let customer">{{ customer.email }}</td>
+        </ng-container>
+
+        <!-- Mobile Number Column -->
+        <ng-container matColumnDef="mobileNumber">
+          <th mat-header-cell *matHeaderCellDef>Mobile</th>
+          <td mat-cell *matCellDef="let customer">{{ customer.mobileNumber }}</td>
+        </ng-container>
+
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let customer">
+            <mat-chip [color]="getStatusColor(customer.status)" selected>
+              {{ customer.status }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- KYC Status Column -->
+        <ng-container matColumnDef="kycStatus">
+          <th mat-header-cell *matHeaderCellDef>KYC Status</th>
+          <td mat-cell *matCellDef="let customer">
+            <mat-chip [color]="getKycStatusColor(customer.kycStatus)" selected>
+              {{ customer.kycStatus }}
+            </mat-chip>
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>Actions</th>
+          <td mat-cell *matCellDef="let customer">
+            <button mat-icon-button [routerLink]="['/customers', customer.id]" matTooltip="View">
+              <mat-icon>visibility</mat-icon>
+            </button>
+            <button mat-icon-button [routerLink]="['/customers', customer.id, 'edit']" matTooltip="Edit">
+              <mat-icon>edit</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+        <!-- No Data Row -->
+        <tr class="mat-row" *matNoDataRow>
+          <td class="mat-cell" colspan="7" class="no-data">
+            <mat-icon>search_off</mat-icon>
+            <span>No customers found</span>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Paginator -->
+      <mat-paginator
+        [length]="totalElements"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        [pageSizeOptions]="[5, 10, 25, 50]"
+        (page)="onPageChange($event)"
+        showFirstLastButtons>
+      </mat-paginator>
+    </mat-card-content>
+  </mat-card>
+</div>

@@ -1,0 +1,11 @@
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/customer-service/src/main/java/com/loanflow/customer/controller/CustomerController.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/customer-service/src/main/java/com/loanflow/customer/domain/enums/CustomerStatus.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/customer-service/src/main/java/com/loanflow/customer/CustomerServiceApplication.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/customer-service/src/main/java/com/loanflow/customer/service/impl/CustomerServiceImpl.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/customer-service/src/main/java/com/loanflow/customer/repository/CustomerRepository.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/customer-service/src/main/java/com/loanflow/customer/service/CustomerService.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/customer-service/src/main/java/com/loanflow/customer/mapper/CustomerMapper.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/customer-service/src/main/java/com/loanflow/customer/domain/enums/Gender.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/customer-service/src/main/java/com/loanflow/customer/domain/entity/Address.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/customer-service/src/main/java/com/loanflow/customer/domain/entity/Customer.java
+/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/customer-service/src/main/java/com/loanflow/customer/domain/enums/KycStatus.java

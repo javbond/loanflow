@@ -1,0 +1,15 @@
+com/loanflow/document/service/DocumentServiceTest.class
+com/loanflow/document/service/DocumentServiceTest$ListTests.class
+com/loanflow/document/domain/DocumentTest$CreationTests.class
+com/loanflow/document/domain/DocumentTest$ExpiryTests.class
+com/loanflow/document/domain/DocumentTest$VersionTests.class
+com/loanflow/document/service/DocumentServiceTest$VerificationTests.class
+com/loanflow/document/domain/DocumentTest$StoragePathTests.class
+com/loanflow/document/service/DocumentServiceTest$UploadTests.class
+com/loanflow/document/service/DocumentServiceTest$DeleteTests.class
+com/loanflow/document/domain/DocumentTest$FileValidationTests.class
+com/loanflow/document/service/DocumentServiceTest$StatisticsTests.class
+com/loanflow/document/service/DocumentServiceTest$GetTests.class
+com/loanflow/document/domain/DocumentTest$VerificationTests.class
+com/loanflow/document/domain/DocumentTest$TypeCategoryTests.class
+com/loanflow/document/domain/DocumentTest.class

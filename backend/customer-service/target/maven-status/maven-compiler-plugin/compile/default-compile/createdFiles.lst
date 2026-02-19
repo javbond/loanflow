@@ -1,0 +1,14 @@
+com/loanflow/customer/mapper/CustomerMapper.class
+com/loanflow/customer/domain/entity/Customer.class
+com/loanflow/customer/repository/CustomerRepository.class
+com/loanflow/customer/controller/CustomerController.class
+com/loanflow/customer/domain/entity/Address$AddressBuilder.class
+com/loanflow/customer/domain/enums/CustomerStatus.class
+com/loanflow/customer/domain/enums/Gender.class
+com/loanflow/customer/domain/entity/Customer$CustomerBuilder.class
+com/loanflow/customer/domain/enums/KycStatus.class
+com/loanflow/customer/mapper/CustomerMapperImpl.class
+com/loanflow/customer/service/impl/CustomerServiceImpl.class
+com/loanflow/customer/CustomerServiceApplication.class
+com/loanflow/customer/domain/entity/Address.class
+com/loanflow/customer/service/CustomerService.class

@@ -1,0 +1,64 @@
+name: CD - Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy'
+        required: true
+      strategy:
+        description: 'Deployment strategy'
+        required: true
+        default: 'rolling'
+        type: choice
+        options: [rolling, blue-green, canary]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+      - name: Verify Image Exists
+        run: docker manifest inspect ghcr.io/${{ github.repository }}:${{ github.event.inputs.version }}
+
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://loanflow.example.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.version }}
+
+      - uses: azure/setup-kubectl@v3
+
+      - name: Configure Kubernetes
+        run: |
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG_PRODUCTION }}" | base64 -d > ~/.kube/config
+
+      - name: Deploy
+        run: |
+          export IMAGE_TAG="${{ github.event.inputs.version }}"
+          envsubst < k8s/production/deployment.yaml | kubectl apply -f -
+          kubectl rollout status deployment -n loanflow-production --timeout=600s
+
+      - name: Rollback on Failure
+        if: failure()
+        run: kubectl rollout undo deployment -n loanflow-production
+
+  notify:
+    needs: deploy
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ needs.deploy.result }}
+          channel: '#deployments'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
