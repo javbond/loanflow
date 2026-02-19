@@ -35,6 +35,16 @@ export const routes: Routes = [
           .then(m => m.CustomerLoanApplicationFormComponent)
       },
       {
+        path: 'applications',
+        loadComponent: () => import('./features/customer-portal/components/my-applications/my-applications.component')
+          .then(m => m.MyApplicationsComponent)
+      },
+      {
+        path: 'applications/:id',
+        loadComponent: () => import('./features/customer-portal/components/application-detail/application-detail.component')
+          .then(m => m.ApplicationDetailComponent)
+      },
+      {
         path: 'documents/upload',
         loadComponent: () => import('./features/customer-portal/components/customer-document-upload/customer-document-upload.component')
           .then(m => m.CustomerDocumentUploadComponent)
