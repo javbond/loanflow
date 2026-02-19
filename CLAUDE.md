@@ -68,15 +68,27 @@
 
 ## 📊 CURRENT SPRINT STATUS
 
-### Sprint 2 (Loan & Document Management) - 🔄 IN PROGRESS
+### Sprint 3 (Security & Auth) - ⏳ READY TO START
+**Planned Stories:**
+| Issue | Title | Points | Status |
+|-------|-------|--------|--------|
+| #3 | [US-002] Authentication System | 8 | ⏳ Ready |
+| #4 | [US-003] Role-Based Access Control | 5 | ⏳ Ready |
+
+**Progress:** `░░░░░░░░░░` 0%
+
+---
+
+### Sprint 2 (Loan & Document Management) - ✅ COMPLETED
 **Milestone**: [Sprint 2](https://github.com/javbond/loanflow/milestone/5)
 **Duration**: 2026-02-19 to 2026-03-05
+**Velocity**: 13 story points
 
 | Issue | Title | Points | Status |
 |-------|-------|--------|--------|
-| #11 | [EPIC-002] Loan Application Management | - | 🔄 Parent |
-| #14 | [US-005] Loan Application Angular UI | 8 | ✅ Done |
-| #15 | [US-006] Document Management Angular UI | 5 | ✅ Done |
+| #11 | [EPIC-002] Loan Application Management | - | ✅ Closed |
+| #14 | [US-005] Loan Application Angular UI | 8 | ✅ Closed |
+| #15 | [US-006] Document Management Angular UI | 5 | ✅ Closed |
 
 **Bug Fixes (Sprint 2):**
 | Issue | Description | Status |
@@ -86,7 +98,7 @@
 | #18 | Document verification verifierId | ✅ Closed |
 | #19 | Documents list not visible | ✅ Closed |
 
-**Progress:** `████████░░` 80% (Loan + Document UI complete, UAT verified)
+**Progress:** `██████████` 100%
 
 ### Sprint 1 (Foundation + Customer) - ✅ COMPLETED
 | Issue | Title | Status |
