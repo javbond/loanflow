@@ -28,6 +28,7 @@
         <module>loan-service</module>
         <module>customer-service</module>
         <module>document-service</module>
+        <module>auth-service</module>
         <!-- TODO: Add when implemented -->
         <!-- <module>notification-service</module> -->
         <!-- <module>api-gateway</module> -->
