@@ -32,6 +32,14 @@ import { UserInfo } from '../../../../core/auth/models/auth.model';
         <p class="subtitle">Your LoanFlow Customer Portal</p>
       </div>
 
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <button mat-raised-button color="primary" routerLink="/my-portal/apply" class="apply-btn">
+          <mat-icon>add_circle</mat-icon>
+          Apply for a Loan
+        </button>
+      </div>
+
       <div class="dashboard-grid">
         <!-- Application Status Card -->
         <mat-card class="dashboard-card status-card">
@@ -44,7 +52,7 @@ import { UserInfo } from '../../../../core/auth/models/auth.model';
             <div class="status-placeholder">
               <mat-icon class="placeholder-icon">inbox</mat-icon>
               <p>No active applications</p>
-              <p class="hint">Contact your loan officer to start a new application</p>
+              <p class="hint">Click "Apply for a Loan" above to get started</p>
             </div>
           </mat-card-content>
         </mat-card>
@@ -131,6 +139,19 @@ import { UserInfo } from '../../../../core/auth/models/auth.model';
     .subtitle {
       color: #666;
       margin: 8px 0 0;
+    }
+
+    .quick-actions {
+      margin-bottom: 24px;
+    }
+
+    .apply-btn {
+      font-size: 1rem;
+      padding: 12px 24px;
+    }
+
+    .apply-btn mat-icon {
+      margin-right: 8px;
     }
 
     .dashboard-grid {

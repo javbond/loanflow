@@ -3,6 +3,7 @@ package com.loanflow.loan.service;
 import com.loanflow.dto.request.LoanApplicationRequest;
 import com.loanflow.dto.response.LoanApplicationResponse;
 import com.loanflow.loan.domain.enums.LoanStatus;
+import com.loanflow.loan.dto.CustomerLoanApplicationRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -101,4 +102,27 @@ public interface LoanApplicationService {
      * Search loan applications by application number
      */
     Page<LoanApplicationResponse> searchByApplicationNumber(String query, Pageable pageable);
+
+    // ==================== CUSTOMER PORTAL METHODS ====================
+    // Issue: #26 [US-024] Customer Loan Application Form
+
+    /**
+     * Get loan applications by customer email (for Customer Portal)
+     */
+    Page<LoanApplicationResponse> getByCustomerEmail(String email, Pageable pageable);
+
+    /**
+     * Create a loan application submitted by customer through portal
+     */
+    LoanApplicationResponse createCustomerApplication(String customerEmail, CustomerLoanApplicationRequest request);
+
+    /**
+     * Accept loan offer (Customer Portal)
+     */
+    LoanApplicationResponse acceptOffer(UUID applicationId, String customerEmail);
+
+    /**
+     * Reject loan offer (Customer Portal)
+     */
+    LoanApplicationResponse rejectOffer(UUID applicationId, String customerEmail, String reason);
 }

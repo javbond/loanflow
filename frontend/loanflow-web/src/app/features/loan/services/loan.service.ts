@@ -148,4 +148,49 @@ export class LoanService {
     const denominator = power - 1;
     return Math.round((numerator / denominator) * 100) / 100;
   }
+
+  // ==================== CUSTOMER PORTAL METHODS ====================
+  // Issue: #26 [US-024] Customer Loan Application Form
+
+  // Get my loan applications (Customer Portal)
+  getMyApplications(page: number = 0, size: number = 10): Observable<PageResponse<LoanApplication>> {
+    const params = new HttpParams()
+      .set('page', page.toString())
+      .set('size', size.toString())
+      .set('sort', 'createdAt,desc');
+    return this.http.get<PageResponse<LoanApplication>>(`${this.apiUrl}/my-applications`, { params });
+  }
+
+  // Submit loan application (Customer Portal)
+  applyForLoan(request: CustomerLoanApplicationRequest): Observable<ApiResponse<LoanApplication>> {
+    return this.http.post<ApiResponse<LoanApplication>>(`${this.apiUrl}/apply`, request);
+  }
+
+  // Accept loan offer (Customer Portal)
+  acceptOffer(id: string): Observable<ApiResponse<LoanApplication>> {
+    return this.http.post<ApiResponse<LoanApplication>>(`${this.apiUrl}/${id}/accept-offer`, {});
+  }
+
+  // Reject loan offer (Customer Portal)
+  rejectOffer(id: string, reason: string): Observable<ApiResponse<LoanApplication>> {
+    const params = new HttpParams().set('reason', reason);
+    return this.http.post<ApiResponse<LoanApplication>>(`${this.apiUrl}/${id}/reject-offer`, {}, { params });
+  }
+}
+
+// Customer loan application request interface
+export interface CustomerLoanApplicationRequest {
+  loanType: string;
+  requestedAmount: number;
+  tenureMonths: number;
+  purpose?: string;
+  fullName: string;
+  pan: string;
+  aadhaar?: string;
+  phone: string;
+  email: string;
+  address?: string;
+  employmentType: string;
+  employerName?: string;
+  monthlyIncome: number;
 }

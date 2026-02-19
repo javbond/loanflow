@@ -49,4 +49,8 @@ public class BusinessException extends RuntimeException {
     public static BusinessException invalidOperation(String reason) {
         return new BusinessException("INVALID_OPERATION", reason);
     }
+
+    public static BusinessException accessDenied(String reason) {
+        return new BusinessException("ACCESS_DENIED", reason);
+    }
 }

@@ -23,8 +23,18 @@ export const routes: Routes = [
     path: 'my-portal',
     canActivate: [authGuard],
     data: { roles: ['CUSTOMER'] },
-    loadComponent: () => import('./features/dashboard/components/customer-dashboard/customer-dashboard.component')
-      .then(m => m.CustomerDashboardComponent)
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/dashboard/components/customer-dashboard/customer-dashboard.component')
+          .then(m => m.CustomerDashboardComponent)
+      },
+      {
+        path: 'apply',
+        loadComponent: () => import('./features/customer-portal/components/loan-application-form/loan-application-form.component')
+          .then(m => m.CustomerLoanApplicationFormComponent)
+      }
+    ]
   },
 
   // Protected routes - Staff Only

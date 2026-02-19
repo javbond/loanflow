@@ -3,7 +3,7 @@
   "realm": "loanflow",
   "displayName": "LoanFlow",
   "enabled": true,
-  "sslRequired": "external",
+  "sslRequired": "none",
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "resetPasswordAllowed": true,
@@ -15,6 +15,7 @@
 
   "roles": {
     "realm": [
+      { "name": "CUSTOMER", "description": "Loan applicant - view own applications and documents" },
       { "name": "LOAN_OFFICER", "description": "Create and manage loan applications" },
       { "name": "SENIOR_LOAN_OFFICER", "description": "Senior loan officer with elevated limits", "composite": true, "composites": { "realm": ["LOAN_OFFICER"] } },
       { "name": "UNDERWRITER", "description": "Review and approve/decline loans" },
@@ -43,7 +44,7 @@
       "enabled": true,
       "publicClient": true,
       "standardFlowEnabled": true,
-      "directAccessGrantsEnabled": false,
+      "directAccessGrantsEnabled": true,
       "protocol": "openid-connect",
       "rootUrl": "http://localhost:4200",
       "redirectUris": ["http://localhost:4200/*", "http://localhost:8080/*"],
@@ -64,6 +65,17 @@
   ],
 
   "users": [
+    {
+      "username": "customer1",
+      "email": "customer@example.com",
+      "firstName": "Rajesh",
+      "lastName": "Kumar",
+      "enabled": true,
+      "emailVerified": true,
+      "credentials": [{ "type": "password", "value": "customer123", "temporary": false }],
+      "realmRoles": ["CUSTOMER"],
+      "attributes": { "customerId": ["CUST001"], "phone": ["+91-9876543210"] }
+    },
     {
       "username": "admin",
       "email": "admin@loanflow.local",

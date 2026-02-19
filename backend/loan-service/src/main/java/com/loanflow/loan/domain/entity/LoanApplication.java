@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 @Table(name = "loan_applications", schema = "application",
         indexes = {
                 @Index(name = "idx_loan_app_customer", columnList = "customer_id"),
+                @Index(name = "idx_loan_app_customer_email", columnList = "customer_email"),
                 @Index(name = "idx_loan_app_status", columnList = "status"),
                 @Index(name = "idx_loan_app_number", columnList = "application_number", unique = true),
                 @Index(name = "idx_loan_app_branch", columnList = "branch_code")
@@ -48,6 +49,9 @@ public class LoanApplication {
 
     @Column(name = "customer_id", nullable = false)
     private UUID customerId;
+
+    @Column(name = "customer_email", length = 100)
+    private String customerEmail;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "loan_type", nullable = false, length = 30)
