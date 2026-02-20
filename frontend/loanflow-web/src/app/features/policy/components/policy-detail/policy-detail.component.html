@@ -1,0 +1,154 @@
+<div class="policy-detail-container">
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner diameter="50"></mat-spinner>
+  </div>
+
+  <div *ngIf="policy && !loading">
+    <!-- Header Card -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>policy</mat-icon>
+          {{ policy.name }}
+        </mat-card-title>
+        <mat-card-subtitle>
+          <span class="policy-code">{{ policy.policyCode }}</span>
+          <mat-chip [color]="getStatusColor(policy.status)" selected>{{ policy.status }}</mat-chip>
+          <span class="version-badge">v{{ policy.versionNumber }}</span>
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <p *ngIf="policy.description" class="description">{{ policy.description }}</p>
+
+        <div class="detail-grid">
+          <div class="detail-item">
+            <span class="label">Category</span>
+            <span class="value">{{ getCategoryLabel(policy.category) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Loan Type</span>
+            <span class="value">{{ getLoanTypeLabel(policy.loanType) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Priority</span>
+            <span class="value">{{ policy.priority }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Rules</span>
+            <span class="value">{{ policy.ruleCount }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Created By</span>
+            <span class="value">{{ policy.createdBy || '-' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Created At</span>
+            <span class="value">{{ formatDate(policy.createdAt) }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Modified By</span>
+            <span class="value">{{ policy.modifiedBy || '-' }}</span>
+          </div>
+          <div class="detail-item">
+            <span class="label">Updated At</span>
+            <span class="value">{{ formatDate(policy.updatedAt) }}</span>
+          </div>
+        </div>
+
+        <div *ngIf="policy.tags && policy.tags.length > 0" class="tags-section">
+          <span class="label">Tags:</span>
+          <mat-chip-set>
+            <mat-chip *ngFor="let tag of policy.tags">{{ tag }}</mat-chip>
+          </mat-chip-set>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions align="end">
+        <button mat-button routerLink="/policies">
+          <mat-icon>arrow_back</mat-icon> Back to List
+        </button>
+        <button mat-stroked-button color="primary" *ngIf="canEdit"
+                [routerLink]="['/policies', policy.id, 'edit']">
+          <mat-icon>edit</mat-icon> Edit
+        </button>
+        <button mat-stroked-button color="primary" *ngIf="canActivate"
+                (click)="onActivate()">
+          <mat-icon>check_circle</mat-icon> Activate
+        </button>
+        <button mat-stroked-button color="warn" *ngIf="canDeactivate"
+                (click)="onDeactivate()">
+          <mat-icon>pause_circle</mat-icon> Deactivate
+        </button>
+        <button mat-stroked-button *ngIf="canCreateVersion"
+                (click)="onCreateNewVersion()">
+          <mat-icon>content_copy</mat-icon> New Version
+        </button>
+        <button mat-stroked-button color="warn" *ngIf="canDelete"
+                (click)="onDelete()">
+          <mat-icon>delete</mat-icon> Delete
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Rules Card -->
+    <mat-card class="rules-card" *ngIf="policy.rules && policy.rules.length > 0">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>rule</mat-icon>
+          Policy Rules ({{ policy.rules.length }})
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let rule of policy.rules; let i = index">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon [class.enabled]="rule.enabled" [class.disabled]="!rule.enabled">
+                  {{ rule.enabled ? 'check_circle' : 'cancel' }}
+                </mat-icon>
+                {{ rule.name }}
+              </mat-panel-title>
+              <mat-panel-description>
+                {{ rule.logicalOperator }} | {{ rule.conditions.length }} conditions, {{ rule.actions.length }} actions
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <p *ngIf="rule.description" class="rule-description">{{ rule.description }}</p>
+
+            <!-- Conditions -->
+            <h4 class="section-title"><mat-icon>filter_list</mat-icon> Conditions ({{ rule.logicalOperator }})</h4>
+            <div class="condition-list">
+              <div *ngFor="let condition of rule.conditions; let j = index" class="condition-item">
+                <span class="condition-number">{{ j + 1 }}.</span>
+                <span class="condition-field">{{ condition.field }}</span>
+                <span class="condition-operator">{{ getOperatorLabel(condition.operator) }}</span>
+                <span class="condition-value" *ngIf="condition.value">{{ condition.value }}</span>
+                <span class="condition-value" *ngIf="condition.minValue && condition.maxValue">
+                  {{ condition.minValue }} - {{ condition.maxValue }}
+                </span>
+                <span class="condition-value" *ngIf="condition.values && condition.values.length > 0">
+                  [{{ condition.values.join(', ') }}]
+                </span>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <!-- Actions -->
+            <h4 class="section-title"><mat-icon>bolt</mat-icon> Actions</h4>
+            <div class="action-list">
+              <div *ngFor="let action of rule.actions" class="action-item">
+                <mat-icon>chevron_right</mat-icon>
+                <span class="action-type">{{ getActionTypeLabel(action.type) }}</span>
+                <span *ngIf="action.description" class="action-desc">- {{ action.description }}</span>
+              </div>
+            </div>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

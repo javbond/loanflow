@@ -22,5 +22,11 @@
     "secure": false,
     "changeOrigin": true,
     "logLevel": "debug"
+  },
+  "/api/v1/policies": {
+    "target": "http://localhost:8086",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "debug"
   }
 }

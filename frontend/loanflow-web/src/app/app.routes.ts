@@ -128,6 +128,33 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'policies',
+    canActivate: [authGuard],
+    data: { roles: ['ADMIN', 'SUPERVISOR'] },
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/policy/components/policy-list/policy-list.component')
+          .then(m => m.PolicyListComponent)
+      },
+      {
+        path: 'new',
+        loadComponent: () => import('./features/policy/components/policy-form/policy-form.component')
+          .then(m => m.PolicyFormComponent)
+      },
+      {
+        path: ':id',
+        loadComponent: () => import('./features/policy/components/policy-detail/policy-detail.component')
+          .then(m => m.PolicyDetailComponent)
+      },
+      {
+        path: ':id/edit',
+        loadComponent: () => import('./features/policy/components/policy-form/policy-form.component')
+          .then(m => m.PolicyFormComponent)
+      }
+    ]
+  },
+  {
     path: 'documents',
     canActivate: [authGuard],
     data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER'] },
