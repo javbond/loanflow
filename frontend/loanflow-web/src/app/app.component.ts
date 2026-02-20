@@ -10,6 +10,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { AuthService } from './core/auth/services/auth.service';
+import { map } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -38,6 +39,14 @@ export class AppComponent {
   // Auth state
   isAuthenticated$ = this.authService.isAuthenticated$;
   currentUser$ = this.authService.currentUser$;
+
+  // Role-based navigation
+  isCustomer$ = this.currentUser$.pipe(
+    map(user => user?.roles?.includes('CUSTOMER') ?? false)
+  );
+  isStaff$ = this.currentUser$.pipe(
+    map(user => user?.roles?.some(r => ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER'].includes(r)) ?? false)
+  );
 
   logout(): void {
     this.authService.logout();
