@@ -68,6 +68,7 @@ public class DocumentServiceImpl implements DocumentService {
         Document document = Document.builder()
                 .applicationId(request.getApplicationId())
                 .customerId(request.getCustomerId())
+                .customerEmail(request.getCustomerEmail())
                 .documentType(documentType)
                 .category(documentType.getCategory())
                 .originalFileName(file.getOriginalFilename())
@@ -153,6 +154,13 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public Page<DocumentResponse> getByApplicationIdAndCategory(UUID applicationId, DocumentCategory category, Pageable pageable) {
         return repository.findByApplicationIdAndCategory(applicationId, category, pageable)
+                .map(mapper::toResponse);
+    }
+
+    @Override
+    public Page<DocumentResponse> getByCustomerEmail(String email, Pageable pageable) {
+        log.debug("Fetching documents for customer email: {}", email);
+        return repository.findByCustomerEmail(email, pageable)
                 .map(mapper::toResponse);
     }
 

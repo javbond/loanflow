@@ -4,6 +4,7 @@ import com.loanflow.dto.common.ApiResponse;
 import com.loanflow.dto.request.LoanApplicationRequest;
 import com.loanflow.dto.response.LoanApplicationResponse;
 import com.loanflow.loan.domain.enums.LoanStatus;
+import com.loanflow.loan.dto.CustomerLoanApplicationRequest;
 import com.loanflow.loan.service.LoanApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -16,6 +17,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -206,5 +209,56 @@ public class LoanApplicationController {
         return ResponseEntity.ok(ApiResponse.success(
                 service.updateCibilScore(id, cibilScore, riskCategory),
                 "CIBIL score updated"));
+    }
+
+    // ==================== CUSTOMER PORTAL ENDPOINTS ====================
+    // Issue: #26 [US-024] Customer Loan Application Form
+
+    @GetMapping("/my-applications")
+    @Operation(summary = "Get current customer's loan applications")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<Page<LoanApplicationResponse>> getMyApplications(
+            @AuthenticationPrincipal Jwt jwt,
+            @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
+        String email = jwt.getClaimAsString("email");
+        return ResponseEntity.ok(service.getByCustomerEmail(email, pageable));
+    }
+
+    @PostMapping("/apply")
+    @Operation(summary = "Submit a new loan application (Customer Portal)")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<LoanApplicationResponse>> applyForLoan(
+            @AuthenticationPrincipal Jwt jwt,
+            @Valid @RequestBody CustomerLoanApplicationRequest request) {
+        String email = jwt.getClaimAsString("email");
+        LoanApplicationResponse response = service.createCustomerApplication(email, request);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(ApiResponse.success(response, "Loan application submitted successfully. Your application number is: " + response.getApplicationNumber()));
+    }
+
+    @PostMapping("/{id}/accept-offer")
+    @Operation(summary = "Accept loan offer")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<LoanApplicationResponse>> acceptOffer(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Jwt jwt) {
+        String email = jwt.getClaimAsString("email");
+        return ResponseEntity.ok(ApiResponse.success(
+                service.acceptOffer(id, email),
+                "Loan offer accepted successfully"));
+    }
+
+    @PostMapping("/{id}/reject-offer")
+    @Operation(summary = "Reject loan offer")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<ApiResponse<LoanApplicationResponse>> rejectOffer(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam String reason) {
+        String email = jwt.getClaimAsString("email");
+        return ResponseEntity.ok(ApiResponse.success(
+                service.rejectOffer(id, email, reason),
+                "Loan offer rejected"));
     }
 }

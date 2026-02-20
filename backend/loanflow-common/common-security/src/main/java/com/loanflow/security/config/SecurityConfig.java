@@ -100,6 +100,17 @@ public class SecurityConfig {
                 });
             }
 
+            // Fallback: Extract from top-level "roles" claim (custom Keycloak mapper)
+            if (authorities.isEmpty()) {
+                @SuppressWarnings("unchecked")
+                List<String> topLevelRoles = jwt.getClaim("roles");
+                if (topLevelRoles != null) {
+                    authorities.addAll(topLevelRoles.stream()
+                            .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+                            .collect(Collectors.toList()));
+                }
+            }
+
             return authorities;
         });
         return converter;

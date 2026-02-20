@@ -23,8 +23,48 @@ export const routes: Routes = [
     path: 'my-portal',
     canActivate: [authGuard],
     data: { roles: ['CUSTOMER'] },
-    loadComponent: () => import('./features/dashboard/components/customer-dashboard/customer-dashboard.component')
-      .then(m => m.CustomerDashboardComponent)
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/dashboard/components/customer-dashboard/customer-dashboard.component')
+          .then(m => m.CustomerDashboardComponent)
+      },
+      {
+        path: 'apply',
+        loadComponent: () => import('./features/customer-portal/components/loan-application-form/loan-application-form.component')
+          .then(m => m.CustomerLoanApplicationFormComponent)
+      },
+      {
+        path: 'applications',
+        loadComponent: () => import('./features/customer-portal/components/my-applications/my-applications.component')
+          .then(m => m.MyApplicationsComponent)
+      },
+      {
+        path: 'applications/:id',
+        loadComponent: () => import('./features/customer-portal/components/application-detail/application-detail.component')
+          .then(m => m.ApplicationDetailComponent)
+      },
+      {
+        path: 'documents',
+        loadComponent: () => import('./features/customer-portal/components/my-documents/my-documents.component')
+          .then(m => m.MyDocumentsComponent)
+      },
+      {
+        path: 'documents/upload',
+        loadComponent: () => import('./features/customer-portal/components/customer-document-upload/customer-document-upload.component')
+          .then(m => m.CustomerDocumentUploadComponent)
+      },
+      {
+        path: 'documents/upload/:appId',
+        loadComponent: () => import('./features/customer-portal/components/customer-document-upload/customer-document-upload.component')
+          .then(m => m.CustomerDocumentUploadComponent)
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./features/customer-portal/components/customer-profile/customer-profile.component')
+          .then(m => m.CustomerProfileComponent)
+      }
+    ]
   },
 
   // Protected routes - Staff Only

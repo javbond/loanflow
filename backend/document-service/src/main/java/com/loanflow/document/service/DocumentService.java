@@ -39,6 +39,9 @@ public interface DocumentService {
 
     Page<DocumentResponse> getByApplicationIdAndCategory(UUID applicationId, DocumentCategory category, Pageable pageable);
 
+    // Customer Portal operations
+    Page<DocumentResponse> getByCustomerEmail(String email, Pageable pageable);
+
     // Verification operations
     DocumentResponse verify(String documentId, DocumentVerificationRequest request);
 

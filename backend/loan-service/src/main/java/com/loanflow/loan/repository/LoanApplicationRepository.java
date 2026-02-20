@@ -24,6 +24,8 @@ public interface LoanApplicationRepository extends
 
     Page<LoanApplication> findByCustomerId(UUID customerId, Pageable pageable);
 
+    Page<LoanApplication> findByCustomerEmail(String customerEmail, Pageable pageable);
+
     Page<LoanApplication> findByStatus(LoanStatus status, Pageable pageable);
 
     Page<LoanApplication> findByBranchCode(String branchCode, Pageable pageable);
