@@ -1,0 +1,128 @@
+<div class="decision-panel">
+  <h3>
+    <mat-icon>gavel</mat-icon>
+    Make Decision
+  </h3>
+  <p class="subtitle">Review the loan application and make your decision below.</p>
+
+  <form [formGroup]="decisionForm" (ngSubmit)="onSubmit()">
+    <!-- Decision Radio Buttons -->
+    <div class="decision-options">
+      <mat-radio-group formControlName="decision">
+        <mat-radio-button value="APPROVED" color="primary" class="decision-option approve-option">
+          <div class="option-content">
+            <mat-icon class="option-icon approve">check_circle</mat-icon>
+            <div>
+              <strong>Approve</strong>
+              <span class="option-desc">Approve the loan application</span>
+            </div>
+          </div>
+        </mat-radio-button>
+
+        <mat-radio-button value="REJECTED" color="warn" class="decision-option reject-option">
+          <div class="option-content">
+            <mat-icon class="option-icon reject">cancel</mat-icon>
+            <div>
+              <strong>Reject</strong>
+              <span class="option-desc">Decline the loan application</span>
+            </div>
+          </div>
+        </mat-radio-button>
+
+        <mat-radio-button value="REFERRED" color="accent" class="decision-option refer-option">
+          <div class="option-content">
+            <mat-icon class="option-icon refer">supervisor_account</mat-icon>
+            <div>
+              <strong>Refer to Senior</strong>
+              <span class="option-desc">Escalate for senior review</span>
+            </div>
+          </div>
+        </mat-radio-button>
+      </mat-radio-group>
+    </div>
+
+    <!-- Conditional Fields -->
+    @if (selectedDecision === 'APPROVED') {
+      <mat-divider class="section-divider"></mat-divider>
+      <div class="conditional-fields">
+        <h4>Approval Details</h4>
+        <div class="fields-row">
+          <mat-form-field appearance="outline" class="field-half">
+            <mat-label>Approved Amount (INR)</mat-label>
+            <input matInput type="number" formControlName="approvedAmount" placeholder="Enter approved amount">
+            <mat-icon matPrefix>currency_rupee</mat-icon>
+            @if (decisionForm.get('approvedAmount')?.hasError('required')) {
+              <mat-error>Approved amount is required</mat-error>
+            }
+            @if (decisionForm.get('approvedAmount')?.hasError('min')) {
+              <mat-error>Amount must be greater than 0</mat-error>
+            }
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="field-half">
+            <mat-label>Interest Rate (% p.a.)</mat-label>
+            <input matInput type="number" formControlName="interestRate" placeholder="Enter interest rate" step="0.1">
+            <mat-icon matPrefix>percent</mat-icon>
+            @if (decisionForm.get('interestRate')?.hasError('required')) {
+              <mat-error>Interest rate is required</mat-error>
+            }
+            @if (decisionForm.get('interestRate')?.hasError('min')) {
+              <mat-error>Rate must be at least 0.1%</mat-error>
+            }
+            @if (decisionForm.get('interestRate')?.hasError('max')) {
+              <mat-error>Rate cannot exceed 30%</mat-error>
+            }
+          </mat-form-field>
+        </div>
+      </div>
+    }
+
+    @if (selectedDecision === 'REJECTED') {
+      <mat-divider class="section-divider"></mat-divider>
+      <div class="conditional-fields">
+        <h4>Rejection Details</h4>
+        <mat-form-field appearance="outline" class="field-full">
+          <mat-label>Rejection Reason</mat-label>
+          <textarea matInput formControlName="rejectionReason" rows="3"
+                    placeholder="Provide a detailed reason for rejection (min 10 characters)"></textarea>
+          @if (decisionForm.get('rejectionReason')?.hasError('required')) {
+            <mat-error>Rejection reason is required</mat-error>
+          }
+          @if (decisionForm.get('rejectionReason')?.hasError('minlength')) {
+            <mat-error>Reason must be at least 10 characters</mat-error>
+          }
+        </mat-form-field>
+      </div>
+    }
+
+    <!-- Comments (always visible) -->
+    @if (selectedDecision) {
+      <mat-divider class="section-divider"></mat-divider>
+      <mat-form-field appearance="outline" class="field-full">
+        <mat-label>Comments (optional)</mat-label>
+        <textarea matInput formControlName="comments" rows="2"
+                  placeholder="Add any additional comments or notes"></textarea>
+      </mat-form-field>
+    }
+
+    <!-- Submit Button -->
+    @if (selectedDecision) {
+      <div class="submit-actions">
+        <button mat-raised-button [color]="getDecisionColor()" type="submit"
+                [disabled]="loading || decisionForm.invalid" class="submit-button">
+          @if (loading) {
+            <mat-icon class="spinning">sync</mat-icon>
+            Processing...
+          } @else {
+            <mat-icon>{{ getDecisionIcon() }}</mat-icon>
+            @switch (selectedDecision) {
+              @case ('APPROVED') { Approve Application }
+              @case ('REJECTED') { Reject Application }
+              @case ('REFERRED') { Refer to Senior }
+            }
+          }
+        </button>
+      </div>
+    }
+  </form>
+</div>
