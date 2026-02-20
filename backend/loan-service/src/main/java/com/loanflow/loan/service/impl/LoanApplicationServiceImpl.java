@@ -8,6 +8,7 @@ import com.loanflow.loan.dto.CustomerLoanApplicationRequest;
 import com.loanflow.loan.mapper.LoanApplicationMapper;
 import com.loanflow.loan.repository.LoanApplicationRepository;
 import com.loanflow.loan.service.LoanApplicationService;
+import com.loanflow.loan.workflow.WorkflowService;
 import com.loanflow.util.exception.BusinessException;
 import com.loanflow.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -28,6 +31,7 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
 
     private final LoanApplicationRepository repository;
     private final LoanApplicationMapper mapper;
+    private final WorkflowService workflowService;
 
     @Override
     public LoanApplicationResponse create(LoanApplicationRequest request) {
@@ -112,7 +116,11 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         LoanApplication saved = repository.save(application);
         log.info("Submitted loan application: {}", saved.getApplicationNumber());
 
-        // TODO: Start Flowable workflow process
+        // Start Flowable workflow process
+        String processInstanceId = workflowService.startProcess(saved.getId(), buildProcessVariables(saved));
+        saved.setWorkflowInstanceId(processInstanceId);
+        repository.save(saved);
+
         // TODO: Send notification to assigned officer
 
         return mapper.toResponse(saved);
@@ -191,8 +199,18 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     @Override
     public void cancel(UUID id, String reason) {
         LoanApplication application = findById(id);
-        application.cancel(reason);
 
+        // Cancel Flowable process if running
+        if (application.getWorkflowInstanceId() != null) {
+            try {
+                workflowService.cancelProcess(application.getWorkflowInstanceId(), reason);
+            } catch (Exception e) {
+                log.warn("Failed to cancel workflow for application {}: {}",
+                        application.getApplicationNumber(), e.getMessage());
+            }
+        }
+
+        application.cancel(reason);
         repository.save(application);
         log.info("Cancelled loan application: {} - Reason: {}",
                 application.getApplicationNumber(), reason);
@@ -282,8 +300,12 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         log.info("Customer {} submitted loan application: {}",
                 customerEmail, saved.getApplicationNumber());
 
+        // Start Flowable workflow process
+        String processInstanceId = workflowService.startProcess(saved.getId(), buildProcessVariables(saved));
+        saved.setWorkflowInstanceId(processInstanceId);
+        repository.save(saved);
+
         // TODO: Create/update customer record in customer-service
-        // TODO: Start Flowable workflow process
         // TODO: Send confirmation notification to customer
 
         return mapper.toResponse(saved);
@@ -353,5 +375,16 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     private LoanApplication findById(UUID id) {
         return repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("LoanApplication", "id", id));
+    }
+
+    private Map<String, Object> buildProcessVariables(LoanApplication application) {
+        Map<String, Object> variables = new HashMap<>();
+        variables.put("applicationNumber", application.getApplicationNumber());
+        variables.put("loanType", application.getLoanType().name());
+        variables.put("requestedAmount", application.getRequestedAmount().toString());
+        variables.put("customerId", application.getCustomerId().toString());
+        variables.put("customerEmail",
+                application.getCustomerEmail() != null ? application.getCustomerEmail() : "");
+        return variables;
     }
 }

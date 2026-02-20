@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://loanflow.com/loan-origination"
+             id="loanOriginationDefinitions">
+
+    <process id="loanOrigination" name="Loan Origination Process" isExecutable="true">
+
+        <!-- ===== START EVENT ===== -->
+        <startEvent id="startEvent" name="Application Submitted"/>
+
+        <!-- ===== SERVICE TASK: Submit Application (auto) ===== -->
+        <serviceTask id="submitApplication" name="Process Submission"
+                     flowable:delegateExpression="${submitApplicationDelegate}"/>
+
+        <!-- ===== USER TASK: Document Verification (LOAN_OFFICER) ===== -->
+        <userTask id="documentVerification" name="Document Verification"
+                  flowable:candidateGroups="LOAN_OFFICER"
+                  flowable:formKey="documentVerificationForm">
+            <extensionElements>
+                <flowable:taskListener event="create"
+                    delegateExpression="${statusSyncTaskListener}"/>
+            </extensionElements>
+        </userTask>
+
+        <!-- ===== SERVICE TASK: Credit Check (auto) ===== -->
+        <serviceTask id="creditCheck" name="Credit Check"
+                     flowable:delegateExpression="${creditCheckDelegate}"/>
+
+        <!-- ===== USER TASK: Underwriting Review (UNDERWRITER) ===== -->
+        <userTask id="underwritingReview" name="Underwriting Review"
+                  flowable:candidateGroups="UNDERWRITER"
+                  flowable:formKey="underwritingReviewForm">
+            <extensionElements>
+                <flowable:taskListener event="create"
+                    delegateExpression="${statusSyncTaskListener}"/>
+            </extensionElements>
+        </userTask>
+
+        <!-- ===== EXCLUSIVE GATEWAY: Underwriting Decision ===== -->
+        <exclusiveGateway id="underwritingDecision" name="Underwriting Decision"/>
+
+        <!-- ===== USER TASK: Referred Review (SENIOR_UNDERWRITER / BRANCH_MANAGER) ===== -->
+        <userTask id="referredReview" name="Senior Review (Referred)"
+                  flowable:candidateGroups="SENIOR_UNDERWRITER,BRANCH_MANAGER"
+                  flowable:formKey="referredReviewForm">
+            <extensionElements>
+                <flowable:taskListener event="create"
+                    delegateExpression="${statusSyncTaskListener}"/>
+            </extensionElements>
+        </userTask>
+
+        <!-- ===== EXCLUSIVE GATEWAY: Referred Decision ===== -->
+        <exclusiveGateway id="referredDecision" name="Referred Decision"/>
+
+        <!-- ===== SERVICE TASK: Process Approval ===== -->
+        <serviceTask id="processApproval" name="Process Approval"
+                     flowable:delegateExpression="${approvalDelegate}"/>
+
+        <!-- ===== SERVICE TASK: Process Rejection ===== -->
+        <serviceTask id="processRejection" name="Process Rejection"
+                     flowable:delegateExpression="${rejectionDelegate}"/>
+
+        <!-- ===== END EVENTS ===== -->
+        <endEvent id="approvedEnd" name="Application Approved"/>
+        <endEvent id="rejectedEnd" name="Application Rejected"/>
+
+        <!-- ===== SEQUENCE FLOWS ===== -->
+
+        <!-- Start -> Submit Application -->
+        <sequenceFlow id="flow1" sourceRef="startEvent" targetRef="submitApplication"/>
+
+        <!-- Submit Application -> Document Verification -->
+        <sequenceFlow id="flow2" sourceRef="submitApplication" targetRef="documentVerification"/>
+
+        <!-- Document Verification -> Credit Check -->
+        <sequenceFlow id="flow3" sourceRef="documentVerification" targetRef="creditCheck"/>
+
+        <!-- Credit Check -> Underwriting Review -->
+        <sequenceFlow id="flow4" sourceRef="creditCheck" targetRef="underwritingReview"/>
+
+        <!-- Underwriting Review -> Decision Gateway -->
+        <sequenceFlow id="flow5" sourceRef="underwritingReview" targetRef="underwritingDecision"/>
+
+        <!-- Decision: APPROVED -> Process Approval -->
+        <sequenceFlow id="flowApproved" sourceRef="underwritingDecision" targetRef="processApproval">
+            <conditionExpression xsi:type="tFormalExpression">
+                ${decision == 'APPROVED'}
+            </conditionExpression>
+        </sequenceFlow>
+
+        <!-- Decision: REJECTED -> Process Rejection -->
+        <sequenceFlow id="flowRejected" sourceRef="underwritingDecision" targetRef="processRejection">
+            <conditionExpression xsi:type="tFormalExpression">
+                ${decision == 'REJECTED'}
+            </conditionExpression>
+        </sequenceFlow>
+
+        <!-- Decision: REFERRED -> Senior Review -->
+        <sequenceFlow id="flowReferred" sourceRef="underwritingDecision" targetRef="referredReview">
+            <conditionExpression xsi:type="tFormalExpression">
+                ${decision == 'REFERRED'}
+            </conditionExpression>
+        </sequenceFlow>
+
+        <!-- Process Approval -> Approved End -->
+        <sequenceFlow id="flow6" sourceRef="processApproval" targetRef="approvedEnd"/>
+
+        <!-- Process Rejection -> Rejected End -->
+        <sequenceFlow id="flow7" sourceRef="processRejection" targetRef="rejectedEnd"/>
+
+        <!-- Referred Review -> Referred Decision Gateway -->
+        <sequenceFlow id="flow8" sourceRef="referredReview" targetRef="referredDecision"/>
+
+        <!-- Referred Decision: APPROVED -> Process Approval -->
+        <sequenceFlow id="flowReferredApproved" sourceRef="referredDecision" targetRef="processApproval">
+            <conditionExpression xsi:type="tFormalExpression">
+                ${decision == 'APPROVED'}
+            </conditionExpression>
+        </sequenceFlow>
+
+        <!-- Referred Decision: REJECTED -> Process Rejection -->
+        <sequenceFlow id="flowReferredRejected" sourceRef="referredDecision" targetRef="processRejection">
+            <conditionExpression xsi:type="tFormalExpression">
+                ${decision == 'REJECTED'}
+            </conditionExpression>
+        </sequenceFlow>
+
+    </process>
+</definitions>

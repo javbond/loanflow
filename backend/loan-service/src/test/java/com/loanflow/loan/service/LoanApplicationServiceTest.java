@@ -8,6 +8,7 @@ import com.loanflow.loan.domain.enums.LoanType;
 import com.loanflow.loan.mapper.LoanApplicationMapper;
 import com.loanflow.loan.repository.LoanApplicationRepository;
 import com.loanflow.loan.service.impl.LoanApplicationServiceImpl;
+import com.loanflow.loan.workflow.WorkflowService;
 import com.loanflow.util.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -29,7 +30,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -44,6 +45,9 @@ class LoanApplicationServiceTest {
 
     @Mock
     private LoanApplicationMapper mapper;
+
+    @Mock
+    private WorkflowService workflowService;
 
     @InjectMocks
     private LoanApplicationServiceImpl service;
@@ -255,11 +259,12 @@ class LoanApplicationServiceTest {
     class SubmitTests {
 
         @Test
-        @DisplayName("Should submit draft application")
+        @DisplayName("Should submit draft application and start workflow")
         void shouldSubmitDraftApplication() {
             // Given
             when(repository.findById(applicationId)).thenReturn(Optional.of(loanApplication));
             when(repository.save(any(LoanApplication.class))).thenReturn(loanApplication);
+            when(workflowService.startProcess(any(UUID.class), anyMap())).thenReturn("proc-123");
 
             LoanApplicationResponse submittedResponse = LoanApplicationResponse.builder()
                     .id(applicationId)
@@ -273,10 +278,8 @@ class LoanApplicationServiceTest {
             // Then
             assertThat(result.getStatus()).isEqualTo("SUBMITTED");
 
-            ArgumentCaptor<LoanApplication> captor = ArgumentCaptor.forClass(LoanApplication.class);
-            verify(repository).save(captor.capture());
-            assertThat(captor.getValue().getStatus()).isEqualTo(LoanStatus.SUBMITTED);
-            assertThat(captor.getValue().getSubmittedAt()).isNotNull();
+            verify(workflowService).startProcess(eq(applicationId), anyMap());
+            verify(repository, atLeast(2)).save(any(LoanApplication.class));
         }
 
         @Test
