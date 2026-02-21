@@ -66,6 +66,36 @@ flowable:
   app:
     enabled: false
 
+# US-014: Task Assignment & Escalation
+loanflow:
+  assignment:
+    enabled: true
+    strategy: ROUND_ROBIN
+    sla-enabled: true
+    sla-check-interval-ms: 300000
+    officers:
+      LOAN_OFFICER:
+        - "placeholder-lo-1"
+        - "placeholder-lo-2"
+        - "placeholder-lo-3"
+      UNDERWRITER:
+        - "placeholder-uw-1"
+        - "placeholder-uw-2"
+      SENIOR_UNDERWRITER:
+        - "placeholder-su-1"
+      BRANCH_MANAGER:
+        - "placeholder-bm-1"
+    sla:
+      documentVerification:
+        timeout-hours: 24
+        escalate-to: SENIOR_UNDERWRITER
+      underwritingReview:
+        timeout-hours: 48
+        escalate-to: BRANCH_MANAGER
+      referredReview:
+        timeout-hours: 72
+        escalate-to: BRANCH_MANAGER
+
 server:
   port: ${SERVER_PORT:8081}
 

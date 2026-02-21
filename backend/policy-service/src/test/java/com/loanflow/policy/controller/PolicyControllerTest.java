@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.loanflow.dto.request.PolicyRequest;
 import com.loanflow.dto.response.PolicyResponse;
+import com.loanflow.policy.evaluation.dto.PolicyEvaluationRequest;
+import com.loanflow.policy.evaluation.dto.PolicyEvaluationResponse;
+import com.loanflow.policy.evaluation.service.PolicyEvaluationService;
 import com.loanflow.policy.service.PolicyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,6 +26,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +58,9 @@ class PolicyControllerTest {
 
     @MockBean
     private PolicyService policyService;
+
+    @MockBean
+    private PolicyEvaluationService policyEvaluationService;
 
     @MockBean
     private JwtDecoder jwtDecoder;
@@ -308,6 +315,70 @@ class PolicyControllerTest {
                                     .claim("realm_access", Map.of("roles", List.of("ADMIN"))))))
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.data.versionNumber").value(2));
+        }
+    }
+
+    @Nested
+    @DisplayName("POST /api/v1/policies/evaluate")
+    class EvaluatePolicy {
+
+        @Test
+        @DisplayName("should evaluate loan application against policies")
+        void shouldEvaluateLoanApplication() throws Exception {
+            PolicyEvaluationResponse evalResponse = PolicyEvaluationResponse.builder()
+                    .overallDecision("APPROVED")
+                    .applicationId("APP-001")
+                    .loanType("PERSONAL_LOAN")
+                    .policiesEvaluated(2)
+                    .policiesMatched(1)
+                    .rulesEvaluated(3)
+                    .rulesMatched(2)
+                    .build();
+
+            when(policyEvaluationService.evaluate(any(PolicyEvaluationRequest.class)))
+                    .thenReturn(evalResponse);
+
+            PolicyEvaluationRequest request = PolicyEvaluationRequest.builder()
+                    .applicationId("APP-001")
+                    .loanType("PERSONAL_LOAN")
+                    .requestedAmount(BigDecimal.valueOf(500000))
+                    .tenureMonths(36)
+                    .cibilScore(750)
+                    .applicantAge(35)
+                    .employmentType("SALARIED")
+                    .monthlyIncome(BigDecimal.valueOf(85000))
+                    .build();
+
+            mockMvc.perform(post("/api/v1/policies/evaluate")
+                            .with(jwt().jwt(j -> j
+                                    .claim("preferred_username", "officer@loanflow.com")
+                                    .claim("realm_access", Map.of("roles", List.of("LOAN_OFFICER")))))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.success").value(true))
+                    .andExpect(jsonPath("$.data.overallDecision").value("APPROVED"))
+                    .andExpect(jsonPath("$.data.applicationId").value("APP-001"))
+                    .andExpect(jsonPath("$.data.policiesEvaluated").value(2))
+                    .andExpect(jsonPath("$.data.policiesMatched").value(1));
+
+            verify(policyEvaluationService).evaluate(any(PolicyEvaluationRequest.class));
+        }
+
+        @Test
+        @DisplayName("should reject evaluation with missing required fields")
+        void shouldRejectMissingRequiredFields() throws Exception {
+            PolicyEvaluationRequest invalidRequest = PolicyEvaluationRequest.builder()
+                    .applicationId("")  // blank
+                    .loanType(null)     // null
+                    .build();
+
+            mockMvc.perform(post("/api/v1/policies/evaluate")
+                            .with(jwt().jwt(j -> j
+                                    .claim("realm_access", Map.of("roles", List.of("ADMIN")))))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(invalidRequest)))
+                    .andExpect(status().isBadRequest());
         }
     }
 }
