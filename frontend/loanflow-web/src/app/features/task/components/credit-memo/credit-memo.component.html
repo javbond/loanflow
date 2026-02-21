@@ -1,0 +1,147 @@
+<div class="credit-memo-wrapper">
+  <div class="print-button-container">
+    <button mat-stroked-button (click)="printMemo()">
+      <mat-icon>print</mat-icon> Print Credit Memo
+    </button>
+  </div>
+
+  <div class="credit-memo" id="credit-memo">
+    <div class="memo-header">
+      <h2>Credit Memo</h2>
+      <div class="memo-meta">
+        <span>Application: <strong>{{ task.applicationNumber }}</strong></span>
+        <span>Date: <strong>{{ formatDate(task.createdAt) }}</strong></span>
+      </div>
+    </div>
+
+    <mat-divider></mat-divider>
+
+    <!-- Loan Summary -->
+    <section class="memo-section">
+      <h4>Loan Summary</h4>
+      <div class="memo-grid">
+        <div class="memo-item">
+          <span class="memo-label">Loan Type</span>
+          <span class="memo-value">{{ getLoanTypeLabel(loan.loanType) }}</span>
+        </div>
+        <div class="memo-item">
+          <span class="memo-label">Requested Amount</span>
+          <span class="memo-value highlight">{{ formatAmount(loan.requestedAmount) }}</span>
+        </div>
+        <div class="memo-item">
+          <span class="memo-label">Tenure</span>
+          <span class="memo-value">{{ loan.tenureMonths }} months</span>
+        </div>
+        <div class="memo-item">
+          <span class="memo-label">Purpose</span>
+          <span class="memo-value">{{ loan.purpose || '-' }}</span>
+        </div>
+        <div class="memo-item">
+          <span class="memo-label">Status</span>
+          <span class="memo-value">{{ getStatusLabel(loan.status) }}</span>
+        </div>
+        <div class="memo-item">
+          <span class="memo-label">Branch</span>
+          <span class="memo-value">{{ loan.branchCode || '-' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Customer Info -->
+    <section class="memo-section">
+      <h4>Customer Information</h4>
+      <div class="memo-grid">
+        <div class="memo-item">
+          <span class="memo-label">Name</span>
+          <span class="memo-value">{{ loan.customerName || '-' }}</span>
+        </div>
+        <div class="memo-item">
+          <span class="memo-label">Email</span>
+          <span class="memo-value">{{ task.customerEmail || '-' }}</span>
+        </div>
+      </div>
+    </section>
+
+    <mat-divider></mat-divider>
+
+    <!-- Credit Assessment -->
+    <section class="memo-section">
+      <h4>Credit Assessment</h4>
+      <div class="memo-grid">
+        <div class="memo-item">
+          <span class="memo-label">CIBIL Score</span>
+          @if (loan.cibilScore || task.cibilScore) {
+            <span class="memo-value" [class]="getCibilClass(loan.cibilScore ?? task.cibilScore ?? undefined)">
+              {{ loan.cibilScore || task.cibilScore }} ({{ getCibilRating(loan.cibilScore ?? task.cibilScore ?? undefined) }})
+            </span>
+          } @else {
+            <span class="memo-value na">Not Available</span>
+          }
+        </div>
+        <div class="memo-item">
+          <span class="memo-label">Risk Category</span>
+          <span class="memo-value" [class.risk-high]="(loan.riskCategory || task.riskCategory) === 'HIGH'"
+                [class.risk-medium]="(loan.riskCategory || task.riskCategory) === 'MEDIUM'"
+                [class.risk-low]="(loan.riskCategory || task.riskCategory) === 'LOW'">
+            {{ loan.riskCategory || task.riskCategory || '-' }}
+          </span>
+        </div>
+        <div class="memo-item">
+          <span class="memo-label">Processing Fee</span>
+          <span class="memo-value">{{ formatAmount(loan.processingFee) }}</span>
+        </div>
+        <div class="memo-item">
+          <span class="memo-label">Expected Disbursement</span>
+          <span class="memo-value">{{ loan.expectedDisbursementDate || '-' }}</span>
+        </div>
+      </div>
+    </section>
+
+    @if (loan.approvedAmount) {
+      <mat-divider></mat-divider>
+      <section class="memo-section">
+        <h4>Approval Details</h4>
+        <div class="memo-grid">
+          <div class="memo-item">
+            <span class="memo-label">Approved Amount</span>
+            <span class="memo-value highlight">{{ formatAmount(loan.approvedAmount) }}</span>
+          </div>
+          <div class="memo-item">
+            <span class="memo-label">Interest Rate</span>
+            <span class="memo-value">{{ loan.interestRate || '-' }}% p.a.</span>
+          </div>
+          <div class="memo-item">
+            <span class="memo-label">EMI</span>
+            <span class="memo-value highlight">{{ formatAmount(loan.emiAmount) }}</span>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- Workflow Info -->
+    <mat-divider></mat-divider>
+    <section class="memo-section">
+      <h4>Current Task</h4>
+      <div class="memo-grid">
+        <div class="memo-item">
+          <span class="memo-label">Task</span>
+          <span class="memo-value">{{ getTaskLabel(task.taskDefinitionKey) }}</span>
+        </div>
+        <div class="memo-item">
+          <span class="memo-label">Assigned To</span>
+          <span class="memo-value">{{ task.assignee || 'Unassigned' }}</span>
+        </div>
+        <div class="memo-item">
+          <span class="memo-label">Task Created</span>
+          <span class="memo-value">{{ formatDate(task.createdAt) }}</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="memo-footer">
+      <p>Generated by LoanFlow System on {{ formatDate(today) }}</p>
+    </div>
+  </div>
+</div>

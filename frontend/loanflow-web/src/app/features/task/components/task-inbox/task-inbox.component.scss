@@ -1,0 +1,136 @@
+.task-inbox-container {
+  padding: 24px;
+}
+
+mat-card {
+  margin-bottom: 24px;
+}
+
+mat-card-header {
+  margin-bottom: 16px;
+
+  mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    mat-icon {
+      color: #1976d2;
+    }
+  }
+}
+
+// Tab styling
+.tab-icon {
+  margin-right: 6px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 8px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: #1976d2;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+// Table styling
+.table-container {
+  overflow-x: auto;
+}
+
+.task-table {
+  width: 100%;
+
+  .task-name {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
+.clickable-row {
+  cursor: pointer;
+
+  &:hover {
+    background-color: rgba(0, 0, 0, 0.04);
+  }
+}
+
+// CIBIL score colors
+.cibil-good {
+  color: #388e3c;
+  font-weight: 600;
+}
+
+.cibil-fair {
+  color: #f57c00;
+  font-weight: 600;
+}
+
+.cibil-poor {
+  color: #d32f2f;
+  font-weight: 600;
+}
+
+.na {
+  color: rgba(0, 0, 0, 0.38);
+  font-style: italic;
+}
+
+// Risk chips
+mat-chip {
+  font-size: 12px;
+}
+
+// Loading state
+.loading-container {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+// Empty state
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.54);
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+    color: rgba(0, 0, 0, 0.26);
+  }
+
+  p {
+    font-size: 16px;
+    margin: 0;
+  }
+}
+
+// Responsive styles
+@media (max-width: 768px) {
+  .task-inbox-container {
+    padding: 16px;
+  }
+
+  .task-table {
+    .mat-column-cibilScore,
+    .mat-column-riskCategory,
+    .mat-column-createdAt {
+      display: none;
+    }
+  }
+}

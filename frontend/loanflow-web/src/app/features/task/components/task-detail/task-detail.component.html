@@ -1,0 +1,298 @@
+<div class="task-detail-container">
+  @if (loading) {
+    <div class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+    </div>
+  } @else if (task) {
+    <!-- Header Card -->
+    <mat-card class="header-card">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="task-type">
+            <mat-icon class="task-icon">rate_review</mat-icon>
+            <span class="task-label">{{ getTaskLabel(task.taskDefinitionKey) }}</span>
+          </div>
+          <div class="app-number">{{ task.applicationNumber }}</div>
+          <div class="task-meta">
+            <span class="meta-item">
+              <mat-icon>category</mat-icon>
+              {{ formatLoanType(task.loanType) }}
+            </span>
+            <span class="meta-item">
+              <mat-icon>currency_rupee</mat-icon>
+              {{ formatCurrency(task.requestedAmount) }}
+            </span>
+            @if (task.customerEmail) {
+              <span class="meta-item">
+                <mat-icon>email</mat-icon>
+                {{ task.customerEmail }}
+              </span>
+            }
+          </div>
+        </div>
+        <div class="header-right">
+          @if (loan?.status) {
+            <mat-chip [color]="getStatusColor(loan?.status)" selected class="status-chip">
+              {{ getStatusLabel(loan?.status) }}
+            </mat-chip>
+          }
+          @if (task.assignee) {
+            <span class="assignee-badge">
+              <mat-icon>person</mat-icon> Assigned to you
+            </span>
+          } @else {
+            <span class="unassigned-badge">
+              <mat-icon>group</mat-icon> Unclaimed
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="header-actions">
+        @if (!task.assignee) {
+          <button mat-raised-button color="primary" (click)="claimTask()" [disabled]="actionLoading"
+                  matTooltip="Claim this task to start working on it">
+            <mat-icon>assignment_ind</mat-icon> Claim Task
+          </button>
+        } @else {
+          <button mat-stroked-button color="warn" (click)="releaseTask()" [disabled]="actionLoading"
+                  matTooltip="Release task back to the pool">
+            <mat-icon>undo</mat-icon> Release Task
+          </button>
+        }
+        <button mat-button (click)="goBack()">
+          <mat-icon>arrow_back</mat-icon> Back to Inbox
+        </button>
+      </div>
+    </mat-card>
+
+    <!-- Detail Tabs -->
+    <mat-card>
+      <mat-tab-group>
+        <!-- Loan Details Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">description</mat-icon>
+            Loan Details
+          </ng-template>
+          <div class="tab-content">
+            @if (loan) {
+              <div class="details-grid">
+                <div class="detail-item">
+                  <span class="label">Loan Type</span>
+                  <span class="value">{{ getLoanTypeLabel(loan.loanType) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Requested Amount</span>
+                  <span class="value amount">{{ formatAmount(loan.requestedAmount) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Tenure</span>
+                  <span class="value">{{ loan.tenureMonths }} months</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Purpose</span>
+                  <span class="value">{{ loan.purpose || '-' }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Customer</span>
+                  <span class="value">{{ loan.customerName || task.customerEmail || '-' }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Branch Code</span>
+                  <span class="value">{{ loan.branchCode || '-' }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Application Date</span>
+                  <span class="value">{{ formatDate(loan.createdAt) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Submitted Date</span>
+                  <span class="value">{{ formatDate(loan.submittedAt) }}</span>
+                </div>
+              </div>
+
+              @if (loan.approvedAmount) {
+                <mat-divider class="section-divider"></mat-divider>
+                <h4>Approval Details</h4>
+                <div class="details-grid">
+                  <div class="detail-item">
+                    <span class="label">Approved Amount</span>
+                    <span class="value amount">{{ formatAmount(loan.approvedAmount) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Interest Rate</span>
+                    <span class="value">{{ loan.interestRate || '-' }}% p.a.</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">EMI Amount</span>
+                    <span class="value amount">{{ formatAmount(loan.emiAmount) }}</span>
+                  </div>
+                  <div class="detail-item">
+                    <span class="label">Processing Fee</span>
+                    <span class="value">{{ formatAmount(loan.processingFee) }}</span>
+                  </div>
+                </div>
+              }
+            } @else {
+              <div class="no-data">
+                <mat-icon>info</mat-icon>
+                <p>Full loan details not available</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Credit Info Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">credit_score</mat-icon>
+            Credit Info
+          </ng-template>
+          <div class="tab-content">
+            <div class="details-grid">
+              <div class="detail-item">
+                <span class="label">CIBIL Score</span>
+                @if (task.cibilScore || loan?.cibilScore) {
+                  <span class="value" [class]="getCibilClass(task.cibilScore || loan?.cibilScore)">
+                    {{ task.cibilScore || loan?.cibilScore }}
+                  </span>
+                } @else {
+                  <span class="value na">Not Available</span>
+                }
+              </div>
+              <div class="detail-item">
+                <span class="label">Risk Category</span>
+                @if (task.riskCategory || loan?.riskCategory) {
+                  <mat-chip [color]="getRiskColor(task.riskCategory || loan?.riskCategory || '')" selected>
+                    {{ task.riskCategory || loan?.riskCategory }}
+                  </mat-chip>
+                } @else {
+                  <span class="value na">Not Assessed</span>
+                }
+              </div>
+              @if (loan) {
+                <div class="detail-item">
+                  <span class="label">Processing Fee</span>
+                  <span class="value">{{ formatAmount(loan.processingFee) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="label">Expected Disbursement</span>
+                  <span class="value">{{ loan.expectedDisbursementDate || '-' }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Credit Memo (printable summary) -->
+            @if (loan) {
+              <mat-divider class="section-divider"></mat-divider>
+              <app-credit-memo [task]="task" [loan]="loan"></app-credit-memo>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Decision Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">gavel</mat-icon>
+            Decision
+          </ng-template>
+          <div class="tab-content">
+            @if (task.assignee) {
+              <app-decision-panel
+                [task]="task"
+                [loan]="loan"
+                [loading]="actionLoading"
+                (decisionSubmitted)="onDecisionSubmitted($event)">
+              </app-decision-panel>
+            } @else {
+              <div class="claim-prompt">
+                <mat-icon>lock</mat-icon>
+                <h3>Claim Required</h3>
+                <p>You must claim this task before making a decision.</p>
+                <button mat-raised-button color="primary" (click)="claimTask()" [disabled]="actionLoading">
+                  <mat-icon>assignment_ind</mat-icon> Claim Task
+                </button>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Documents Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">folder</mat-icon>
+            Documents
+          </ng-template>
+          <div class="tab-content">
+            @if (loan?.documents?.length) {
+              <mat-list>
+                @for (doc of loan!.documents!; track doc.documentId) {
+                  <mat-list-item>
+                    <mat-icon matListItemIcon>description</mat-icon>
+                    <div matListItemTitle>{{ doc.fileName }}</div>
+                    <div matListItemLine>{{ doc.documentType }} - {{ doc.status }}</div>
+                  </mat-list-item>
+                  <mat-divider></mat-divider>
+                }
+              </mat-list>
+            } @else {
+              <div class="no-data">
+                <mat-icon>folder_open</mat-icon>
+                <p>No documents uploaded for this application</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
+        <!-- Timeline Tab -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">timeline</mat-icon>
+            Timeline
+          </ng-template>
+          <div class="tab-content">
+            <mat-list>
+              @if (loan?.createdAt) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon>add_circle</mat-icon>
+                  <div matListItemTitle>Application Created</div>
+                  <div matListItemLine>{{ formatDate(loan?.createdAt) }}</div>
+                </mat-list-item>
+                <mat-divider></mat-divider>
+              }
+              @if (loan?.submittedAt) {
+                <mat-list-item>
+                  <mat-icon matListItemIcon>send</mat-icon>
+                  <div matListItemTitle>Submitted for Processing</div>
+                  <div matListItemLine>{{ formatDate(loan?.submittedAt) }}</div>
+                </mat-list-item>
+                <mat-divider></mat-divider>
+              }
+              <mat-list-item>
+                <mat-icon matListItemIcon>assignment</mat-icon>
+                <div matListItemTitle>Task Created: {{ getTaskLabel(task.taskDefinitionKey) }}</div>
+                <div matListItemLine>{{ formatDate(task.createdAt) }}</div>
+              </mat-list-item>
+            </mat-list>
+
+            @if (loan?.workflowHistory?.length) {
+              <mat-divider class="section-divider"></mat-divider>
+              <h4>Workflow History</h4>
+              <mat-list>
+                @for (history of loan!.workflowHistory!; track history.timestamp) {
+                  <mat-list-item>
+                    <mat-icon matListItemIcon>history</mat-icon>
+                    <div matListItemTitle>{{ history.fromStage }} → {{ history.toStage }}</div>
+                    <div matListItemLine>{{ history.action }} by {{ history.performedBy }} - {{ formatDate(history.timestamp) }}</div>
+                  </mat-list-item>
+                  <mat-divider></mat-divider>
+                }
+              </mat-list>
+            }
+          </div>
+        </mat-tab>
+      </mat-tab-group>
+    </mat-card>
+  }
+</div>

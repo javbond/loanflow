@@ -155,6 +155,23 @@ export const routes: Routes = [
     ]
   },
   {
+    path: 'tasks',
+    canActivate: [authGuard],
+    data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER', 'SENIOR_UNDERWRITER', 'SUPERVISOR', 'BRANCH_MANAGER'] },
+    children: [
+      {
+        path: '',
+        loadComponent: () => import('./features/task/components/task-inbox/task-inbox.component')
+          .then(m => m.TaskInboxComponent)
+      },
+      {
+        path: ':taskId',
+        loadComponent: () => import('./features/task/components/task-detail/task-detail.component')
+          .then(m => m.TaskDetailComponent)
+      }
+    ]
+  },
+  {
     path: 'documents',
     canActivate: [authGuard],
     data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER'] },

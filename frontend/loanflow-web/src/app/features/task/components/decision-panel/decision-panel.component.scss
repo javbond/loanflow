@@ -1,0 +1,148 @@
+.decision-panel {
+  h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 4px 0;
+    color: rgba(0, 0, 0, 0.87);
+
+    mat-icon {
+      color: #1976d2;
+    }
+  }
+
+  .subtitle {
+    color: rgba(0, 0, 0, 0.54);
+    margin: 0 0 24px 0;
+    font-size: 14px;
+  }
+}
+
+// Decision radio options
+.decision-options {
+  mat-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .decision-option {
+    padding: 16px;
+    border: 2px solid rgba(0, 0, 0, 0.12);
+    border-radius: 8px;
+    transition: border-color 0.2s, background-color 0.2s;
+
+    &:hover {
+      border-color: rgba(0, 0, 0, 0.24);
+      background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .option-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      .option-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+
+        &.approve { color: #388e3c; }
+        &.reject { color: #d32f2f; }
+        &.refer { color: #f57c00; }
+      }
+
+      strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .option-desc {
+        display: block;
+        font-size: 13px;
+        color: rgba(0, 0, 0, 0.54);
+        font-weight: 400;
+      }
+    }
+  }
+
+  // Selected state styles
+  .approve-option.mat-mdc-radio-checked {
+    border-color: #388e3c;
+    background-color: rgba(56, 142, 60, 0.04);
+  }
+
+  .reject-option.mat-mdc-radio-checked {
+    border-color: #d32f2f;
+    background-color: rgba(211, 47, 47, 0.04);
+  }
+
+  .refer-option.mat-mdc-radio-checked {
+    border-color: #f57c00;
+    background-color: rgba(245, 124, 0, 0.04);
+  }
+}
+
+// Conditional fields
+.conditional-fields {
+  h4 {
+    margin: 0 0 16px 0;
+    color: rgba(0, 0, 0, 0.7);
+  }
+}
+
+.section-divider {
+  margin: 24px 0;
+}
+
+.fields-row {
+  display: flex;
+  gap: 16px;
+
+  .field-half {
+    flex: 1;
+  }
+}
+
+.field-full {
+  width: 100%;
+}
+
+// Submit
+.submit-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 16px;
+
+  .submit-button {
+    min-width: 200px;
+    height: 44px;
+    font-size: 15px;
+  }
+}
+
+// Spinning animation for loading
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+// Responsive
+@media (max-width: 768px) {
+  .fields-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .submit-actions {
+    justify-content: stretch;
+
+    .submit-button {
+      width: 100%;
+    }
+  }
+}
