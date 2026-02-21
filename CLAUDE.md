@@ -68,7 +68,7 @@
 
 ## 📊 CURRENT SPRINT STATUS
 
-### Sprint 5 (Policy Engine Foundation) - 🔄 IN PROGRESS
+### Sprint 5 (Policy Engine Foundation) - ✅ COMPLETED
 **Milestone**: [Sprint 5](https://github.com/javbond/loanflow/milestone/8)
 **Duration**: 2026-02-20 to 2026-03-06
 **Sprint Goal**: Policy Data Model, CRUD APIs, and Flowable BPMN workflow integration
@@ -76,10 +76,12 @@
 | Issue | Title | Points | Status |
 |-------|-------|--------|--------|
 | #12 | [EPIC-003] Dynamic Policy Engine | - | 🔄 Parent |
-| #32 | [US-008] Policy Data Model & CRUD | 8 | ✅ Complete (51 tests, UAT ready) |
-| #33 | [US-012] Flowable BPMN Integration | 5 | ✅ Complete (48 tests, 14 new files) |
+| #32 | [US-008] Policy Data Model & CRUD | 8 | ✅ Complete (51 tests) |
+| #33 | [US-012] Flowable BPMN Integration | 5 | ✅ Complete (48 tests) |
+| #35 | [US-013] Underwriter Workbench UI | - | ✅ Complete (18 files, 2457 lines) |
 
-**Total Story Points**: 13 | **Completed**: 13 | **Stretch**: US-003 RBAC Admin UI (3 pts)
+**Total Story Points**: 13 | **Completed**: 13
+**PRs Merged**: #34 (US-008, US-012), #36 (US-013)
 
 **Progress:** `██████████` 100%
 
@@ -158,12 +160,13 @@
 
 | Issue | Title | Priority | Sprint |
 |-------|-------|----------|--------|
-| #4 | [US-003] RBAC Admin UI (remaining) | P1 | Sprint 5 (stretch) |
-| US-009 | Policy Builder UI | P1 | Sprint 6 |
+| #4 | [US-003] RBAC Admin UI (remaining) | P1 | Deferred |
+| US-009 | Policy Builder UI | P1 | Sprint 6+ |
 | US-010 | Policy Evaluation Engine | P1 | Sprint 6 |
 | US-011 | Pre-built Policy Templates | P2 | Sprint 6 |
-| US-013 | Underwriter Workbench | P1 | Sprint 6-7 |
+| US-014 | Task Assignment & Escalation | P1 | Sprint 6 |
 | US-018 | Decision Engine (Drools) | P1 | Sprint 7 |
+| US-016 | Credit Bureau Integration (CIBIL) | P1 | Sprint 7 |
 
 ---
 
