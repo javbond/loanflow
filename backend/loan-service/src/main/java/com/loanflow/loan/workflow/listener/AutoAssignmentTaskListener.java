@@ -1,7 +1,7 @@
 package com.loanflow.loan.workflow.listener;
 
-import com.loanflow.loan.domain.entity.LoanApplication;
 import com.loanflow.loan.repository.LoanApplicationRepository;
+import com.loanflow.loan.workflow.assignment.ApprovalHierarchyResolver;
 import com.loanflow.loan.workflow.assignment.AssignmentProperties;
 import com.loanflow.loan.workflow.assignment.AssignmentStrategy;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +18,10 @@ import java.util.UUID;
 /**
  * Task listener that auto-assigns workflow tasks to officers using the configured strategy.
  *
- * Fires on "create" event for each user task. Reads candidate groups from the task,
- * delegates to AssignmentStrategy to select an officer, then sets the task assignee.
+ * Fires on "create" event for each user task. For underwriting tasks, uses the
+ * ApprovalHierarchyResolver to dynamically determine the correct candidate group
+ * based on loan amount (approval matrix). For other tasks, uses the BPMN-defined
+ * candidate group.
  *
  * Also syncs the selected officer to LoanApplication.assignedOfficer for entity-level tracking.
  *
@@ -33,6 +35,7 @@ public class AutoAssignmentTaskListener implements TaskListener {
     private final AssignmentProperties properties;
     private final AssignmentStrategy assignmentStrategy;
     private final LoanApplicationRepository repository;
+    private final ApprovalHierarchyResolver hierarchyResolver;
 
     @Override
     public void notify(DelegateTask delegateTask) {
@@ -54,22 +57,37 @@ public class AutoAssignmentTaskListener implements TaskListener {
             return;
         }
 
-        // Use the first candidate group with a group ID
-        Optional<String> candidateGroup = candidates.stream()
+        // Use the first candidate group with a group ID (BPMN-defined default)
+        Optional<String> bpmnCandidateGroup = candidates.stream()
                 .filter(link -> link.getGroupId() != null)
                 .map(IdentityLink::getGroupId)
                 .findFirst();
 
-        if (candidateGroup.isEmpty()) {
+        if (bpmnCandidateGroup.isEmpty()) {
             log.debug("No group-based candidates found for task {}", delegateTask.getTaskDefinitionKey());
             return;
         }
 
-        // Select assignee via strategy
-        Optional<String> selectedAssignee = assignmentStrategy.selectAssignee(candidateGroup.get());
+        // US-015: Resolve effective candidate group via approval hierarchy
+        String applicationId = (String) delegateTask.getVariable("applicationId");
+        String effectiveGroup = hierarchyResolver.resolveGroup(
+                delegateTask.getTaskDefinitionKey(),
+                applicationId,
+                bpmnCandidateGroup.get());
+
+        // If hierarchy resolved a different group, update the task's candidate group
+        if (!effectiveGroup.equals(bpmnCandidateGroup.get())) {
+            log.info("Approval hierarchy override: task={}, bpmn={} → resolved={}",
+                    delegateTask.getTaskDefinitionKey(), bpmnCandidateGroup.get(), effectiveGroup);
+            delegateTask.addCandidateGroup(effectiveGroup);
+            delegateTask.deleteCandidateGroup(bpmnCandidateGroup.get());
+        }
+
+        // Select assignee via strategy using the effective group
+        Optional<String> selectedAssignee = assignmentStrategy.selectAssignee(effectiveGroup);
         if (selectedAssignee.isEmpty()) {
             log.warn("No assignee selected for task {} (group={}), task remains unassigned",
-                    delegateTask.getTaskDefinitionKey(), candidateGroup.get());
+                    delegateTask.getTaskDefinitionKey(), effectiveGroup);
             return;
         }
 
@@ -77,7 +95,7 @@ public class AutoAssignmentTaskListener implements TaskListener {
         delegateTask.setAssignee(assigneeId);
         log.info("Auto-assigned task {} ({}) to user {} via group {}",
                 delegateTask.getId(), delegateTask.getTaskDefinitionKey(),
-                assigneeId, candidateGroup.get());
+                assigneeId, effectiveGroup);
 
         // Sync assignedOfficer on LoanApplication entity
         syncAssignedOfficer(delegateTask, assigneeId);
