@@ -4,6 +4,7 @@ import com.loanflow.dto.common.ApiResponse;
 import com.loanflow.loan.workflow.WorkflowService;
 import com.loanflow.loan.workflow.dto.CompleteTaskRequest;
 import com.loanflow.loan.workflow.dto.TaskResponse;
+import com.loanflow.loan.workflow.dto.WorkloadResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -123,6 +124,16 @@ public class TaskController {
 
         workflowService.completeTask(taskId, variables, jwt.getSubject());
         return ResponseEntity.ok(ApiResponse.success(null, "Task completed successfully"));
+    }
+
+    /**
+     * Get officer workload summary showing active tasks and SLA status per officer.
+     * Restricted to supervisor-level roles for dashboard visibility.
+     */
+    @GetMapping("/workload")
+    @PreAuthorize("hasAnyRole('SENIOR_UNDERWRITER', 'BRANCH_MANAGER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<WorkloadResponse>> getWorkload() {
+        return ResponseEntity.ok(ApiResponse.success(workflowService.getOfficerWorkload()));
     }
 
     /**

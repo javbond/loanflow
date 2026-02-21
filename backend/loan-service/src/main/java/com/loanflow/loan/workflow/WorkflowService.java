@@ -1,6 +1,7 @@
 package com.loanflow.loan.workflow;
 
 import com.loanflow.loan.workflow.dto.TaskResponse;
+import com.loanflow.loan.workflow.dto.WorkloadResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -67,4 +68,10 @@ public interface WorkflowService {
      * Cancel/delete a running process instance.
      */
     void cancelProcess(String processInstanceId, String reason);
+
+    /**
+     * Get workload summary for all configured officers.
+     * Shows active task count and SLA breach status per officer.
+     */
+    WorkloadResponse getOfficerWorkload();
 }

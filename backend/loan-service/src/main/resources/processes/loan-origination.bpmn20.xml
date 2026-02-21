@@ -21,6 +21,8 @@
             <extensionElements>
                 <flowable:taskListener event="create"
                     delegateExpression="${statusSyncTaskListener}"/>
+                <flowable:taskListener event="create"
+                    delegateExpression="${autoAssignmentTaskListener}"/>
             </extensionElements>
         </userTask>
 
@@ -35,6 +37,8 @@
             <extensionElements>
                 <flowable:taskListener event="create"
                     delegateExpression="${statusSyncTaskListener}"/>
+                <flowable:taskListener event="create"
+                    delegateExpression="${autoAssignmentTaskListener}"/>
             </extensionElements>
         </userTask>
 
@@ -48,6 +52,8 @@
             <extensionElements>
                 <flowable:taskListener event="create"
                     delegateExpression="${statusSyncTaskListener}"/>
+                <flowable:taskListener event="create"
+                    delegateExpression="${autoAssignmentTaskListener}"/>
             </extensionElements>
         </userTask>
 

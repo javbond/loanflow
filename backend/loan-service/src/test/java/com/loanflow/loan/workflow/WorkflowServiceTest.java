@@ -1,5 +1,6 @@
 package com.loanflow.loan.workflow;
 
+import com.loanflow.loan.workflow.assignment.AssignmentProperties;
 import com.loanflow.loan.workflow.dto.TaskResponse;
 import com.loanflow.loan.workflow.impl.WorkflowServiceImpl;
 import com.loanflow.util.exception.ResourceNotFoundException;
@@ -34,6 +35,9 @@ class WorkflowServiceTest {
 
     @Mock
     private TaskService taskService;
+
+    @Mock
+    private AssignmentProperties assignmentProperties;
 
     @InjectMocks
     private WorkflowServiceImpl workflowService;

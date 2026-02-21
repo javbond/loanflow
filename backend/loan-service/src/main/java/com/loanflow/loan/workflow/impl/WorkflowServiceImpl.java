@@ -1,7 +1,10 @@
 package com.loanflow.loan.workflow.impl;
 
 import com.loanflow.loan.workflow.WorkflowService;
+import com.loanflow.loan.workflow.assignment.AssignmentProperties;
+import com.loanflow.loan.workflow.dto.OfficerWorkload;
 import com.loanflow.loan.workflow.dto.TaskResponse;
+import com.loanflow.loan.workflow.dto.WorkloadResponse;
 import com.loanflow.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +19,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -30,6 +37,7 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     private final RuntimeService runtimeService;
     private final TaskService taskService;
+    private final AssignmentProperties assignmentProperties;
 
     @Override
     public String startProcess(UUID applicationId, Map<String, Object> variables) {
@@ -133,6 +141,60 @@ public class WorkflowServiceImpl implements WorkflowService {
     public void cancelProcess(String processInstanceId, String reason) {
         runtimeService.deleteProcessInstance(processInstanceId, reason);
         log.info("Cancelled workflow process {} — Reason: {}", processInstanceId, reason);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public WorkloadResponse getOfficerWorkload() {
+        List<OfficerWorkload> workloads = new ArrayList<>();
+        int totalActive = 0;
+
+        for (Map.Entry<String, List<String>> entry : assignmentProperties.getOfficers().entrySet()) {
+            String role = entry.getKey();
+            for (String userId : entry.getValue()) {
+                long activeCount = taskService.createTaskQuery()
+                        .taskAssignee(userId)
+                        .count();
+
+                // Check if any assigned task is SLA-breached
+                boolean slaBreached = false;
+                AssignmentProperties.SlaConfig slaConfig = findSlaConfigForRole(role);
+                if (slaConfig != null) {
+                    Instant deadline = Instant.now().minus(slaConfig.getTimeoutHours(), ChronoUnit.HOURS);
+                    long overdueCount = taskService.createTaskQuery()
+                            .taskAssignee(userId)
+                            .taskCreatedBefore(Date.from(deadline))
+                            .count();
+                    slaBreached = overdueCount > 0;
+                }
+
+                workloads.add(OfficerWorkload.builder()
+                        .userId(userId)
+                        .role(role)
+                        .activeTaskCount(activeCount)
+                        .slaBreached(slaBreached)
+                        .build());
+
+                totalActive += (int) activeCount;
+            }
+        }
+
+        return WorkloadResponse.builder()
+                .officers(workloads)
+                .totalActiveTaskCount(totalActive)
+                .build();
+    }
+
+    /**
+     * Find SLA config for tasks typically assigned to this role.
+     */
+    private AssignmentProperties.SlaConfig findSlaConfigForRole(String role) {
+        return switch (role) {
+            case "LOAN_OFFICER" -> assignmentProperties.getSla().get("documentVerification");
+            case "UNDERWRITER" -> assignmentProperties.getSla().get("underwritingReview");
+            case "SENIOR_UNDERWRITER", "BRANCH_MANAGER" -> assignmentProperties.getSla().get("referredReview");
+            default -> null;
+        };
     }
 
     private TaskResponse mapToTaskResponse(Task task) {
