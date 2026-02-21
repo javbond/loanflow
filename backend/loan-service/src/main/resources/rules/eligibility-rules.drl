@@ -1,0 +1,449 @@
+package com.loanflow.rules.eligibility;
+
+import com.loanflow.loan.decision.model.LoanApplicationFact;
+import com.loanflow.loan.decision.model.ApplicantFact;
+import com.loanflow.loan.decision.model.EmploymentDetailsFact;
+import com.loanflow.loan.decision.model.CreditReportFact;
+import com.loanflow.loan.decision.model.EligibilityResultFact;
+import com.loanflow.loan.decision.model.LoanProduct;
+import com.loanflow.loan.decision.model.EmploymentType;
+import com.loanflow.loan.decision.model.EligibilityStatus;
+
+// ==============================================================================
+// GLOBAL VARIABLES
+// ==============================================================================
+global org.slf4j.Logger logger;
+global com.loanflow.loan.decision.service.ConfigService configService;
+
+// ==============================================================================
+// RULE: AGE ELIGIBILITY (ALL PRODUCTS)
+// ==============================================================================
+rule "Age - Minimum Age Check"
+    salience 1000
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $applicant : ApplicantFact(
+            applicationId == $app.id,
+            applicantType == "PRIMARY",
+            age < 21
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        logger.info("Application {} rejected: Applicant age {} is below minimum 21",
+            $app.getApplicationNumber(), $applicant.getAge());
+        $result.addRejectionReason("MINIMUM_AGE_NOT_MET",
+            "Applicant must be at least 21 years old");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "Age - Maximum Age at Maturity"
+    salience 1000
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $applicant : ApplicantFact(
+            applicationId == $app.id,
+            applicantType == "PRIMARY"
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+        eval($applicant.getAge() + ($app.getTenureMonths() / 12) > 65)
+    then
+        logger.info("Application {} rejected: Age at maturity exceeds 65",
+            $app.getApplicationNumber());
+        $result.addRejectionReason("AGE_AT_MATURITY_EXCEEDED",
+            "Applicant age at loan maturity cannot exceed 65 years");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+// ==============================================================================
+// PERSONAL LOAN ELIGIBILITY RULES
+// ==============================================================================
+rule "PL - Salaried Minimum Income"
+    salience 900
+    no-loop true
+    when
+        $app : LoanApplicationFact(productCode == "PL")
+        $applicant : ApplicantFact(applicationId == $app.id, applicantType == "PRIMARY")
+        $emp : EmploymentDetailsFact(
+            applicantId == $applicant.id,
+            employmentType == EmploymentType.SALARIED,
+            netMonthlyIncome < 25000
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        $result.addRejectionReason("MINIMUM_INCOME_NOT_MET",
+            "Minimum net monthly income of Rs. 25,000 required for salaried applicants");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "PL - Self-Employed Minimum Income"
+    salience 900
+    no-loop true
+    when
+        $app : LoanApplicationFact(productCode == "PL")
+        $applicant : ApplicantFact(applicationId == $app.id, applicantType == "PRIMARY")
+        $emp : EmploymentDetailsFact(
+            applicantId == $applicant.id,
+            employmentType in (EmploymentType.SELF_EMPLOYED_PROFESSIONAL, EmploymentType.SELF_EMPLOYED_BUSINESS),
+            netMonthlyIncome < 40000
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        $result.addRejectionReason("MINIMUM_INCOME_NOT_MET",
+            "Minimum net monthly income of Rs. 40,000 required for self-employed applicants");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "PL - Maximum Loan Amount"
+    salience 850
+    no-loop true
+    when
+        $app : LoanApplicationFact(
+            productCode == "PL",
+            requestedAmount > 5000000
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        $result.addRejectionReason("AMOUNT_EXCEEDS_LIMIT",
+            "Personal loan amount cannot exceed Rs. 50 Lakhs");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "PL - FOIR Check"
+    salience 800
+    no-loop true
+    when
+        $app : LoanApplicationFact(productCode == "PL")
+        $applicant : ApplicantFact(applicationId == $app.id, applicantType == "PRIMARY")
+        $emp : EmploymentDetailsFact(applicantId == $applicant.id)
+        $result : EligibilityResultFact(applicationId == $app.id)
+        eval(($applicant.getExistingEmi() + $app.getCalculatedEmi()) / $emp.getNetMonthlyIncome() > 0.50)
+    then
+        $result.addRejectionReason("FOIR_EXCEEDED",
+            "Fixed Obligation to Income Ratio exceeds 50%");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+// ==============================================================================
+// HOME LOAN ELIGIBILITY RULES
+// ==============================================================================
+rule "HL - Minimum Loan Amount"
+    salience 900
+    no-loop true
+    when
+        $app : LoanApplicationFact(
+            productCode == "HL",
+            requestedAmount < 500000
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        $result.addRejectionReason("AMOUNT_BELOW_MINIMUM",
+            "Home loan amount must be at least Rs. 5 Lakhs");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "HL - Employment Stability Salaried"
+    salience 850
+    no-loop true
+    when
+        $app : LoanApplicationFact(productCode == "HL")
+        $applicant : ApplicantFact(applicationId == $app.id, applicantType == "PRIMARY")
+        $emp : EmploymentDetailsFact(
+            applicantId == $applicant.id,
+            employmentType == EmploymentType.SALARIED,
+            totalExperienceYears < 2 || yearsInCurrentJob < 1
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        $result.addRejectionReason("EMPLOYMENT_STABILITY",
+            "Salaried applicants require minimum 2 years total experience and 1 year in current job");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "HL - LTV Ratio Check"
+    salience 800
+    no-loop true
+    when
+        $app : LoanApplicationFact(productCode == "HL")
+        $result : EligibilityResultFact(applicationId == $app.id)
+        eval($app.getRequestedAmount() / $app.getPropertyValue() > 0.80)
+    then
+        $result.addRejectionReason("LTV_EXCEEDED",
+            "Loan to Value ratio cannot exceed 80%");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+// ==============================================================================
+// CREDIT SCORE RULES
+// ==============================================================================
+rule "Credit Score - Hard Rejection"
+    salience 950
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $applicant : ApplicantFact(applicationId == $app.id, applicantType == "PRIMARY")
+        $credit : CreditReportFact(
+            applicantId == $applicant.id,
+            creditScore < 550
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        logger.warn("Application {} auto-rejected: Credit score {} below threshold",
+            $app.getApplicationNumber(), $credit.getCreditScore());
+        $result.addRejectionReason("CREDIT_SCORE_TOO_LOW",
+            "Credit score below minimum threshold of 550");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "Credit Score - Refer to Senior"
+    salience 940
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $applicant : ApplicantFact(applicationId == $app.id, applicantType == "PRIMARY")
+        $credit : CreditReportFact(
+            applicantId == $applicant.id,
+            creditScore >= 550 && creditScore < 650
+        )
+        $result : EligibilityResultFact(applicationId == $app.id, status != EligibilityStatus.REJECTED)
+    then
+        $result.setStatus(EligibilityStatus.REFER);
+        $result.setReferReason("Credit score in marginal range (550-650), requires senior review");
+        update($result);
+end
+
+rule "Credit Score - DPD 90+ Rejection"
+    salience 945
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $applicant : ApplicantFact(applicationId == $app.id, applicantType == "PRIMARY")
+        $credit : CreditReportFact(
+            applicantId == $applicant.id,
+            dpd90PlusCount > 0
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        $result.addRejectionReason("DPD_90_PLUS",
+            "Applicant has accounts with 90+ days past due in credit history");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "Credit Score - Write-off Rejection"
+    salience 945
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $applicant : ApplicantFact(applicationId == $app.id, applicantType == "PRIMARY")
+        $credit : CreditReportFact(
+            applicantId == $applicant.id,
+            writtenOffAccounts > 0
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        $result.addRejectionReason("WRITE_OFF_FOUND",
+            "Applicant has written-off accounts in credit history");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "Credit Score - High Enquiry Count"
+    salience 850
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $applicant : ApplicantFact(applicationId == $app.id, applicantType == "PRIMARY")
+        $credit : CreditReportFact(
+            applicantId == $applicant.id,
+            enquiryCount30Days > 5
+        )
+        $result : EligibilityResultFact(applicationId == $app.id, status != EligibilityStatus.REJECTED)
+    then
+        $result.setStatus(EligibilityStatus.REFER);
+        $result.setReferReason("High credit enquiry count in last 30 days (" +
+            $credit.getEnquiryCount30Days() + "), indicates credit hungry behavior");
+        update($result);
+end
+
+// ==============================================================================
+// VEHICLE LOAN ELIGIBILITY RULES
+// ==============================================================================
+rule "VL - New Vehicle LTV"
+    salience 900
+    no-loop true
+    when
+        $app : LoanApplicationFact(productCode == "VL", vehicleType == "NEW")
+        $result : EligibilityResultFact(applicationId == $app.id)
+        eval($app.getRequestedAmount() / $app.getVehiclePrice() > 0.90)
+    then
+        $result.addRejectionReason("LTV_EXCEEDED",
+            "LTV for new vehicle cannot exceed 90%");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "VL - Used Vehicle Age"
+    salience 900
+    no-loop true
+    when
+        $app : LoanApplicationFact(productCode == "VL", vehicleType == "USED", vehicleAge > 5)
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        $result.addRejectionReason("VEHICLE_TOO_OLD",
+            "Used vehicle age cannot exceed 5 years");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+// ==============================================================================
+// GOLD LOAN ELIGIBILITY RULES
+// ==============================================================================
+rule "GL - LTV Check"
+    salience 900
+    no-loop true
+    when
+        $app : LoanApplicationFact(productCode == "GL")
+        $result : EligibilityResultFact(applicationId == $app.id)
+        eval($app.getRequestedAmount() / $app.getGoldValue() > 0.75)
+    then
+        $result.addRejectionReason("LTV_EXCEEDED",
+            "Gold loan LTV cannot exceed 75% as per RBI guidelines");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "GL - Minimum Gold Weight"
+    salience 850
+    no-loop true
+    when
+        $app : LoanApplicationFact(productCode == "GL", goldWeightGrams < 10)
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        $result.addRejectionReason("MINIMUM_GOLD_WEIGHT",
+            "Minimum gold weight of 10 grams required");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+// ==============================================================================
+// KYC COMPLIANCE RULES
+// ==============================================================================
+rule "KYC - PAN Mandatory"
+    salience 1000
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $applicant : ApplicantFact(
+            applicationId == $app.id,
+            applicantType == "PRIMARY",
+            (pan == null || pan.isEmpty())
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        $result.addRejectionReason("PAN_REQUIRED",
+            "Valid PAN is mandatory for all loan applications");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "KYC - PAN Not Verified"
+    salience 990
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $applicant : ApplicantFact(
+            applicationId == $app.id,
+            applicantType == "PRIMARY",
+            panVerified == false
+        )
+        $result : EligibilityResultFact(applicationId == $app.id, status != EligibilityStatus.REJECTED)
+    then
+        $result.setStatus(EligibilityStatus.PENDING_KYC);
+        $result.addPendingItem("PAN_VERIFICATION", "PAN verification pending");
+        update($result);
+end
+
+rule "KYC - PEP Check"
+    salience 985
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $applicant : ApplicantFact(
+            applicationId == $app.id,
+            applicantType == "PRIMARY",
+            politicallyExposed == true
+        )
+        $result : EligibilityResultFact(applicationId == $app.id, status != EligibilityStatus.REJECTED)
+    then
+        $result.setStatus(EligibilityStatus.REFER);
+        $result.setReferReason("Applicant is Politically Exposed Person (PEP), requires compliance review");
+        update($result);
+end
+
+// ==============================================================================
+// ELIGIBLE AMOUNT CALCULATION RULES
+// ==============================================================================
+rule "Calculate Eligible Amount - Salaried PL"
+    salience 100
+    no-loop true
+    when
+        $app : LoanApplicationFact(productCode == "PL")
+        $applicant : ApplicantFact(applicationId == $app.id, applicantType == "PRIMARY")
+        $emp : EmploymentDetailsFact(
+            applicantId == $applicant.id,
+            employmentType == EmploymentType.SALARIED
+        )
+        $credit : CreditReportFact(applicantId == $applicant.id)
+        $result : EligibilityResultFact(applicationId == $app.id, status == EligibilityStatus.ELIGIBLE)
+    then
+        double multiplier = 15.0;
+        if ($credit.getCreditScore() >= 750) {
+            multiplier = 20.0;
+        } else if ($credit.getCreditScore() >= 700) {
+            multiplier = 18.0;
+        }
+        double maxEligible = $emp.getNetMonthlyIncome() * multiplier;
+        double foirLimit = ($emp.getNetMonthlyIncome() * 0.50 - $applicant.getExistingEmi()) *
+                          $app.getTenureMonths() * 0.9; // Rough EMI to principal conversion
+
+        double eligibleAmount = Math.min(maxEligible, foirLimit);
+        eligibleAmount = Math.min(eligibleAmount, 5000000); // Product max cap
+
+        $result.setMaxEligibleAmount(eligibleAmount);
+        $result.setRecommendedInterestRate(
+            $credit.getCreditScore() >= 750 ? 10.50 :
+            $credit.getCreditScore() >= 700 ? 12.00 :
+            $credit.getCreditScore() >= 650 ? 14.00 : 16.00
+        );
+        update($result);
+end
+
+// ==============================================================================
+// FINAL ELIGIBILITY DETERMINATION
+// ==============================================================================
+rule "Final - Set Eligible if No Rejections"
+    salience 10
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $result : EligibilityResultFact(
+            applicationId == $app.id,
+            status == null,
+            rejectionReasons.isEmpty()
+        )
+    then
+        $result.setStatus(EligibilityStatus.ELIGIBLE);
+        update($result);
+end
