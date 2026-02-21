@@ -68,6 +68,23 @@
 
 ## 📊 CURRENT SPRINT STATUS
 
+### Sprint 6 (Policy Evaluation + Task Assignment) - 🔄 IN PROGRESS
+**Milestone**: [Sprint 6](https://github.com/javbond/loanflow/milestone/9)
+**Duration**: 2026-03-06 to 2026-03-20
+**Sprint Goal**: Complete M2 milestone (Policy Evaluation Engine) + Production-grade workflow assignment
+
+| Issue | Title | Points | Status |
+|-------|-------|--------|--------|
+| #37 | [US-010] Policy Evaluation Engine | 8 | ⏳ Pending |
+| #38 | [US-011] Pre-built Policy Templates | 3 | ⏳ Pending |
+| #39 | [US-014] Task Assignment & Escalation | 5 | ⏳ Pending |
+
+**Total Story Points**: 16 | **Completed**: 0
+
+**Progress:** `░░░░░░░░░░` 0%
+
+---
+
 ### Sprint 5 (Policy Engine Foundation) - ✅ COMPLETED
 **Milestone**: [Sprint 5](https://github.com/javbond/loanflow/milestone/8)
 **Duration**: 2026-02-20 to 2026-03-06
