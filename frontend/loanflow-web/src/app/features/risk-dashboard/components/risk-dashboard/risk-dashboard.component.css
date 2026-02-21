@@ -1,0 +1,423 @@
+.risk-dashboard {
+  padding: 24px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* Header */
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 24px;
+}
+
+.header-left h1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 24px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.header-icon {
+  color: #3b82f6;
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.generated-at {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 4px;
+  display: block;
+}
+
+/* Loading */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 0;
+  gap: 16px;
+  color: #64748b;
+}
+
+/* Error */
+.error-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 24px;
+  background: #fef2f2;
+  border-left: 4px solid #ef4444;
+  margin-bottom: 24px;
+}
+
+.error-card mat-icon {
+  color: #ef4444;
+}
+
+/* KPI Grid */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+}
+
+.kpi-icon-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.kpi-icon-wrapper mat-icon {
+  color: white;
+  font-size: 24px;
+  width: 24px;
+  height: 24px;
+}
+
+.kpi-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi-value {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.2;
+}
+
+.kpi-label {
+  font-size: 12px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Charts Row */
+.charts-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.chart-card {
+  padding: 0;
+}
+
+.chart-card.full-width {
+  margin-bottom: 24px;
+}
+
+.chart-card mat-card-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.chart-card mat-card-content {
+  padding: 24px;
+}
+
+/* Bar Chart */
+.bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar-label {
+  width: 80px;
+  font-size: 13px;
+  color: #475569;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.bar-container {
+  flex: 1;
+  height: 28px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s ease-out;
+  min-width: 2px;
+}
+
+.bar-value {
+  width: 40px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Risk Tiers */
+.risk-tiers {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.tier-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.tier-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.tier-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tier-label {
+  font-size: 13px;
+  color: #475569;
+}
+
+.tier-bar-container {
+  flex: 1;
+  height: 24px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.tier-bar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s ease-out;
+  min-width: 2px;
+}
+
+.tier-stats {
+  display: flex;
+  gap: 8px;
+  width: 80px;
+  flex-shrink: 0;
+  justify-content: flex-end;
+}
+
+.tier-count {
+  font-weight: 600;
+  color: #1e293b;
+  font-size: 14px;
+}
+
+.tier-pct {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+/* Portfolio Exposure */
+.exposure-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.exposure-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.exposure-label {
+  width: 130px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #475569;
+  flex-shrink: 0;
+}
+
+.exposure-bar-container {
+  flex: 1;
+  height: 24px;
+  background: #f1f5f9;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.exposure-bar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s ease-out;
+  min-width: 2px;
+}
+
+.exposure-value {
+  width: 180px;
+  font-size: 13px;
+  color: #475569;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+  gap: 8px;
+  color: #94a3b8;
+}
+
+.empty-state mat-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+}
+
+.success-icon {
+  color: #22c55e !important;
+}
+
+/* Alerts Card */
+.alerts-card {
+  padding: 0;
+}
+
+.alerts-card mat-card-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.alerts-card mat-card-content {
+  padding: 0;
+}
+
+.alert-icon {
+  color: #ef4444;
+}
+
+.alert-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 11px;
+  background: #ef4444;
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 8px;
+}
+
+.alerts-table {
+  width: 100%;
+}
+
+.alert-row:hover {
+  background: #f8fafc;
+}
+
+.app-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.app-link:hover {
+  text-decoration: underline;
+}
+
+.low-score {
+  color: #ef4444;
+  font-weight: 600;
+}
+
+.status-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-npa {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.status-rejected {
+  background: #fef2f2;
+  color: #ef4444;
+}
+
+.alert-type-chip {
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .risk-dashboard {
+    padding: 16px;
+  }
+
+  .charts-row {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboard-header {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .exposure-value {
+    width: 120px;
+    font-size: 11px;
+  }
+}

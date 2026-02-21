@@ -53,4 +53,87 @@ public interface LoanApplicationRepository extends
 
     @Query("SELECT la FROM LoanApplication la WHERE LOWER(la.applicationNumber) LIKE LOWER(CONCAT('%', :query, '%'))")
     Page<LoanApplication> searchByApplicationNumber(@Param("query") String query, Pageable pageable);
+
+    // ==================== US-019: Risk Dashboard Queries ====================
+
+    /**
+     * Count applications by risk category (for risk tier breakdown chart).
+     */
+    @Query("SELECT la.riskCategory, COUNT(la) FROM LoanApplication la " +
+            "WHERE la.riskCategory IS NOT NULL AND la.status NOT IN ('DRAFT', 'CANCELLED') " +
+            "GROUP BY la.riskCategory")
+    List<Object[]> countByRiskCategory();
+
+    /**
+     * Count applications by CIBIL score range (for score distribution chart).
+     */
+    @Query("SELECT " +
+            "CASE " +
+            "  WHEN la.cibilScore >= 750 THEN 'EXCELLENT' " +
+            "  WHEN la.cibilScore >= 700 THEN 'GOOD' " +
+            "  WHEN la.cibilScore >= 650 THEN 'FAIR' " +
+            "  WHEN la.cibilScore >= 550 THEN 'BELOW_AVERAGE' " +
+            "  ELSE 'POOR' " +
+            "END, COUNT(la) " +
+            "FROM LoanApplication la " +
+            "WHERE la.cibilScore IS NOT NULL AND la.status NOT IN ('DRAFT', 'CANCELLED') " +
+            "GROUP BY " +
+            "CASE " +
+            "  WHEN la.cibilScore >= 750 THEN 'EXCELLENT' " +
+            "  WHEN la.cibilScore >= 700 THEN 'GOOD' " +
+            "  WHEN la.cibilScore >= 650 THEN 'FAIR' " +
+            "  WHEN la.cibilScore >= 550 THEN 'BELOW_AVERAGE' " +
+            "  ELSE 'POOR' " +
+            "END")
+    List<Object[]> countByCibilScoreRange();
+
+    /**
+     * Count applications by status (for status overview).
+     */
+    @Query("SELECT la.status, COUNT(la) FROM LoanApplication la " +
+            "WHERE la.status NOT IN ('DRAFT') " +
+            "GROUP BY la.status")
+    List<Object[]> countByStatus();
+
+    /**
+     * Get average CIBIL score.
+     */
+    @Query("SELECT AVG(la.cibilScore) FROM LoanApplication la " +
+            "WHERE la.cibilScore IS NOT NULL AND la.status NOT IN ('DRAFT', 'CANCELLED')")
+    Double findAverageCibilScore();
+
+    /**
+     * Count high-risk applications (riskCategory in HIGH, MEDIUM_HIGH or cibilScore < 650).
+     */
+    @Query("SELECT COUNT(la) FROM LoanApplication la " +
+            "WHERE la.status NOT IN ('DRAFT', 'CANCELLED', 'REJECTED') " +
+            "AND (la.riskCategory IN ('HIGH', 'MEDIUM_HIGH') OR la.cibilScore < 650)")
+    long countHighRiskApplications();
+
+    /**
+     * Find applications with negative markers (NPA status or rejection for credit reasons).
+     */
+    @Query("SELECT la FROM LoanApplication la " +
+            "WHERE (la.status = 'NPA' " +
+            "   OR (la.status = 'REJECTED' AND la.riskCategory IN ('HIGH', 'MEDIUM_HIGH'))) " +
+            "ORDER BY la.updatedAt DESC")
+    List<LoanApplication> findNegativeMarkerApplications();
+
+    /**
+     * Get total disbursed amount by risk category.
+     */
+    @Query("SELECT la.riskCategory, SUM(la.approvedAmount) FROM LoanApplication la " +
+            "WHERE la.riskCategory IS NOT NULL " +
+            "AND la.status IN ('APPROVED', 'DISBURSEMENT_PENDING', 'DISBURSED', 'CLOSED') " +
+            "GROUP BY la.riskCategory")
+    List<Object[]> sumApprovedAmountByRiskCategory();
+
+    /**
+     * Count applications by loan type and risk category (for cross-analysis).
+     */
+    @Query("SELECT la.loanType, la.riskCategory, COUNT(la) FROM LoanApplication la " +
+            "WHERE la.riskCategory IS NOT NULL AND la.status NOT IN ('DRAFT', 'CANCELLED') " +
+            "GROUP BY la.loanType, la.riskCategory " +
+            "ORDER BY la.loanType, la.riskCategory")
+    List<Object[]> countByLoanTypeAndRiskCategory();
 }

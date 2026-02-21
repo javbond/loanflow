@@ -1,0 +1,276 @@
+<div class="risk-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div class="header-left">
+      <h1>
+        <mat-icon class="header-icon">assessment</mat-icon>
+        Risk Analytics Dashboard
+      </h1>
+      @if (dashboard?.generatedAt) {
+        <span class="generated-at">Last updated: {{ dashboard!.generatedAt | date:'medium' }}</span>
+      }
+    </div>
+    <button mat-raised-button color="primary" (click)="refresh()" [disabled]="loading">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  @if (loading) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Loading risk analytics...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error) {
+    <mat-card class="error-card">
+      <mat-icon>error_outline</mat-icon>
+      <span>{{ error }}</span>
+      <button mat-button color="primary" (click)="refresh()">Retry</button>
+    </mat-card>
+  }
+
+  @if (dashboard && !loading) {
+    <!-- Summary KPIs -->
+    <div class="kpi-grid">
+      <mat-card class="kpi-card">
+        <div class="kpi-icon-wrapper" style="background: #3b82f6">
+          <mat-icon>credit_score</mat-icon>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-value">{{ dashboard.summaryKpis.averageCibilScore }}</span>
+          <span class="kpi-label">Avg CIBIL Score</span>
+        </div>
+      </mat-card>
+
+      <mat-card class="kpi-card">
+        <div class="kpi-icon-wrapper" style="background: #ef4444">
+          <mat-icon>warning</mat-icon>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-value">{{ dashboard.summaryKpis.highRiskCount }}</span>
+          <span class="kpi-label">High Risk Apps</span>
+        </div>
+      </mat-card>
+
+      <mat-card class="kpi-card">
+        <div class="kpi-icon-wrapper" style="background: #22c55e">
+          <mat-icon>assignment</mat-icon>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-value">{{ dashboard.summaryKpis.totalProcessed }}</span>
+          <span class="kpi-label">Total Processed</span>
+        </div>
+      </mat-card>
+
+      <mat-card class="kpi-card">
+        <div class="kpi-icon-wrapper" style="background: #f97316">
+          <mat-icon>cancel</mat-icon>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-value">{{ dashboard.summaryKpis.rejectionRate }}%</span>
+          <span class="kpi-label">Rejection Rate</span>
+        </div>
+      </mat-card>
+
+      <mat-card class="kpi-card">
+        <div class="kpi-icon-wrapper" style="background: #dc2626">
+          <mat-icon>report_problem</mat-icon>
+        </div>
+        <div class="kpi-content">
+          <span class="kpi-value">{{ dashboard.summaryKpis.npaCount }}</span>
+          <span class="kpi-label">NPA Count</span>
+        </div>
+      </mat-card>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <!-- CIBIL Score Distribution -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>bar_chart</mat-icon>
+          <mat-card-title>CIBIL Score Distribution</mat-card-title>
+          <mat-card-subtitle>Credit score ranges across applications</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="bar-chart">
+            @for (bucket of dashboard.scoreDistribution; track bucket.range) {
+              <div class="bar-row">
+                <span class="bar-label">{{ bucket.label }}</span>
+                <div class="bar-container">
+                  <div class="bar-fill"
+                       [style.width.%]="getBarWidth(bucket.count)"
+                       [style.background]="bucket.color">
+                  </div>
+                </div>
+                <span class="bar-value">{{ bucket.count }}</span>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Risk Tier Breakdown -->
+      <mat-card class="chart-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>pie_chart</mat-icon>
+          <mat-card-title>Risk Tier Breakdown</mat-card-title>
+          <mat-card-subtitle>Distribution of applications by risk category</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (dashboard.riskTierBreakdown.length > 0) {
+            <div class="risk-tiers">
+              @for (tier of dashboard.riskTierBreakdown; track tier.category) {
+                <div class="tier-row">
+                  <div class="tier-info">
+                    <span class="tier-dot" [style.background]="tier.color"></span>
+                    <span class="tier-label">{{ tier.label }}</span>
+                  </div>
+                  <div class="tier-bar-container">
+                    <div class="tier-bar"
+                         [style.width.%]="tier.percentage"
+                         [style.background]="tier.color">
+                    </div>
+                  </div>
+                  <div class="tier-stats">
+                    <span class="tier-count">{{ tier.count }}</span>
+                    <span class="tier-pct">{{ tier.percentage }}%</span>
+                  </div>
+                </div>
+              }
+            </div>
+          } @else {
+            <div class="empty-state">
+              <mat-icon>info</mat-icon>
+              <p>No risk tier data available yet.</p>
+            </div>
+          }
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Portfolio Exposure -->
+    @if (dashboard.portfolioExposure.length > 0) {
+      <mat-card class="chart-card full-width">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>account_balance_wallet</mat-icon>
+          <mat-card-title>Portfolio Exposure by Risk Category</mat-card-title>
+          <mat-card-subtitle>Approved loan amounts grouped by risk level</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="exposure-chart">
+            @for (exposure of dashboard.portfolioExposure; track exposure.riskCategory) {
+              <div class="exposure-row">
+                <span class="exposure-label">
+                  <span class="tier-dot" [style.background]="getRiskCategoryColor(exposure.riskCategory)"></span>
+                  {{ exposure.riskCategory }}
+                </span>
+                <div class="exposure-bar-container">
+                  <div class="exposure-bar"
+                       [style.width.%]="getExposureBarWidth(exposure.totalAmount)"
+                       [style.background]="getRiskCategoryColor(exposure.riskCategory)">
+                  </div>
+                </div>
+                <span class="exposure-value">{{ formatAmount(exposure.totalAmount) }} ({{ exposure.percentage }}%)</span>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- Negative Marker Alerts -->
+    <mat-card class="alerts-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar class="alert-icon">notification_important</mat-icon>
+        <mat-card-title>
+          Negative Marker Alerts
+          @if (dashboard.negativeMarkerAlerts.length > 0) {
+            <span class="alert-badge">{{ dashboard.negativeMarkerAlerts.length }}</span>
+          }
+        </mat-card-title>
+        <mat-card-subtitle>Applications with risk flags, NPAs, and high-risk rejections</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        @if (dashboard.negativeMarkerAlerts.length > 0) {
+          <table mat-table [dataSource]="dashboard.negativeMarkerAlerts" class="alerts-table">
+            <!-- Severity -->
+            <ng-container matColumnDef="severity">
+              <th mat-header-cell *matHeaderCellDef>Severity</th>
+              <td mat-cell *matCellDef="let alert">
+                <mat-icon [style.color]="getSeverityColor(alert.severity)"
+                          [matTooltip]="alert.severity">
+                  {{ getSeverityIcon(alert.severity) }}
+                </mat-icon>
+              </td>
+            </ng-container>
+
+            <!-- Application Number -->
+            <ng-container matColumnDef="applicationNumber">
+              <th mat-header-cell *matHeaderCellDef>Application</th>
+              <td mat-cell *matCellDef="let alert">
+                <a [routerLink]="['/loans', alert.applicationId]" class="app-link">
+                  {{ alert.applicationNumber }}
+                </a>
+              </td>
+            </ng-container>
+
+            <!-- Loan Type -->
+            <ng-container matColumnDef="loanType">
+              <th mat-header-cell *matHeaderCellDef>Type</th>
+              <td mat-cell *matCellDef="let alert">{{ alert.loanType }}</td>
+            </ng-container>
+
+            <!-- Amount -->
+            <ng-container matColumnDef="amount">
+              <th mat-header-cell *matHeaderCellDef>Amount</th>
+              <td mat-cell *matCellDef="let alert">{{ formatAmount(alert.requestedAmount) }}</td>
+            </ng-container>
+
+            <!-- CIBIL Score -->
+            <ng-container matColumnDef="cibilScore">
+              <th mat-header-cell *matHeaderCellDef>CIBIL</th>
+              <td mat-cell *matCellDef="let alert"
+                  [class.low-score]="alert.cibilScore && alert.cibilScore < 650">
+                {{ alert.cibilScore || 'N/A' }}
+              </td>
+            </ng-container>
+
+            <!-- Status -->
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let alert">
+                <span class="status-chip" [class]="'status-' + alert.status.toLowerCase()">
+                  {{ alert.status }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Alert Type -->
+            <ng-container matColumnDef="alertType">
+              <th mat-header-cell *matHeaderCellDef>Alert</th>
+              <td mat-cell *matCellDef="let alert">
+                <span class="alert-type-chip" [matTooltip]="alert.reason || ''">
+                  {{ getAlertTypeLabel(alert.alertType) }}
+                </span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"
+                class="alert-row"></tr>
+          </table>
+        } @else {
+          <div class="empty-state">
+            <mat-icon class="success-icon">check_circle</mat-icon>
+            <p>No negative markers found. Portfolio is healthy!</p>
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

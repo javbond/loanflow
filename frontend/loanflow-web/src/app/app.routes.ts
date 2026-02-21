@@ -154,6 +154,14 @@ export const routes: Routes = [
       }
     ]
   },
+  // Risk Dashboard - Staff analytics (Underwriter+)
+  {
+    path: 'risk-dashboard',
+    canActivate: [authGuard],
+    data: { roles: ['ADMIN', 'UNDERWRITER', 'SENIOR_UNDERWRITER', 'BRANCH_MANAGER'] },
+    loadComponent: () => import('./features/risk-dashboard/components/risk-dashboard/risk-dashboard.component')
+      .then(m => m.RiskDashboardComponent)
+  },
   {
     path: 'tasks',
     canActivate: [authGuard],
