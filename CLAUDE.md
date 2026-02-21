@@ -4,7 +4,7 @@
 **LoanFlow** - Loan Origination System for Indian Banks
 - Multi-tenant SaaS platform
 - Spring Boot 3.2 microservices + Angular 17 frontend
-- TDD approach with 121+ tests
+- TDD approach with 211+ tests
 
 ---
 
@@ -68,17 +68,56 @@
 
 ## 📊 CURRENT SPRINT STATUS
 
-### Sprint 3 (Security & Auth) - 🔄 IN PROGRESS
-**Milestone**: [Sprint 3](https://github.com/javbond/loanflow/milestone/6)
+### Sprint 5 (Policy Engine Foundation) - 🔄 IN PROGRESS
+**Milestone**: [Sprint 5](https://github.com/javbond/loanflow/milestone/8)
 **Duration**: 2026-02-20 to 2026-03-06
+**Sprint Goal**: Policy Data Model, CRUD APIs, and Flowable BPMN workflow integration
 
 | Issue | Title | Points | Status |
 |-------|-------|--------|--------|
-| #1 | [EPIC-001] Platform Foundation | - | 🔄 Parent |
-| #3 | [US-002] Authentication System (Keycloak) | 8 | 🔄 In Progress |
-| #4 | [US-003] Role-Based Access Control | 5 | ⏳ Pending |
+| #12 | [EPIC-003] Dynamic Policy Engine | - | 🔄 Parent |
+| #32 | [US-008] Policy Data Model & CRUD | 8 | ✅ Complete (51 tests, UAT ready) |
+| #33 | [US-012] Flowable BPMN Integration | 5 | ✅ Complete (48 tests, 14 new files) |
 
-**Progress:** `████░░░░░░` 40% (Keycloak OAuth2/OIDC implemented, UAT pending)
+**Total Story Points**: 13 | **Completed**: 13 | **Stretch**: US-003 RBAC Admin UI (3 pts)
+
+**Progress:** `██████████` 100%
+
+---
+
+### Sprint 4 (Customer Portal) - ✅ COMPLETED
+**Milestone**: [Sprint 4](https://github.com/javbond/loanflow/milestone/7)
+**Velocity**: 5 stories delivered
+
+| Issue | Title | Status |
+|-------|-------|--------|
+| #22 | [EPIC-004] Customer Self-Service Portal | ✅ Closed |
+| #26 | [US-024] Customer Loan Application Form | ✅ Closed |
+| #27 | [US-025] Customer Document Upload | ✅ Closed |
+| #28 | [US-026] Loan Offer Accept/Reject | ✅ Closed |
+| #29 | [US-027] Document Download | ✅ Closed |
+| #30 | [US-028] Customer Profile Management | ✅ Closed |
+| #21 | [US-007] Application Status Tracking | ✅ Closed |
+| #23 | [US-021] Customer Dashboard | ✅ Closed |
+| #24 | [US-022] Customer Documents | ✅ Closed |
+| #25 | [US-023] Application Status Timeline | ✅ Closed |
+
+**PR Merged**: #31 (Customer Portal)
+**Progress:** `██████████` 100%
+
+---
+
+### Sprint 3 (Security & Auth) - ✅ COMPLETED
+**Milestone**: [Sprint 3](https://github.com/javbond/loanflow/milestone/6)
+**Velocity**: 8 story points
+
+| Issue | Title | Points | Status |
+|-------|-------|--------|--------|
+| #3 | [US-002] Authentication System (Keycloak OAuth2/OIDC) | 8 | ✅ Closed |
+| #4 | [US-003] Role-Based Access Control | 5 | 🔄 Partial (admin UI deferred) |
+
+**PR Merged**: #20 (Auth System)
+**Progress:** `██████████` 100%
 
 ---
 
@@ -119,9 +158,12 @@
 
 | Issue | Title | Priority | Sprint |
 |-------|-------|----------|--------|
-| #3 | [US-002] Authentication System | P1 | Sprint 3 |
-| #4 | [US-003] Role-Based Access Control | P1 | Sprint 3 |
-| #12 | [EPIC-003] Policy Engine | P2 | Sprint 4 |
+| #4 | [US-003] RBAC Admin UI (remaining) | P1 | Sprint 5 (stretch) |
+| US-009 | Policy Builder UI | P1 | Sprint 6 |
+| US-010 | Policy Evaluation Engine | P1 | Sprint 6 |
+| US-011 | Pre-built Policy Templates | P2 | Sprint 6 |
+| US-013 | Underwriter Workbench | P1 | Sprint 6-7 |
+| US-018 | Decision Engine (Drools) | P1 | Sprint 7 |
 
 ---
 
@@ -143,13 +185,14 @@
 | Service | Port | Tests | Backend | Frontend |
 |---------|------|-------|---------|----------|
 | customer-service | 8082 | 45 | ✅ Done | ✅ Done |
-| loan-service | 8081 | 27 | ✅ Done | ✅ Done |
+| loan-service | 8081 | 48 | ✅ Done (+ Flowable BPMN workflow) | ✅ Done |
 | document-service | 8083 | 49 | ✅ Done | ✅ Done |
-| auth-service (Keycloak) | 8085 | 10 | 🔄 Keycloak OAuth2 | 🔄 Sprint 3 |
+| auth-service (Keycloak) | 8085 | 10 | ✅ Keycloak OAuth2/OIDC | ✅ Done (Login/Logout/Guards) |
+| policy-service | 8086 | 51 | ✅ Done (MongoDB + Redis) | ✅ Done (Policy Builder UI) |
 | notification-service | 8084 | - | ⏳ Pending | ⏳ Pending |
 | api-gateway | 8080 | - | ⏳ Pending | - |
 
-**Total TDD Tests**: 139+
+**Total TDD Tests**: 211+ (auth-service: 10, customer: 45, loan: 48, document: 49, policy: 51, common: 8)
 
 ---
 

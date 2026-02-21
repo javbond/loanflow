@@ -5,7 +5,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
-@SpringBootApplication
+@SpringBootApplication(exclude = {
+        org.flowable.spring.boot.FlowableSecurityAutoConfiguration.class
+})
 @EnableJpaAuditing
 @ComponentScan(basePackages = {
         "com.loanflow.loan",

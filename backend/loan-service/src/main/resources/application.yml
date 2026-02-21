@@ -52,6 +52,20 @@ spring:
       port: ${REDIS_PORT:6379}
       password: ${REDIS_PASSWORD:loanflow_secret}
 
+# Flowable BPMN Workflow Engine
+flowable:
+  database-schema-update: true
+  history-level: audit
+  async-executor-activate: true
+  cmmn:
+    enabled: false
+  dmn:
+    enabled: false
+  idm:
+    enabled: false
+  app:
+    enabled: false
+
 server:
   port: ${SERVER_PORT:8081}
 

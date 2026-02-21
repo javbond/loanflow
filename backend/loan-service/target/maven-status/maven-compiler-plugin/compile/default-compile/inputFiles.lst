@@ -1,9 +1,0 @@
-/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/loan-service/src/main/java/com/loanflow/loan/service/LoanApplicationService.java
-/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/loan-service/src/main/java/com/loanflow/loan/repository/LoanApplicationRepository.java
-/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/loan-service/src/main/java/com/loanflow/loan/domain/enums/LoanStatus.java
-/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/loan-service/src/main/java/com/loanflow/loan/LoanServiceApplication.java
-/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/loan-service/src/main/java/com/loanflow/loan/controller/LoanApplicationController.java
-/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/loan-service/src/main/java/com/loanflow/loan/domain/entity/LoanApplication.java
-/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/loan-service/src/main/java/com/loanflow/loan/service/impl/LoanApplicationServiceImpl.java
-/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/loan-service/src/main/java/com/loanflow/loan/mapper/LoanApplicationMapper.java
-/Users/rayan/Documents/my-work/STUDY/2025/AI-ML/CLAUDE-CODE/Coding-Projects/loanflow/backend/loan-service/src/main/java/com/loanflow/loan/domain/enums/LoanType.java

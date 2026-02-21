@@ -1,0 +1,217 @@
+<div class="policy-form-container">
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="loading">
+    <mat-spinner diameter="50"></mat-spinner>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" *ngIf="!loading">
+    <!-- Basic Info Card -->
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>policy</mat-icon>
+          {{ isEditMode ? 'Edit Policy' : 'Create New Policy' }}
+        </mat-card-title>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Policy Name</mat-label>
+            <input matInput formControlName="name" placeholder="e.g. Personal Loan Eligibility">
+            <mat-error *ngIf="form.get('name')?.hasError('required')">Policy name is required</mat-error>
+            <mat-error *ngIf="form.get('name')?.hasError('minlength')">Minimum 3 characters</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="3" placeholder="Describe the policy purpose..."></textarea>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row two-columns">
+          <mat-form-field appearance="outline">
+            <mat-label>Category</mat-label>
+            <mat-select formControlName="category">
+              <mat-option *ngFor="let cat of categories" [value]="cat.value">
+                {{ cat.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error>Category is required</mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Loan Type</mat-label>
+            <mat-select formControlName="loanType">
+              <mat-option *ngFor="let type of loanTypes" [value]="type.value">
+                {{ type.label }}
+              </mat-option>
+            </mat-select>
+            <mat-error>Loan type is required</mat-error>
+          </mat-form-field>
+        </div>
+
+        <div class="form-row two-columns">
+          <mat-form-field appearance="outline">
+            <mat-label>Priority</mat-label>
+            <input matInput formControlName="priority" type="number" min="0">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Tags (comma-separated)</mat-label>
+            <input matInput formControlName="tags" placeholder="e.g. kyc, income, eligibility">
+          </mat-form-field>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Rules Section -->
+    <mat-card class="rules-card">
+      <mat-card-header>
+        <mat-card-title>
+          <mat-icon>rule</mat-icon>
+          Policy Rules
+        </mat-card-title>
+        <button mat-raised-button color="accent" type="button" (click)="addRule()">
+          <mat-icon>add</mat-icon>
+          Add Rule
+        </button>
+      </mat-card-header>
+
+      <mat-card-content formArrayName="rules">
+        <div *ngIf="rules.length === 0" class="empty-rules">
+          <mat-icon>info</mat-icon>
+          <p>No rules defined yet. Click "Add Rule" to start building policy rules.</p>
+        </div>
+
+        <mat-accordion>
+          <mat-expansion-panel *ngFor="let rule of rules.controls; let ruleIdx = index" [formGroupName]="ruleIdx">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <mat-icon>rule_folder</mat-icon>
+                {{ rule.get('name')?.value || 'Rule ' + (ruleIdx + 1) }}
+              </mat-panel-title>
+              <mat-panel-description>
+                {{ getConditions(ruleIdx).length }} condition(s), {{ getActions(ruleIdx).length }} action(s)
+              </mat-panel-description>
+            </mat-expansion-panel-header>
+
+            <!-- Rule Header -->
+            <div class="form-row two-columns">
+              <mat-form-field appearance="outline">
+                <mat-label>Rule Name</mat-label>
+                <input matInput formControlName="name" placeholder="e.g. Age Eligibility Check">
+                <mat-error>Rule name is required</mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Logical Operator</mat-label>
+                <mat-select formControlName="logicalOperator">
+                  <mat-option value="AND">AND (all conditions)</mat-option>
+                  <mat-option value="OR">OR (any condition)</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Rule Description</mat-label>
+              <input matInput formControlName="description" placeholder="Optional description">
+            </mat-form-field>
+
+            <!-- Conditions -->
+            <div class="section-header">
+              <h4><mat-icon>filter_list</mat-icon> Conditions</h4>
+              <button mat-stroked-button type="button" (click)="addCondition(ruleIdx)">
+                <mat-icon>add</mat-icon> Add Condition
+              </button>
+            </div>
+
+            <div formArrayName="conditions">
+              <div *ngFor="let condition of getConditions(ruleIdx).controls; let condIdx = index"
+                   [formGroupName]="condIdx" class="condition-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Field</mat-label>
+                  <input matInput formControlName="field" placeholder="e.g. applicant.age">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Operator</mat-label>
+                  <mat-select formControlName="operator">
+                    <mat-option *ngFor="let op of conditionOperators" [value]="op.value">
+                      {{ op.label }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>Value</mat-label>
+                  <input matInput formControlName="value" placeholder="e.g. 21">
+                </mat-form-field>
+
+                <button mat-icon-button color="warn" type="button" (click)="removeCondition(ruleIdx, condIdx)"
+                        matTooltip="Remove condition" [disabled]="getConditions(ruleIdx).length <= 1">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <!-- Actions -->
+            <div class="section-header">
+              <h4><mat-icon>bolt</mat-icon> Actions</h4>
+              <button mat-stroked-button type="button" (click)="addAction(ruleIdx)">
+                <mat-icon>add</mat-icon> Add Action
+              </button>
+            </div>
+
+            <div formArrayName="actions">
+              <div *ngFor="let action of getActions(ruleIdx).controls; let actIdx = index"
+                   [formGroupName]="actIdx" class="action-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>Action Type</mat-label>
+                  <mat-select formControlName="type">
+                    <mat-option *ngFor="let act of actionTypes" [value]="act.value">
+                      {{ act.label }}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="flex-grow">
+                  <mat-label>Description</mat-label>
+                  <input matInput formControlName="description" placeholder="Optional description">
+                </mat-form-field>
+
+                <button mat-icon-button color="warn" type="button" (click)="removeAction(ruleIdx, actIdx)"
+                        matTooltip="Remove action" [disabled]="getActions(ruleIdx).length <= 1">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <mat-action-row>
+              <button mat-button color="warn" type="button" (click)="removeRule(ruleIdx)">
+                <mat-icon>delete</mat-icon> Remove Rule
+              </button>
+            </mat-action-row>
+          </mat-expansion-panel>
+        </mat-accordion>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Action Buttons -->
+    <div class="form-actions">
+      <button mat-button type="button" routerLink="/policies">
+        <mat-icon>arrow_back</mat-icon>
+        Cancel
+      </button>
+      <button mat-raised-button color="primary" type="submit" [disabled]="submitting">
+        <mat-spinner *ngIf="submitting" diameter="20"></mat-spinner>
+        <mat-icon *ngIf="!submitting">save</mat-icon>
+        {{ isEditMode ? 'Update Policy' : 'Create Policy' }}
+      </button>
+    </div>
+  </form>
+</div>

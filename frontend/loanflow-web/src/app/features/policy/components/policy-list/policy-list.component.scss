@@ -1,0 +1,99 @@
+.policy-list-container {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
+    }
+  }
+
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    .search-field {
+      flex: 1;
+      min-width: 250px;
+      max-width: 400px;
+    }
+
+    .filter-field {
+      width: 200px;
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  .policy-table {
+    width: 100%;
+
+    .policy-link {
+      color: #1976d2;
+      text-decoration: none;
+      font-weight: 500;
+      font-family: monospace;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    .category-badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      background-color: #e3f2fd;
+      color: #1565c0;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: capitalize;
+    }
+
+    .mat-column-actions {
+      width: 180px;
+      text-align: center;
+    }
+
+    .mat-column-status {
+      width: 120px;
+    }
+
+    .mat-column-versionNumber,
+    .mat-column-ruleCount {
+      width: 80px;
+      text-align: center;
+    }
+
+    .mat-column-policyCode {
+      width: 160px;
+    }
+  }
+
+  .no-data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #666;
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      margin-bottom: 10px;
+    }
+  }
+}

@@ -29,6 +29,7 @@
         <module>customer-service</module>
         <module>document-service</module>
         <module>auth-service</module>
+        <module>policy-service</module>
         <!-- TODO: Add when implemented -->
         <!-- <module>notification-service</module> -->
         <!-- <module>api-gateway</module> -->
@@ -42,7 +43,7 @@
         <springdoc.version>2.3.0</springdoc.version>
         <testcontainers.version>1.19.3</testcontainers.version>
         <keycloak.version>23.0.3</keycloak.version>
-        <flowable.version>6.8.0</flowable.version>
+        <flowable.version>7.1.0</flowable.version>
         <minio.version>8.5.7</minio.version>
         <flyway.version>10.4.1</flyway.version>
     </properties>
