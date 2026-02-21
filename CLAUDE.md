@@ -68,6 +68,23 @@
 
 ## 📊 CURRENT SPRINT STATUS
 
+### Sprint 7 (Drools + Approval Hierarchy + Risk Dashboard) - 🔄 IN PROGRESS
+**Milestone**: [Sprint 7](https://github.com/javbond/loanflow/milestone/10)
+**Duration**: 2026-03-20 to 2026-04-03
+**Sprint Goal**: Integrate PRD-mandated Drools engine, add amount-based approval routing, deliver risk analytics dashboard
+
+| Issue | Title | Points | Status |
+|-------|-------|--------|--------|
+| #40 | [US-018] Decision Engine (Drools) | 8 | ⏳ Pending |
+| #41 | [US-015] Approval Hierarchy | 5 | ⏳ Pending |
+| #42 | [US-019] Risk Dashboard | 3 | ⏳ Pending |
+
+**Total Story Points**: 16 | **Completed**: 0
+
+**Progress:** `░░░░░░░░░░` 0%
+
+---
+
 ### Sprint 6 (Policy Evaluation + Task Assignment) - ✅ COMPLETED
 **Milestone**: [Sprint 6](https://github.com/javbond/loanflow/milestone/9)
 **Duration**: 2026-03-06 to 2026-03-20
@@ -179,11 +196,10 @@
 
 | Issue | Title | Priority | Sprint |
 |-------|-------|----------|--------|
-| US-015 | Approval Hierarchy (amount-based matrix) | P1 | Sprint 7 |
-| US-016 | Credit Bureau Integration (CIBIL) | P1 | Sprint 7 |
-| US-018 | Decision Engine (Drools) | P1 | Sprint 7 |
-| US-017 | Income Verification (ITR, GST, bank stmt) | P2 | Sprint 7-8 |
-| US-019 | Risk Dashboard | P2 | Sprint 8 |
+| US-016 | Credit Bureau Integration (CIBIL) | P1 | Sprint 8 |
+| US-017 | Income Verification (ITR, GST, bank stmt) | P1 | Sprint 8 |
+| US-020 | Document Upload (enhanced with virus scan) | P2 | Sprint 8-9 |
+| US-024 | e-KYC Integration (UIDAI) | P2 | Sprint 9 |
 | #4 | [US-003] RBAC Admin UI (remaining) | P2 | Deferred |
 
 ---
