@@ -76,7 +76,7 @@ export const routes: Routes = [
   {
     path: 'customers',
     canActivate: [authGuard],
-    data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER'] },
+    data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER', 'SENIOR_UNDERWRITER', 'SUPERVISOR', 'BRANCH_MANAGER'] },
     children: [
       {
         path: '',
@@ -103,7 +103,7 @@ export const routes: Routes = [
   {
     path: 'loans',
     canActivate: [authGuard],
-    data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER'] },
+    data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER', 'SENIOR_UNDERWRITER', 'SUPERVISOR', 'BRANCH_MANAGER'] },
     children: [
       {
         path: '',
@@ -174,7 +174,7 @@ export const routes: Routes = [
   {
     path: 'documents',
     canActivate: [authGuard],
-    data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER'] },
+    data: { roles: ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER', 'SENIOR_UNDERWRITER', 'SUPERVISOR', 'BRANCH_MANAGER'] },
     children: [
       {
         path: '',

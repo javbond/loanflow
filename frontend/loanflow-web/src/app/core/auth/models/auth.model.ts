@@ -52,7 +52,7 @@ export interface UserInfo {
 /**
  * Role types supported by LoanFlow
  */
-export type RoleType = 'ADMIN' | 'LOAN_OFFICER' | 'UNDERWRITER' | 'SUPERVISOR' | 'AUDITOR' | 'CUSTOMER';
+export type RoleType = 'ADMIN' | 'LOAN_OFFICER' | 'UNDERWRITER' | 'SENIOR_UNDERWRITER' | 'SUPERVISOR' | 'BRANCH_MANAGER' | 'AUDITOR' | 'CUSTOMER';
 
 /**
  * Role display names
@@ -61,10 +61,20 @@ export const ROLE_DISPLAY_NAMES: Record<RoleType, string> = {
   ADMIN: 'Administrator',
   LOAN_OFFICER: 'Loan Officer',
   UNDERWRITER: 'Underwriter',
+  SENIOR_UNDERWRITER: 'Senior Underwriter',
   SUPERVISOR: 'Supervisor',
+  BRANCH_MANAGER: 'Branch Manager',
   AUDITOR: 'Auditor',
   CUSTOMER: 'Customer'
 };
+
+/**
+ * All staff roles (non-customer) — used for sidebar display, route guards, and post-login redirect
+ */
+export const STAFF_ROLES: readonly string[] = [
+  'ADMIN', 'LOAN_OFFICER', 'UNDERWRITER',
+  'SENIOR_UNDERWRITER', 'SUPERVISOR', 'BRANCH_MANAGER'
+] as const;
 
 /**
  * Keycloak configuration

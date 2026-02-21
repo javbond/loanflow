@@ -10,6 +10,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 
 import { AuthService } from './core/auth/services/auth.service';
+import { STAFF_ROLES } from './core/auth/models/auth.model';
 import { map } from 'rxjs';
 
 @Component({
@@ -45,7 +46,7 @@ export class AppComponent {
     map(user => user?.roles?.includes('CUSTOMER') ?? false)
   );
   isStaff$ = this.currentUser$.pipe(
-    map(user => user?.roles?.some(r => ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER'].includes(r)) ?? false)
+    map(user => user?.roles?.some(r => STAFF_ROLES.includes(r)) ?? false)
   );
 
   logout(): void {

@@ -11,7 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 
 import { AuthService } from '../../services/auth.service';
-import { LoginRequest } from '../../models/auth.model';
+import { LoginRequest, STAFF_ROLES } from '../../models/auth.model';
 
 @Component({
   selector: 'app-login',
@@ -236,7 +236,7 @@ export class LoginComponent implements OnInit {
     if (user?.roles?.includes('CUSTOMER')) {
       // Customers go to their portal
       this.router.navigate(['/my-portal']);
-    } else if (user?.roles?.some(r => ['ADMIN', 'LOAN_OFFICER', 'UNDERWRITER', 'SUPERVISOR'].includes(r))) {
+    } else if (user?.roles?.some(r => STAFF_ROLES.includes(r))) {
       // Staff members go to customer management
       this.router.navigate(['/customers']);
     } else {
