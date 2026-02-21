@@ -42,6 +42,14 @@
         "description": "Full system administration access"
       },
       {
+        "name": "SENIOR_UNDERWRITER",
+        "description": "Senior underwriter for escalated and referred reviews"
+      },
+      {
+        "name": "BRANCH_MANAGER",
+        "description": "Branch manager with final escalation authority"
+      },
+      {
         "name": "AUDITOR",
         "description": "Read-only access for compliance"
       }
@@ -154,6 +162,54 @@
         }
       ],
       "realmRoles": ["CUSTOMER"]
+    },
+    {
+      "username": "officer2@loanflow.com",
+      "email": "officer2@loanflow.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Loan",
+      "lastName": "Officer Two",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "officer123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["LOAN_OFFICER"]
+    },
+    {
+      "username": "senior.uw@loanflow.com",
+      "email": "senior.uw@loanflow.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Senior",
+      "lastName": "Underwriter",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "senior123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["SENIOR_UNDERWRITER"]
+    },
+    {
+      "username": "manager@loanflow.com",
+      "email": "manager@loanflow.com",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Branch",
+      "lastName": "Manager",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "manager123",
+          "temporary": false
+        }
+      ],
+      "realmRoles": ["BRANCH_MANAGER"]
     }
   ],
   "clientScopes": [

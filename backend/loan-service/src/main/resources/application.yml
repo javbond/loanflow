@@ -75,16 +75,14 @@ loanflow:
     sla-check-interval-ms: 300000
     officers:
       LOAN_OFFICER:
-        - "placeholder-lo-1"
-        - "placeholder-lo-2"
-        - "placeholder-lo-3"
+        - "3d4c6e4e-582e-45bf-b4f8-844e76cfd8db"   # officer@loanflow.com
+        - "842fec11-14f7-4378-885c-a8c3dfcf1bfe"   # officer2@loanflow.com
       UNDERWRITER:
-        - "placeholder-uw-1"
-        - "placeholder-uw-2"
+        - "c896cf46-1352-4b15-abc8-5de774a13113"   # underwriter@loanflow.com
       SENIOR_UNDERWRITER:
-        - "placeholder-su-1"
+        - "78861730-c75b-4cd6-b6d1-f5395136e492"   # senior.uw@loanflow.com
       BRANCH_MANAGER:
-        - "placeholder-bm-1"
+        - "9a3c6949-7398-40bc-a512-1d049f43b9da"   # manager@loanflow.com
     sla:
       documentVerification:
         timeout-hours: 24
