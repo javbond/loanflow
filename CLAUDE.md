@@ -68,20 +68,22 @@
 
 ## 📊 CURRENT SPRINT STATUS
 
-### Sprint 6 (Policy Evaluation + Task Assignment) - 🔄 IN PROGRESS
+### Sprint 6 (Policy Evaluation + Task Assignment) - ✅ COMPLETED
 **Milestone**: [Sprint 6](https://github.com/javbond/loanflow/milestone/9)
 **Duration**: 2026-03-06 to 2026-03-20
 **Sprint Goal**: Complete M2 milestone (Policy Evaluation Engine) + Production-grade workflow assignment
 
 | Issue | Title | Points | Status |
 |-------|-------|--------|--------|
-| #37 | [US-010] Policy Evaluation Engine | 8 | ⏳ Pending |
-| #38 | [US-011] Pre-built Policy Templates | 3 | ⏳ Pending |
-| #39 | [US-014] Task Assignment & Escalation | 5 | ⏳ Pending |
+| #37 | [US-010] Policy Evaluation Engine | 8 | ✅ Complete |
+| #38 | [US-011] Pre-built Policy Templates | 3 | ✅ Complete |
+| #39 | [US-014] Task Assignment & Escalation | 5 | ✅ Complete |
 
-**Total Story Points**: 16 | **Completed**: 0
+**Total Story Points**: 16 | **Completed**: 16
+**Velocity**: 16 pts/sprint
+**Review**: `docs/sprints/sprint-6-review.md`
 
-**Progress:** `░░░░░░░░░░` 0%
+**Progress:** `██████████` 100%
 
 ---
 
@@ -177,13 +179,12 @@
 
 | Issue | Title | Priority | Sprint |
 |-------|-------|----------|--------|
-| #4 | [US-003] RBAC Admin UI (remaining) | P1 | Deferred |
-| US-009 | Policy Builder UI | P1 | Sprint 6+ |
-| US-010 | Policy Evaluation Engine | P1 | Sprint 6 |
-| US-011 | Pre-built Policy Templates | P2 | Sprint 6 |
-| US-014 | Task Assignment & Escalation | P1 | Sprint 6 |
-| US-018 | Decision Engine (Drools) | P1 | Sprint 7 |
+| US-015 | Approval Hierarchy (amount-based matrix) | P1 | Sprint 7 |
 | US-016 | Credit Bureau Integration (CIBIL) | P1 | Sprint 7 |
+| US-018 | Decision Engine (Drools) | P1 | Sprint 7 |
+| US-017 | Income Verification (ITR, GST, bank stmt) | P2 | Sprint 7-8 |
+| US-019 | Risk Dashboard | P2 | Sprint 8 |
+| #4 | [US-003] RBAC Admin UI (remaining) | P2 | Deferred |
 
 ---
 
@@ -205,14 +206,14 @@
 | Service | Port | Tests | Backend | Frontend |
 |---------|------|-------|---------|----------|
 | customer-service | 8082 | 45 | ✅ Done | ✅ Done |
-| loan-service | 8081 | 48 | ✅ Done (+ Flowable BPMN workflow) | ✅ Done |
+| loan-service | 8081 | 61 | ✅ Done (+ Flowable BPMN + Task Assignment) | ✅ Done (+ Task Inbox UI) |
 | document-service | 8083 | 49 | ✅ Done | ✅ Done |
 | auth-service (Keycloak) | 8085 | 10 | ✅ Keycloak OAuth2/OIDC | ✅ Done (Login/Logout/Guards) |
-| policy-service | 8086 | 51 | ✅ Done (MongoDB + Redis) | ✅ Done (Policy Builder UI) |
+| policy-service | 8086 | 66 | ✅ Done (MongoDB + Redis + Evaluation Engine) | ✅ Done (Policy Builder UI) |
 | notification-service | 8084 | - | ⏳ Pending | ⏳ Pending |
 | api-gateway | 8080 | - | ⏳ Pending | - |
 
-**Total TDD Tests**: 211+ (auth-service: 10, customer: 45, loan: 48, document: 49, policy: 51, common: 8)
+**Total TDD Tests**: 239+ (auth-service: 10, customer: 45, loan: 61, document: 49, policy: 66, common: 8)
 
 ---
 
