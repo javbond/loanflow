@@ -5,6 +5,9 @@ import com.loanflow.dto.response.ApiResponse;
 import com.loanflow.dto.response.PolicyResponse;
 import com.loanflow.policy.domain.enums.LoanType;
 import com.loanflow.policy.domain.enums.PolicyCategory;
+import com.loanflow.policy.evaluation.dto.PolicyEvaluationRequest;
+import com.loanflow.policy.evaluation.dto.PolicyEvaluationResponse;
+import com.loanflow.policy.evaluation.service.PolicyEvaluationService;
 import com.loanflow.policy.service.PolicyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -24,16 +27,17 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * REST controller for policy management
+ * REST controller for policy management and evaluation
  */
 @RestController
 @RequestMapping("/api/v1/policies")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Policy Management", description = "APIs for managing loan policies")
+@Tag(name = "Policy Management", description = "APIs for managing loan policies and evaluation")
 public class PolicyController {
 
     private final PolicyService policyService;
+    private final PolicyEvaluationService policyEvaluationService;
 
     // ==================== CRUD Endpoints ====================
 
@@ -177,5 +181,20 @@ public class PolicyController {
     public ResponseEntity<ApiResponse<PolicyService.PolicyStatsResponse>> getStats() {
         PolicyService.PolicyStatsResponse stats = policyService.getStats();
         return ResponseEntity.ok(ApiResponse.success(stats));
+    }
+
+    // ==================== Evaluation Endpoint ====================
+
+    @PostMapping("/evaluate")
+    @PreAuthorize("hasAnyRole('ADMIN', 'SUPERVISOR', 'LOAN_OFFICER', 'UNDERWRITER', 'SENIOR_UNDERWRITER')")
+    @Operation(summary = "Evaluate a loan application against active policies",
+            description = "Evaluates all active policies for the given loan type against the provided application data. " +
+                    "Returns matched policies, triggered actions, and an overall decision.")
+    public ResponseEntity<ApiResponse<PolicyEvaluationResponse>> evaluate(
+            @Valid @RequestBody PolicyEvaluationRequest request) {
+        log.info("Policy evaluation request for application: {}, loanType: {}",
+                request.getApplicationId(), request.getLoanType());
+        PolicyEvaluationResponse response = policyEvaluationService.evaluate(request);
+        return ResponseEntity.ok(ApiResponse.success("Policy evaluation completed", response));
     }
 }
