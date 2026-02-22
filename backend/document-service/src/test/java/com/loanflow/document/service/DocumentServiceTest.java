@@ -53,6 +53,9 @@ class DocumentServiceTest {
     @Mock
     private StorageService storageService;
 
+    @Mock
+    private VirusScanService virusScanService;
+
     @InjectMocks
     private DocumentServiceImpl service;
 
@@ -115,6 +118,7 @@ class DocumentServiceTest {
                     .documentType("PAN_CARD")
                     .build();
 
+            when(virusScanService.scan(any())).thenReturn(VirusScanResult.clean());
             when(storageService.upload(any(MultipartFile.class), anyString()))
                     .thenReturn("loanflow-documents/applications/123/kyc/pan.pdf");
             when(repository.save(any(Document.class))).thenReturn(document);
@@ -186,6 +190,7 @@ class DocumentServiceTest {
                     .documentType("PAN_CARD")
                     .build();
 
+            when(virusScanService.scan(any())).thenReturn(VirusScanResult.clean());
             when(storageService.upload(any(MultipartFile.class), anyString()))
                     .thenThrow(new StorageException("MinIO connection failed"));
 
@@ -209,6 +214,7 @@ class DocumentServiceTest {
                     .category(DocumentCategory.INCOME)
                     .build();
 
+            when(virusScanService.scan(any())).thenReturn(VirusScanResult.clean());
             when(storageService.upload(any(), anyString())).thenReturn("path");
             when(repository.save(any(Document.class))).thenReturn(incomeDoc);
             when(mapper.toResponse(any())).thenReturn(

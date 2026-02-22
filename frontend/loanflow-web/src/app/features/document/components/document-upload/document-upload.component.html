@@ -165,8 +165,16 @@
             <!-- Upload Progress -->
             @if (isUploading) {
               <div class="upload-progress">
-                <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
-                <span class="progress-text">{{ uploadProgress }}%</span>
+                @if (uploadStatus === 'scanning') {
+                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                  <div class="scan-status">
+                    <mat-icon class="spin">security</mat-icon>
+                    <span class="progress-text">Scanning for viruses...</span>
+                  </div>
+                } @else {
+                  <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+                  <span class="progress-text">{{ uploadProgress }}%</span>
+                }
               </div>
             }
           }
@@ -179,8 +187,13 @@
           </button>
           @if (isUploading) {
             <button mat-raised-button color="primary" type="button" disabled>
-              <mat-icon class="spin">sync</mat-icon>
-              Uploading...
+              @if (uploadStatus === 'scanning') {
+                <mat-icon class="spin">security</mat-icon>
+                Scanning...
+              } @else {
+                <mat-icon class="spin">sync</mat-icon>
+                Uploading...
+              }
             </button>
           } @else {
             <button mat-raised-button color="primary" type="submit"

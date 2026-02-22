@@ -115,9 +115,26 @@ services:
       retries: 5
       start_period: 60s
 
+  # ClamAV for document virus scanning (US-020)
+  clamav:
+    image: clamav/clamav:1.2
+    container_name: loanflow-clamav
+    ports:
+      - "3310:3310"
+    volumes:
+      - clamav_data:/var/lib/clamav
+    healthcheck:
+      test: ["CMD", "clamdcheck"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   mongodb_data:
   minio_data:
   redis_data:
   rabbitmq_data:
+  clamav_data:

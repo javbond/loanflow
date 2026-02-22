@@ -150,8 +150,16 @@ import {
             <!-- Upload Progress -->
             @if (isUploading) {
               <div class="progress-section">
-                <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
-                <span class="progress-text">Uploading... {{ uploadProgress }}%</span>
+                @if (uploadStatus === 'scanning') {
+                  <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+                  <span class="progress-text scan-text">
+                    <mat-icon class="scan-icon">security</mat-icon>
+                    Scanning for viruses...
+                  </span>
+                } @else {
+                  <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+                  <span class="progress-text">Uploading... {{ uploadProgress }}%</span>
+                }
               </div>
             }
 
@@ -169,7 +177,9 @@ import {
               </button>
               <button mat-raised-button color="primary" type="submit"
                       [disabled]="uploadForm.invalid || !selectedFile || isUploading">
-                @if (isUploading) {
+                @if (isUploading && uploadStatus === 'scanning') {
+                  <mat-icon>security</mat-icon> Scanning...
+                } @else if (isUploading) {
                   <mat-icon>hourglass_empty</mat-icon> Uploading...
                 } @else {
                   <mat-icon>cloud_upload</mat-icon> Upload Document
@@ -309,6 +319,26 @@ import {
       color: #666;
     }
 
+    .scan-text {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #ff9800;
+    }
+
+    .scan-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
     .form-actions {
       display: flex;
       justify-content: space-between;
@@ -342,6 +372,7 @@ export class CustomerDocumentUploadComponent implements OnInit, OnDestroy {
   isDragOver = false;
   uploadProgress = 0;
   isUploading = false;
+  uploadStatus: 'idle' | 'scanning' | 'uploading' | 'complete' = 'idle';
 
   maxFileSizeDisplay = MAX_FILE_SIZE_DISPLAY;
   allowedExtensions = ALLOWED_FILE_EXTENSIONS;
@@ -500,13 +531,16 @@ export class CustomerDocumentUploadComponent implements OnInit, OnDestroy {
 
     this.isUploading = true;
     this.uploadProgress = 0;
+    this.uploadStatus = 'scanning';
 
     this.documentService.upload(this.selectedFile, request).subscribe({
       next: (event) => {
         if (event.type === HttpEventType.UploadProgress) {
+          this.uploadStatus = 'uploading';
           const total = event.total || 0;
           this.uploadProgress = total > 0 ? Math.round((100 * event.loaded) / total) : 0;
         } else if (event.type === HttpEventType.Response) {
+          this.uploadStatus = 'complete';
           this.isUploading = false;
           this.showSuccess('Document uploaded successfully!');
           this.router.navigate(['/my-portal']);
@@ -514,8 +548,17 @@ export class CustomerDocumentUploadComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.isUploading = false;
+        this.uploadStatus = 'idle';
         this.uploadProgress = 0;
-        this.showError(error.error?.message || 'Upload failed. Please try again.');
+
+        const errorCode = error.error?.error?.code;
+        if (errorCode === 'VIRUS_DETECTED') {
+          this.showError('Security Warning: A virus was detected in this file. Please scan your device with antivirus software and upload a clean file.');
+        } else if (errorCode === 'VIRUS_SCAN_FAILED') {
+          this.showError('Unable to verify file safety. Please try uploading again.');
+        } else {
+          this.showError(error.error?.message || 'Upload failed. Please try again.');
+        }
       }
     });
   }

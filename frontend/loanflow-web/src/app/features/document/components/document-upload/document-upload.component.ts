@@ -81,6 +81,7 @@ export class DocumentUploadComponent implements OnInit, OnDestroy {
   isDragOver = false;
   uploadProgress = 0;
   isUploading = false;
+  uploadStatus: 'idle' | 'scanning' | 'uploading' | 'complete' = 'idle';
 
   // Validation
   maxFileSize = MAX_FILE_SIZE;
@@ -266,13 +267,16 @@ export class DocumentUploadComponent implements OnInit, OnDestroy {
 
     this.isUploading = true;
     this.uploadProgress = 0;
+    this.uploadStatus = 'scanning';
 
     this.documentService.upload(this.selectedFile, request).subscribe({
       next: (event) => {
         if (event.type === HttpEventType.UploadProgress) {
+          this.uploadStatus = 'uploading';
           const total = event.total || 0;
           this.uploadProgress = total > 0 ? Math.round((100 * event.loaded) / total) : 0;
         } else if (event.type === HttpEventType.Response) {
+          this.uploadStatus = 'complete';
           this.isUploading = false;
           this.showSuccess('Document uploaded successfully!');
 
@@ -283,8 +287,18 @@ export class DocumentUploadComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         this.isUploading = false;
+        this.uploadStatus = 'idle';
         this.uploadProgress = 0;
-        this.showError(error.error?.message || 'Upload failed. Please try again.');
+
+        // Check for virus scan specific errors
+        const errorCode = error.error?.error?.code;
+        if (errorCode === 'VIRUS_DETECTED') {
+          this.showError('Security Warning: A virus was detected in this file. Please scan your device with antivirus software and upload a clean file.');
+        } else if (errorCode === 'VIRUS_SCAN_FAILED') {
+          this.showError('Unable to verify file safety. Please try uploading again.');
+        } else {
+          this.showError(error.error?.message || 'Upload failed. Please try again.');
+        }
       }
     });
   }

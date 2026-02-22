@@ -196,11 +196,10 @@ mat-divider {
 .upload-progress {
   margin-top: 16px;
   display: flex;
-  align-items: center;
-  gap: 16px;
+  flex-direction: column;
+  gap: 8px;
 
   mat-progress-bar {
-    flex: 1;
     height: 8px;
     border-radius: 4px;
   }
@@ -210,6 +209,25 @@ mat-divider {
     color: #1976d2;
     min-width: 40px;
     text-align: right;
+  }
+
+  .scan-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #ff9800;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+
+    .progress-text {
+      color: #ff9800;
+      text-align: center;
+    }
   }
 }
 

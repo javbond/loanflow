@@ -8,9 +8,12 @@ import com.loanflow.document.mapper.DocumentMapper;
 import com.loanflow.document.repository.DocumentRepository;
 import com.loanflow.document.service.DocumentService;
 import com.loanflow.document.service.StorageService;
+import com.loanflow.document.service.VirusScanResult;
+import com.loanflow.document.service.VirusScanService;
 import com.loanflow.dto.request.DocumentUploadRequest;
 import com.loanflow.dto.request.DocumentVerificationRequest;
 import com.loanflow.dto.response.DocumentResponse;
+import com.loanflow.util.exception.BusinessException;
 import com.loanflow.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -49,6 +52,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentRepository repository;
     private final DocumentMapper mapper;
     private final StorageService storageService;
+    private final VirusScanService virusScanService;
 
     @Override
     @Transactional
@@ -60,6 +64,22 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Validate file size
         validateFileSize(file);
+
+        // Scan for viruses (US-020) — fail-closed for security
+        VirusScanResult scanResult = virusScanService.scan(file);
+        if (scanResult.isInfected()) {
+            log.warn("Virus detected in upload for application {}: {}",
+                    request.getApplicationId(), scanResult.getVirusName());
+            throw new BusinessException("VIRUS_DETECTED",
+                    "File rejected: virus detected (" + scanResult.getVirusName() +
+                    "). Please scan your device and upload a clean file.");
+        }
+        if (!scanResult.isClean()) {
+            log.error("Virus scan failed for application {}: {}",
+                    request.getApplicationId(), scanResult.getErrorMessage());
+            throw new BusinessException("VIRUS_SCAN_FAILED",
+                    "Unable to verify file safety. Please try again later.");
+        }
 
         // Parse document type
         DocumentType documentType = DocumentType.valueOf(request.getDocumentType());
