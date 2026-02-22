@@ -300,8 +300,9 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         log.info("Customer {} submitted loan application: {}",
                 customerEmail, saved.getApplicationNumber());
 
-        // Start Flowable workflow process
-        String processInstanceId = workflowService.startProcess(saved.getId(), buildProcessVariables(saved));
+        // Start Flowable workflow process (pass PAN for credit bureau pull)
+        String processInstanceId = workflowService.startProcess(
+                saved.getId(), buildProcessVariables(saved, request.pan()));
         saved.setWorkflowInstanceId(processInstanceId);
         repository.save(saved);
 
@@ -378,6 +379,10 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     }
 
     private Map<String, Object> buildProcessVariables(LoanApplication application) {
+        return buildProcessVariables(application, null);
+    }
+
+    private Map<String, Object> buildProcessVariables(LoanApplication application, String customerPan) {
         Map<String, Object> variables = new HashMap<>();
         variables.put("applicationNumber", application.getApplicationNumber());
         variables.put("loanType", application.getLoanType().name());
@@ -385,6 +390,9 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         variables.put("customerId", application.getCustomerId().toString());
         variables.put("customerEmail",
                 application.getCustomerEmail() != null ? application.getCustomerEmail() : "");
+        if (customerPan != null && !customerPan.isBlank()) {
+            variables.put("customerPan", customerPan);
+        }
         return variables;
     }
 }

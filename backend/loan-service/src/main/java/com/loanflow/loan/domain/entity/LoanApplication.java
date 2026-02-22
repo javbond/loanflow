@@ -98,6 +98,12 @@ public class LoanApplication {
     @Column(name = "rejection_reason", length = 500)
     private String rejectionReason;
 
+    @Column(name = "bureau_data_source", length = 20)
+    private String bureauDataSource;
+
+    @Column(name = "bureau_pull_timestamp")
+    private Instant bureauPullTimestamp;
+
     @Column(name = "workflow_instance_id", length = 50)
     private String workflowInstanceId;
 

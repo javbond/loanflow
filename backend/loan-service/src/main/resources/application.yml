@@ -66,8 +66,19 @@ flowable:
   app:
     enabled: false
 
-# US-014: Task Assignment & Escalation
+# US-016: CIBIL Credit Bureau Integration
 loanflow:
+  cibil:
+    base-url: ${CIBIL_BASE_URL:https://uat-api.cibil.com/v2}
+    member-code: ${CIBIL_MEMBER_CODE:LOANFLOW-DEV}
+    security-code: ${CIBIL_SECURITY_CODE:dev-secret}
+    timeout-ms: ${CIBIL_TIMEOUT_MS:30000}
+    max-retries: ${CIBIL_MAX_RETRIES:3}
+    retry-delay-ms: ${CIBIL_RETRY_DELAY_MS:1000}
+    cache-ttl-hours: ${CIBIL_CACHE_TTL_HOURS:24}
+    enabled: ${CIBIL_ENABLED:true}
+
+  # US-014: Task Assignment & Escalation
   assignment:
     enabled: true
     strategy: ROUND_ROBIN

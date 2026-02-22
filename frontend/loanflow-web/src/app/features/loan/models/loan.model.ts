@@ -17,6 +17,8 @@ export interface LoanApplication {
   cibilScore?: number;
   riskCategory?: string;
   processingFee?: number;
+  bureauDataSource?: 'REAL' | 'CACHED' | 'SIMULATED';
+  bureauPullTimestamp?: string;
   expectedDisbursementDate?: string;
   submittedAt?: string;
   createdAt?: string;

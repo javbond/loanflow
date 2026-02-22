@@ -1,5 +1,8 @@
 package com.loanflow.loan.workflow.delegate;
 
+import com.loanflow.loan.creditbureau.dto.CreditBureauRequest;
+import com.loanflow.loan.creditbureau.dto.CreditBureauResponse;
+import com.loanflow.loan.creditbureau.service.CreditBureauService;
 import com.loanflow.loan.decision.service.DecisionEngineService;
 import com.loanflow.loan.decision.service.DecisionEngineService.DecisionResult;
 import com.loanflow.loan.domain.entity.LoanApplication;
@@ -27,6 +30,7 @@ public class CreditCheckDelegate implements JavaDelegate {
 
     private final LoanApplicationRepository repository;
     private final DecisionEngineService decisionEngineService;
+    private final CreditBureauService creditBureauService;
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -39,8 +43,36 @@ public class CreditCheckDelegate implements JavaDelegate {
         // Transition to CREDIT_CHECK
         application.transitionTo(LoanStatus.CREDIT_CHECK);
 
-        // Execute Drools decision engine (eligibility + pricing rules)
-        DecisionResult result = decisionEngineService.evaluate(application);
+        // 1. Pull credit bureau report (cache-first with retry + fallback)
+        String customerPan = (String) execution.getVariable("customerPan");
+        CreditBureauResponse bureauResponse = null;
+        if (customerPan != null && !customerPan.isBlank()) {
+            log.info("Workflow [CreditCheck]: Pulling credit bureau report for PAN {}***",
+                    customerPan.substring(0, 3));
+            CreditBureauRequest bureauRequest = CreditBureauRequest.builder()
+                    .pan(customerPan)
+                    .build();
+            bureauResponse = creditBureauService.pullReport(bureauRequest);
+
+            // Persist bureau metadata on the application
+            application.setBureauDataSource(bureauResponse.getDataSource().name());
+            application.setBureauPullTimestamp(bureauResponse.getPullTimestamp());
+
+            log.info("Workflow [CreditCheck]: Bureau report — score={}, source={}, controlNo={}",
+                    bureauResponse.getCreditScore(),
+                    bureauResponse.getDataSource(),
+                    bureauResponse.getControlNumber());
+        } else {
+            log.warn("Workflow [CreditCheck]: No customerPan in process variables — using default bureau data");
+        }
+
+        // 2. Execute Drools decision engine (eligibility + pricing rules)
+        DecisionResult result;
+        if (bureauResponse != null) {
+            result = decisionEngineService.evaluate(application, bureauResponse);
+        } else {
+            result = decisionEngineService.evaluate(application);
+        }
 
         // Apply decision results to application
         application.setCibilScore(result.creditScore());
@@ -72,16 +104,23 @@ public class CreditCheckDelegate implements JavaDelegate {
             execution.setVariable("rejectionReasons", String.join("; ", result.rejectionReasons()));
         }
 
+        // Store bureau metadata in process variables
+        if (bureauResponse != null) {
+            execution.setVariable("bureauDataSource", bureauResponse.getDataSource().name());
+            execution.setVariable("bureauControlNumber", bureauResponse.getControlNumber());
+        }
+
         // Transition to UNDERWRITING after credit check
         application.transitionTo(LoanStatus.UNDERWRITING);
         repository.save(application);
 
-        log.info("Workflow [CreditCheck]: Application {} — Decision={}, CIBIL={}, Risk={}, Rate={}, Rules={}",
+        log.info("Workflow [CreditCheck]: Application {} — Decision={}, CIBIL={}, Risk={}, Rate={}, Rules={}, Bureau={}",
                 application.getApplicationNumber(),
                 result.decision(),
                 result.creditScore(),
                 result.riskCategory(),
                 result.interestRate(),
-                result.rulesFired());
+                result.rulesFired(),
+                bureauResponse != null ? bureauResponse.getDataSource() : "N/A");
     }
 }

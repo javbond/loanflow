@@ -185,11 +185,119 @@
                   <span class="value">{{ formatAmount(loan.processingFee) }}</span>
                 </div>
                 <div class="detail-item">
-                  <span class="label">Expected Disbursement</span>
-                  <span class="value">{{ loan.expectedDisbursementDate || '-' }}</span>
+                  <span class="label">Bureau Data Source</span>
+                  @if (loan.bureauDataSource) {
+                    <mat-chip [color]="getBureauSourceColor(loan.bureauDataSource)" selected class="bureau-chip">
+                      {{ getBureauSourceLabel(loan.bureauDataSource) }}
+                    </mat-chip>
+                  } @else {
+                    <span class="value na">Not Pulled</span>
+                  }
+                </div>
+                <div class="detail-item">
+                  <span class="label">Bureau Pull Time</span>
+                  <span class="value">{{ loan.bureauPullTimestamp ? formatDate(loan.bureauPullTimestamp) : '-' }}</span>
                 </div>
               }
             </div>
+
+            <!-- Bureau Report Expansion Panel -->
+            @if (bureauReport) {
+              <mat-divider class="section-divider"></mat-divider>
+              <mat-accordion>
+                <mat-expansion-panel>
+                  <mat-expansion-panel-header>
+                    <mat-panel-title>
+                      <mat-icon class="panel-icon">assessment</mat-icon>
+                      Bureau Report Details
+                    </mat-panel-title>
+                    <mat-panel-description>
+                      Score: {{ bureauReport.creditScore }} | {{ bureauReport.scoreVersion }}
+                    </mat-panel-description>
+                  </mat-expansion-panel-header>
+
+                  <div class="bureau-details">
+                    <div class="details-grid">
+                      <div class="detail-item">
+                        <span class="label">Control Number</span>
+                        <span class="value mono">{{ bureauReport.controlNumber }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Total Active Accounts</span>
+                        <span class="value">{{ bureauReport.totalActiveAccounts }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Total Outstanding</span>
+                        <span class="value amount">{{ formatBalance(bureauReport.totalOutstandingBalance) }}</span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">DPD 90+ Accounts</span>
+                        <span class="value" [class.negative-marker]="bureauReport.dpd90PlusCount > 0">
+                          {{ bureauReport.dpd90PlusCount }}
+                        </span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Written-Off Accounts</span>
+                        <span class="value" [class.negative-marker]="bureauReport.writtenOffAccounts > 0">
+                          {{ bureauReport.writtenOffAccounts }}
+                        </span>
+                      </div>
+                      <div class="detail-item">
+                        <span class="label">Enquiries (30 Days)</span>
+                        <span class="value">{{ bureauReport.enquiryCount30Days }}</span>
+                      </div>
+                    </div>
+
+                    @if (bureauReport.scoreFactors?.length) {
+                      <mat-divider class="section-divider"></mat-divider>
+                      <h4>Score Factors</h4>
+                      <div class="score-factors">
+                        @for (factor of bureauReport.scoreFactors; track factor) {
+                          <mat-chip class="factor-chip">{{ factor }}</mat-chip>
+                        }
+                      </div>
+                    }
+
+                    @if (bureauReport.accounts?.length) {
+                      <mat-divider class="section-divider"></mat-divider>
+                      <h4>Account Summary ({{ bureauReport.accounts.length }})</h4>
+                      <div class="account-list">
+                        @for (account of bureauReport.accounts; track account.lenderName) {
+                          <div class="account-card">
+                            <div class="account-header">
+                              <span class="lender">{{ account.lenderName }}</span>
+                              <mat-chip class="account-type-chip">{{ account.accountType }}</mat-chip>
+                            </div>
+                            <div class="account-details">
+                              <span>Balance: {{ formatBalance(account.currentBalance) }}</span>
+                              @if (account.amountOverdue > 0) {
+                                <span class="negative-marker">Overdue: {{ formatBalance(account.amountOverdue) }}</span>
+                              }
+                              <span>DPD: {{ account.dpdStatus }}</span>
+                              <span>Status: {{ account.accountStatus }}</span>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+
+                    @if (bureauReport.enquiries?.length) {
+                      <mat-divider class="section-divider"></mat-divider>
+                      <h4>Recent Enquiries ({{ bureauReport.enquiries.length }})</h4>
+                      <mat-list dense>
+                        @for (enquiry of bureauReport.enquiries; track enquiry.enquiryDate) {
+                          <mat-list-item>
+                            <mat-icon matListItemIcon>search</mat-icon>
+                            <div matListItemTitle>{{ enquiry.memberName }} — {{ enquiry.purpose }}</div>
+                            <div matListItemLine>{{ enquiry.enquiryDate }} | {{ formatBalance(enquiry.amount) }}</div>
+                          </mat-list-item>
+                        }
+                      </mat-list>
+                    }
+                  </div>
+                </mat-expansion-panel>
+              </mat-accordion>
+            }
 
             <!-- Credit Memo (printable summary) -->
             @if (loan) {

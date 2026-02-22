@@ -1,5 +1,6 @@
 package com.loanflow.loan.decision.mapper;
 
+import com.loanflow.loan.creditbureau.dto.CreditBureauResponse;
 import com.loanflow.loan.decision.model.*;
 import com.loanflow.loan.domain.entity.LoanApplication;
 import com.loanflow.loan.domain.enums.LoanType;
@@ -92,6 +93,88 @@ public class DecisionFactMapper {
                 eligibilityResult,
                 pricingResult,
                 null  // No collateral by default
+        );
+    }
+
+    /**
+     * Map a JPA LoanApplication + real Credit Bureau response to Drools facts.
+     * Uses actual bureau data (score, DPD, write-offs, enquiries) instead of defaults.
+     *
+     * @param application JPA LoanApplication entity
+     * @param bureauResponse Real credit bureau response from CIBIL
+     */
+    public DecisionFacts mapToFacts(LoanApplication application, CreditBureauResponse bureauResponse) {
+        String appId = application.getId().toString();
+        String applicantId = UUID.randomUUID().toString();
+
+        LoanApplicationFact appFact = LoanApplicationFact.builder()
+                .id(appId)
+                .applicationNumber(application.getApplicationNumber())
+                .productCode(mapLoanTypeToProductCode(application.getLoanType()))
+                .requestedAmount(application.getRequestedAmount().doubleValue())
+                .tenureMonths(application.getTenureMonths())
+                .propertyValue(0)
+                .build();
+
+        ApplicantFact applicantFact = ApplicantFact.builder()
+                .id(applicantId)
+                .applicationId(appId)
+                .applicantType("PRIMARY")
+                .age(35)
+                .gender("MALE")
+                .pan(bureauResponse.getPan())
+                .panVerified(true)
+                .politicallyExposed(false)
+                .existingEmi(0)
+                .hasSalaryAccount(false)
+                .existingCustomer(false)
+                .existingLoanDpd(0)
+                .build();
+
+        EmploymentDetailsFact employmentFact = EmploymentDetailsFact.builder()
+                .id(UUID.randomUUID().toString())
+                .applicantId(applicantId)
+                .employmentType(EmploymentType.SALARIED)
+                .employerCategory(EmployerCategory.PRIVATE)
+                .netMonthlyIncome(50000)
+                .totalExperienceYears(5)
+                .yearsInCurrentJob(2)
+                .build();
+
+        // Use REAL bureau data instead of defaults
+        CreditReportFact creditFact = CreditReportFact.builder()
+                .id(UUID.randomUUID().toString())
+                .applicantId(applicantId)
+                .creditScore(bureauResponse.getCreditScore())
+                .dpd90PlusCount(bureauResponse.getDpd90PlusCount())
+                .writtenOffAccounts(bureauResponse.getWrittenOffAccounts())
+                .enquiryCount30Days(bureauResponse.getEnquiryCount30Days())
+                .build();
+
+        log.info("Mapped bureau data to Drools facts: score={}, dpd90+={}, writeoffs={}, enquiries={}",
+                bureauResponse.getCreditScore(),
+                bureauResponse.getDpd90PlusCount(),
+                bureauResponse.getWrittenOffAccounts(),
+                bureauResponse.getEnquiryCount30Days());
+
+        EligibilityResultFact eligibilityResult = EligibilityResultFact.builder()
+                .applicationId(appId)
+                .build();
+
+        PricingResultFact pricingResult = PricingResultFact.builder()
+                .applicationId(appId)
+                .loanAmount(application.getRequestedAmount().doubleValue())
+                .tenureMonths(application.getTenureMonths())
+                .build();
+
+        return new DecisionFacts(
+                appFact,
+                applicantFact,
+                employmentFact,
+                creditFact,
+                eligibilityResult,
+                pricingResult,
+                null
         );
     }
 

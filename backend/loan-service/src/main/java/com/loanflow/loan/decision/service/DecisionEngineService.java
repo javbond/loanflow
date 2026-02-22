@@ -1,5 +1,6 @@
 package com.loanflow.loan.decision.service;
 
+import com.loanflow.loan.creditbureau.dto.CreditBureauResponse;
 import com.loanflow.loan.decision.mapper.DecisionFactMapper;
 import com.loanflow.loan.decision.mapper.DecisionFactMapper.DecisionFacts;
 import com.loanflow.loan.decision.model.*;
@@ -37,6 +38,18 @@ public class DecisionEngineService {
      */
     public DecisionResult evaluate(LoanApplication application) {
         DecisionFacts facts = factMapper.mapToFacts(application);
+        return evaluateWithFacts(facts, application.getApplicationNumber());
+    }
+
+    /**
+     * Evaluate a loan application using real credit bureau data.
+     *
+     * @param application JPA LoanApplication entity
+     * @param bureauResponse Real credit bureau response from CIBIL
+     * @return DecisionResult with eligibility status, interest rate, and pricing
+     */
+    public DecisionResult evaluate(LoanApplication application, CreditBureauResponse bureauResponse) {
+        DecisionFacts facts = factMapper.mapToFacts(application, bureauResponse);
         return evaluateWithFacts(facts, application.getApplicationNumber());
     }
 

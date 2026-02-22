@@ -11,10 +11,19 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatTableModule } from '@angular/material/table';
 import { TaskService } from '../../services/task.service';
+import { CreditBureauService } from '../../services/credit-bureau.service';
 import { LoanService } from '../../../loan/services/loan.service';
 import { LoanApplication, LOAN_STATUSES, LOAN_TYPES } from '../../../loan/models/loan.model';
 import { TaskResponse, getTaskLabel, formatLoanType, formatCurrency, CompleteTaskRequest } from '../../models/task.model';
+import {
+  CreditBureauResponse,
+  BureauDataSource,
+  BUREAU_SOURCE_COLORS,
+  BUREAU_SOURCE_LABELS
+} from '../../models/credit-bureau.model';
 import { DecisionPanelComponent } from '../decision-panel/decision-panel.component';
 import { CreditMemoComponent } from '../credit-memo/credit-memo.component';
 
@@ -34,6 +43,8 @@ import { CreditMemoComponent } from '../credit-memo/credit-memo.component';
     MatListModule,
     MatDividerModule,
     MatTooltipModule,
+    MatExpansionModule,
+    MatTableModule,
     DecisionPanelComponent,
     CreditMemoComponent
   ],
@@ -43,6 +54,8 @@ import { CreditMemoComponent } from '../credit-memo/credit-memo.component';
 export class TaskDetailComponent implements OnInit {
   task: TaskResponse | null = null;
   loan: LoanApplication | null = null;
+  bureauReport: CreditBureauResponse | null = null;
+  bureauLoading = false;
   loading = true;
   actionLoading = false;
 
@@ -51,6 +64,7 @@ export class TaskDetailComponent implements OnInit {
     private router: Router,
     private taskService: TaskService,
     private loanService: LoanService,
+    private creditBureauService: CreditBureauService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -209,5 +223,40 @@ export class TaskDetailComponent implements OnInit {
 
   goBack(): void {
     this.router.navigate(['/tasks']);
+  }
+
+  // ==================== Credit Bureau Methods ====================
+
+  pullCreditReport(pan: string): void {
+    this.bureauLoading = true;
+    this.creditBureauService.pullReport({ pan }).subscribe({
+      next: (response) => {
+        this.bureauReport = response;
+        this.bureauLoading = false;
+      },
+      error: () => {
+        this.snackBar.open('Failed to pull credit bureau report', 'Close', { duration: 3000 });
+        this.bureauLoading = false;
+      }
+    });
+  }
+
+  getBureauSourceColor(source?: string): string {
+    if (!source) return '';
+    return BUREAU_SOURCE_COLORS[source as BureauDataSource] || '';
+  }
+
+  getBureauSourceLabel(source?: string): string {
+    if (!source) return '';
+    return BUREAU_SOURCE_LABELS[source as BureauDataSource] || source;
+  }
+
+  formatBalance(amount?: number): string {
+    if (amount === undefined || amount === null) return '-';
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(amount);
   }
 }

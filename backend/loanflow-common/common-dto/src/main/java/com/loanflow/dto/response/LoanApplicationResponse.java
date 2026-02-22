@@ -75,6 +75,12 @@ public class LoanApplicationResponse {
     @Schema(description = "Processing fee")
     private BigDecimal processingFee;
 
+    @Schema(description = "Credit bureau data source", example = "REAL")
+    private String bureauDataSource;
+
+    @Schema(description = "Credit bureau pull timestamp")
+    private Instant bureauPullTimestamp;
+
     @Schema(description = "Expected disbursement date")
     private LocalDate expectedDisbursementDate;
 

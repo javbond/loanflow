@@ -75,13 +75,13 @@
 
 | Issue | Title | Points | Status |
 |-------|-------|--------|--------|
-| #44 | [US-016] Credit Bureau Integration (CIBIL API) | 8 | ⏳ Pending |
+| #44 | [US-016] Credit Bureau Integration (CIBIL API) | 8 | ✅ Complete |
 | #45 | [US-017] Income Verification (ITR, GST, Bank Stmt) | 5 | ⏳ Pending |
 | #46 | [US-020] Document Upload Enhanced (Virus Scan) | 3 | ⏳ Pending |
 
-**Total Story Points**: 16 | **Completed**: 0
+**Total Story Points**: 16 | **Completed**: 8
 
-**Progress:** `░░░░░░░░░░` 0%
+**Progress:** `█████░░░░░` 50%
 
 ---
 
@@ -242,14 +242,14 @@
 | Service | Port | Tests | Backend | Frontend |
 |---------|------|-------|---------|----------|
 | customer-service | 8082 | 45 | ✅ Done | ✅ Done |
-| loan-service | 8081 | 167 | ✅ Done (+ Flowable BPMN + Drools + Approval Hierarchy) | ✅ Done (+ Task Inbox + Risk Dashboard) |
+| loan-service | 8081 | 188 | ✅ Done (+ Flowable BPMN + Drools + Approval Hierarchy + CIBIL Bureau) | ✅ Done (+ Task Inbox + Risk Dashboard + Bureau Report) |
 | document-service | 8083 | 49 | ✅ Done | ✅ Done |
 | auth-service (Keycloak) | 8085 | 10 | ✅ Keycloak OAuth2/OIDC | ✅ Done (Login/Logout/Guards) |
 | policy-service | 8086 | 66 | ✅ Done (MongoDB + Redis + Evaluation Engine) | ✅ Done (Policy Builder UI) |
 | notification-service | 8084 | - | ⏳ Pending | ⏳ Pending |
 | api-gateway | 8080 | - | ⏳ Pending | - |
 
-**Total TDD Tests**: 305+ (auth-service: 10, customer: 45, loan: 167, document: 49, policy: 66, common: 8)
+**Total TDD Tests**: 326+ (auth-service: 10, customer: 45, loan: 188, document: 49, policy: 66, common: 8)
 
 ---
 
