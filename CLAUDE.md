@@ -4,7 +4,7 @@
 **LoanFlow** - Loan Origination System for Indian Banks
 - Multi-tenant SaaS platform
 - Spring Boot 3.2 microservices + Angular 17 frontend
-- TDD approach with 211+ tests
+- TDD approach with 305+ tests
 
 ---
 
@@ -68,20 +68,23 @@
 
 ## 📊 CURRENT SPRINT STATUS
 
-### Sprint 7 (Drools + Approval Hierarchy + Risk Dashboard) - 🔄 IN PROGRESS
+### Sprint 7 (Drools + Approval Hierarchy + Risk Dashboard) - ✅ COMPLETED
 **Milestone**: [Sprint 7](https://github.com/javbond/loanflow/milestone/10)
 **Duration**: 2026-03-20 to 2026-04-03
 **Sprint Goal**: Integrate PRD-mandated Drools engine, add amount-based approval routing, deliver risk analytics dashboard
 
 | Issue | Title | Points | Status |
 |-------|-------|--------|--------|
-| #40 | [US-018] Decision Engine (Drools) | 8 | ⏳ Pending |
-| #41 | [US-015] Approval Hierarchy | 5 | ⏳ Pending |
-| #42 | [US-019] Risk Dashboard | 3 | ⏳ Pending |
+| #40 | [US-018] Decision Engine (Drools) | 8 | ✅ Complete |
+| #41 | [US-015] Approval Hierarchy | 5 | ✅ Complete |
+| #42 | [US-019] Risk Dashboard | 3 | ✅ Complete |
+| #43 | BUG: Task Inbox (UUID sync, claim, interest rate) | - | ✅ Fixed |
 
-**Total Story Points**: 16 | **Completed**: 0
+**Total Story Points**: 16 | **Completed**: 16
+**Velocity**: 16 pts/sprint (3rd consecutive)
+**Review**: `docs/sprints/sprint-7-review.md`
 
-**Progress:** `░░░░░░░░░░` 0%
+**Progress:** `██████████` 100%
 
 ---
 
@@ -222,14 +225,14 @@
 | Service | Port | Tests | Backend | Frontend |
 |---------|------|-------|---------|----------|
 | customer-service | 8082 | 45 | ✅ Done | ✅ Done |
-| loan-service | 8081 | 61 | ✅ Done (+ Flowable BPMN + Task Assignment) | ✅ Done (+ Task Inbox UI) |
+| loan-service | 8081 | 167 | ✅ Done (+ Flowable BPMN + Drools + Approval Hierarchy) | ✅ Done (+ Task Inbox + Risk Dashboard) |
 | document-service | 8083 | 49 | ✅ Done | ✅ Done |
 | auth-service (Keycloak) | 8085 | 10 | ✅ Keycloak OAuth2/OIDC | ✅ Done (Login/Logout/Guards) |
 | policy-service | 8086 | 66 | ✅ Done (MongoDB + Redis + Evaluation Engine) | ✅ Done (Policy Builder UI) |
 | notification-service | 8084 | - | ⏳ Pending | ⏳ Pending |
 | api-gateway | 8080 | - | ⏳ Pending | - |
 
-**Total TDD Tests**: 239+ (auth-service: 10, customer: 45, loan: 61, document: 49, policy: 66, common: 8)
+**Total TDD Tests**: 305+ (auth-service: 10, customer: 45, loan: 167, document: 49, policy: 66, common: 8)
 
 ---
 
