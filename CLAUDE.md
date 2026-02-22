@@ -68,6 +68,23 @@
 
 ## 📊 CURRENT SPRINT STATUS
 
+### Sprint 8 (CIBIL + Income Verification + Document Upload) - 🔄 IN PROGRESS
+**Milestone**: [Sprint 8](https://github.com/javbond/loanflow/milestone/11)
+**Duration**: 2026-04-03 to 2026-04-17
+**Sprint Goal**: Integrate CIBIL credit bureau, add income verification pipeline (ITR/GST/bank statement), enhance document upload with virus scanning — Milestone 3 progress
+
+| Issue | Title | Points | Status |
+|-------|-------|--------|--------|
+| #44 | [US-016] Credit Bureau Integration (CIBIL API) | 8 | ⏳ Pending |
+| #45 | [US-017] Income Verification (ITR, GST, Bank Stmt) | 5 | ⏳ Pending |
+| #46 | [US-020] Document Upload Enhanced (Virus Scan) | 3 | ⏳ Pending |
+
+**Total Story Points**: 16 | **Completed**: 0
+
+**Progress:** `░░░░░░░░░░` 0%
+
+---
+
 ### Sprint 7 (Drools + Approval Hierarchy + Risk Dashboard) - ✅ COMPLETED
 **Milestone**: [Sprint 7](https://github.com/javbond/loanflow/milestone/10)
 **Duration**: 2026-03-20 to 2026-04-03
