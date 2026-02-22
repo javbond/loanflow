@@ -23,7 +23,7 @@ public interface ApprovalAuthorityRepository extends JpaRepository<ApprovalAutho
     /**
      * Find all active tiers that apply to all loan types (loanType IS NULL).
      */
-    List<ApprovalAuthority> findByLoanTypeIsNullAndActiveTrueOrderByTierLevel(LoanType loanType);
+    List<ApprovalAuthority> findByLoanTypeIsNullAndActiveTrueOrderByTierLevel();
 
     /**
      * Find the correct approval tier for a given loan type and amount.

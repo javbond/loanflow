@@ -100,6 +100,7 @@ class WorkflowServiceTest {
             TaskQuery taskQuery = mockTaskQuery(List.of(task), 1L);
             when(taskService.createTaskQuery()).thenReturn(taskQuery);
             when(taskQuery.taskCandidateGroupIn(anyList())).thenReturn(taskQuery);
+            when(taskQuery.ignoreAssigneeValue()).thenReturn(taskQuery);
             when(taskService.getVariables("task-1")).thenReturn(
                     Map.of("applicationId", applicationId.toString(),
                             "applicationNumber", "LN-2024-000001"));
@@ -140,6 +141,7 @@ class WorkflowServiceTest {
             TaskQuery taskQuery = mockTaskQuery(List.of(), 0L);
             when(taskService.createTaskQuery()).thenReturn(taskQuery);
             when(taskQuery.taskCandidateGroupIn(anyList())).thenReturn(taskQuery);
+            when(taskQuery.ignoreAssigneeValue()).thenReturn(taskQuery);
 
             Page<TaskResponse> result = workflowService.getTasksByRoles(
                     List.of("LOAN_OFFICER"), PageRequest.of(0, 20));
@@ -210,10 +212,65 @@ class WorkflowServiceTest {
     class ClaimTests {
 
         @Test
-        @DisplayName("Should claim task for user")
-        void shouldClaimTask() {
+        @DisplayName("Should claim unassigned task for user")
+        void shouldClaimUnassignedTask() {
+            Task task = mock(Task.class);
+            when(task.getAssignee()).thenReturn(null);
+
+            TaskQuery taskQuery = mock(TaskQuery.class);
+            when(taskService.createTaskQuery()).thenReturn(taskQuery);
+            when(taskQuery.taskId("task-1")).thenReturn(taskQuery);
+            when(taskQuery.singleResult()).thenReturn(task);
+
             workflowService.claimTask("task-1", "user-1");
+
             verify(taskService).claim("task-1", "user-1");
+        }
+
+        @Test
+        @DisplayName("Should no-op when task already assigned to same user")
+        void shouldNoOpWhenAlreadyAssignedToSameUser() {
+            Task task = mock(Task.class);
+            when(task.getAssignee()).thenReturn("user-1");
+
+            TaskQuery taskQuery = mock(TaskQuery.class);
+            when(taskService.createTaskQuery()).thenReturn(taskQuery);
+            when(taskQuery.taskId("task-1")).thenReturn(taskQuery);
+            when(taskQuery.singleResult()).thenReturn(task);
+
+            workflowService.claimTask("task-1", "user-1");
+
+            verify(taskService, never()).claim(anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("Should throw when task assigned to different user")
+        void shouldThrowWhenAssignedToDifferentUser() {
+            Task task = mock(Task.class);
+            when(task.getAssignee()).thenReturn("other-user");
+
+            TaskQuery taskQuery = mock(TaskQuery.class);
+            when(taskService.createTaskQuery()).thenReturn(taskQuery);
+            when(taskQuery.taskId("task-1")).thenReturn(taskQuery);
+            when(taskQuery.singleResult()).thenReturn(task);
+
+            assertThatThrownBy(() -> workflowService.claimTask("task-1", "user-1"))
+                    .isInstanceOf(IllegalStateException.class)
+                    .hasMessageContaining("already claimed by another user");
+
+            verify(taskService, never()).claim(anyString(), anyString());
+        }
+
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when task does not exist")
+        void shouldThrowWhenTaskNotFoundOnClaim() {
+            TaskQuery taskQuery = mock(TaskQuery.class);
+            when(taskService.createTaskQuery()).thenReturn(taskQuery);
+            when(taskQuery.taskId("missing")).thenReturn(taskQuery);
+            when(taskQuery.singleResult()).thenReturn(null);
+
+            assertThatThrownBy(() -> workflowService.claimTask("missing", "user-1"))
+                    .isInstanceOf(ResourceNotFoundException.class);
         }
 
         @Test

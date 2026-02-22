@@ -89,16 +89,23 @@
                 <ng-container matColumnDef="actions">
                   <th mat-header-cell *matHeaderCellDef>Actions</th>
                   <td mat-cell *matCellDef="let task">
-                    <button mat-raised-button color="primary" (click)="claimTask(task); $event.stopPropagation()"
-                            matTooltip="Claim and review this task">
-                      <mat-icon>assignment_ind</mat-icon> Claim
-                    </button>
+                    @if (task.assignee) {
+                      <button mat-raised-button color="accent" (click)="viewTask(task); $event.stopPropagation()"
+                              matTooltip="Task is auto-assigned to you — click to review">
+                        <mat-icon>visibility</mat-icon> View
+                      </button>
+                    } @else {
+                      <button mat-raised-button color="primary" (click)="claimTask(task); $event.stopPropagation()"
+                              matTooltip="Claim and review this task">
+                        <mat-icon>assignment_ind</mat-icon> Claim
+                      </button>
+                    }
                   </td>
                 </ng-container>
 
                 <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
                 <tr mat-row *matRowDef="let row; columns: displayedColumns;"
-                    class="clickable-row" (click)="claimTask(row)"></tr>
+                    class="clickable-row" (click)="onInboxRowClick(row)"></tr>
               </table>
             </div>
 

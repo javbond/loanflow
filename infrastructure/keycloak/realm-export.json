@@ -100,6 +100,7 @@
   ],
   "users": [
     {
+      "id": "a1b2c3d4-0000-0000-0000-000000000001",
       "username": "admin@loanflow.com",
       "email": "admin@loanflow.com",
       "emailVerified": true,
@@ -116,6 +117,7 @@
       "realmRoles": ["ADMIN"]
     },
     {
+      "id": "3d4c6e4e-582e-45bf-b4f8-844e76cfd8db",
       "username": "officer@loanflow.com",
       "email": "officer@loanflow.com",
       "emailVerified": true,
@@ -132,6 +134,7 @@
       "realmRoles": ["LOAN_OFFICER"]
     },
     {
+      "id": "c896cf46-1352-4b15-abc8-5de774a13113",
       "username": "underwriter@loanflow.com",
       "email": "underwriter@loanflow.com",
       "emailVerified": true,
@@ -148,6 +151,7 @@
       "realmRoles": ["UNDERWRITER"]
     },
     {
+      "id": "f0e1d2c3-0000-0000-0000-000000000004",
       "username": "customer@example.com",
       "email": "customer@example.com",
       "emailVerified": true,
@@ -164,6 +168,7 @@
       "realmRoles": ["CUSTOMER"]
     },
     {
+      "id": "842fec11-14f7-4378-885c-a8c3dfcf1bfe",
       "username": "officer2@loanflow.com",
       "email": "officer2@loanflow.com",
       "emailVerified": true,
@@ -180,6 +185,7 @@
       "realmRoles": ["LOAN_OFFICER"]
     },
     {
+      "id": "78861730-c75b-4cd6-b6d1-f5395136e492",
       "username": "senior.uw@loanflow.com",
       "email": "senior.uw@loanflow.com",
       "emailVerified": true,
@@ -196,6 +202,7 @@
       "realmRoles": ["SENIOR_UNDERWRITER"]
     },
     {
+      "id": "9a3c6949-7398-40bc-a512-1d049f43b9da",
       "username": "manager@loanflow.com",
       "email": "manager@loanflow.com",
       "emailVerified": true,

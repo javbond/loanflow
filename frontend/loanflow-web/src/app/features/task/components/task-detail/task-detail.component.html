@@ -173,6 +173,14 @@
               </div>
               @if (loan) {
                 <div class="detail-item">
+                  <span class="label">Interest Rate</span>
+                  @if (loan.interestRate) {
+                    <span class="value">{{ loan.interestRate }}% p.a.</span>
+                  } @else {
+                    <span class="value na">Not Computed</span>
+                  }
+                </div>
+                <div class="detail-item">
                   <span class="label">Processing Fee</span>
                   <span class="value">{{ formatAmount(loan.processingFee) }}</span>
                 </div>

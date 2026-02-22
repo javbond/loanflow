@@ -69,6 +69,22 @@ public class WorkflowServiceImpl implements WorkflowService {
 
     @Override
     public void claimTask(String taskId, String userId) {
+        Task task = taskService.createTaskQuery().taskId(taskId).singleResult();
+        if (task == null) {
+            throw new ResourceNotFoundException("Task", "id", taskId);
+        }
+
+        // If already assigned to this user (e.g. by AutoAssignmentTaskListener), treat as no-op
+        if (userId.equals(task.getAssignee())) {
+            log.info("Task {} already assigned to user {}, skipping claim", taskId, userId);
+            return;
+        }
+
+        // If assigned to someone else, throw a clear error
+        if (task.getAssignee() != null) {
+            throw new IllegalStateException("Task " + taskId + " is already claimed by another user");
+        }
+
         taskService.claim(taskId, userId);
         log.info("User {} claimed task {}", userId, taskId);
     }
@@ -84,6 +100,7 @@ public class WorkflowServiceImpl implements WorkflowService {
     public Page<TaskResponse> getTasksByRoles(List<String> roles, Pageable pageable) {
         TaskQuery query = taskService.createTaskQuery()
                 .taskCandidateGroupIn(roles)
+                .ignoreAssigneeValue()
                 .orderByTaskCreateTime().desc();
 
         long total = query.count();

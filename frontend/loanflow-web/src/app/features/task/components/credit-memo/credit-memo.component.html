@@ -89,6 +89,10 @@
           </span>
         </div>
         <div class="memo-item">
+          <span class="memo-label">Interest Rate</span>
+          <span class="memo-value">{{ loan.interestRate ? (loan.interestRate + '% p.a.') : 'Not Computed' }}</span>
+        </div>
+        <div class="memo-item">
           <span class="memo-label">Processing Fee</span>
           <span class="memo-value">{{ formatAmount(loan.processingFee) }}</span>
         </div>

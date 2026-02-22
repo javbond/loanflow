@@ -148,6 +148,14 @@ export class TaskInboxComponent implements OnInit {
     this.router.navigate(['/tasks', task.taskId]);
   }
 
+  onInboxRowClick(task: TaskResponse): void {
+    if (task.assignee) {
+      this.viewTask(task);
+    } else {
+      this.claimTask(task);
+    }
+  }
+
   getTaskLabel(key: string): string {
     return getTaskLabel(key);
   }
