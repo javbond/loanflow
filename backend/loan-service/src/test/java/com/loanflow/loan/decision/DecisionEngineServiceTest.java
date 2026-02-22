@@ -552,6 +552,61 @@ class DecisionEngineServiceTest {
     }
 
     // =========================================================================
+    // INCOME VERIFICATION RULES (US-017)
+    // =========================================================================
+
+    @Nested
+    @DisplayName("Income Verification Rules")
+    class IncomeVerificationTests {
+
+        @Test
+        @DisplayName("Should reject when DTI ratio exceeds 50%")
+        void shouldRejectHighDtiRatio() {
+            DecisionFacts facts = buildFactsWithIncome("PL", 500000, 36, 750, 30, 50000,
+                    true, 50000, 0.55, 90, 3);
+            DecisionResult result = decisionEngineService.evaluateWithFacts(facts, "TEST-INCOME-001");
+
+            assertThat(result.eligible()).isFalse();
+            assertThat(result.eligibilityStatus()).isEqualTo("REJECTED");
+            assertThat(result.rejectionReasons()).anyMatch(r -> r.contains("DTI") || r.contains("Debt-to-Income"));
+        }
+
+        @Test
+        @DisplayName("Should refer when income consistency below 70%")
+        void shouldReferIncomeMismatch() {
+            DecisionFacts facts = buildFactsWithIncome("PL", 300000, 36, 750, 30, 50000,
+                    true, 50000, 0.30, 60, 1);
+            DecisionResult result = decisionEngineService.evaluateWithFacts(facts, "TEST-INCOME-002");
+
+            assertThat(result.eligibilityStatus()).isEqualTo("REFER");
+            assertThat(result.referReason()).containsIgnoringCase("income");
+        }
+
+        @Test
+        @DisplayName("Should refer when cheque bounce count exceeds 3")
+        void shouldReferHighBounceCount() {
+            DecisionFacts facts = buildFactsWithIncome("PL", 300000, 36, 750, 30, 50000,
+                    true, 50000, 0.30, 90, 5);
+            DecisionResult result = decisionEngineService.evaluateWithFacts(facts, "TEST-INCOME-003");
+
+            assertThat(result.eligibilityStatus()).isEqualTo("REFER");
+            assertThat(result.referReason()).containsIgnoringCase("bounce");
+        }
+
+        @Test
+        @DisplayName("Should apply verified income discount for consistency >= 90%")
+        void shouldApplyVerifiedIncomeDiscount() {
+            DecisionFacts facts = buildFactsWithIncome("PL", 300000, 36, 750, 30, 50000,
+                    true, 50000, 0.25, 95, 0);
+            DecisionResult result = decisionEngineService.evaluateWithFacts(facts, "TEST-INCOME-004");
+
+            // Should have VERIFIED_INCOME_GOOD discount (-0.15)
+            assertThat(result.eligible()).isTrue();
+            assertThat(result.totalDiscounts()).isLessThan(0);
+        }
+    }
+
+    // =========================================================================
     // HELPER METHODS
     // =========================================================================
 
@@ -633,5 +688,42 @@ class DecisionEngineServiceTest {
                 .creditScore(cibilScore).dpd90PlusCount(0).writtenOffAccounts(0)
                 .enquiryCount30Days(1)
                 .build();
+    }
+
+    private DecisionFacts buildFactsWithIncome(String productCode, double amount, int tenure,
+                                                int cibilScore, int age, double income,
+                                                boolean incomeVerified, double verifiedIncome,
+                                                double dtiRatio, int consistencyScore, int bounceCount) {
+        String appId = UUID.randomUUID().toString();
+        String applicantId = UUID.randomUUID().toString();
+
+        LoanApplicationFact appFact = LoanApplicationFact.builder()
+                .id(appId).applicationNumber("TEST-" + productCode)
+                .productCode(productCode).requestedAmount(amount).tenureMonths(tenure).build();
+        ApplicantFact applicantFact = buildDefaultApplicant(applicantId, appId, age);
+        EmploymentDetailsFact empFact = buildDefaultEmployment(applicantId, income);
+        CreditReportFact creditFact = buildDefaultCredit(applicantId, cibilScore);
+
+        IncomeVerificationFact incomeFact = IncomeVerificationFact.builder()
+                .applicationId(appId)
+                .incomeVerified(incomeVerified)
+                .verifiedMonthlyIncome(verifiedIncome)
+                .dtiRatio(dtiRatio)
+                .incomeConsistencyScore(consistencyScore)
+                .annualItrIncome(verifiedIncome * 12)
+                .annualGstTurnover(0)
+                .gstFilingCount12Months(0)
+                .avgMonthlyBankBalance(verifiedIncome * 2)
+                .avgMonthlySalaryCredits(verifiedIncome)
+                .chequeBounceCount(bounceCount)
+                .build();
+
+        EligibilityResultFact eligibilityResult = EligibilityResultFact.builder()
+                .applicationId(appId).build();
+        PricingResultFact pricingResult = PricingResultFact.builder()
+                .applicationId(appId).loanAmount(amount).tenureMonths(tenure).build();
+
+        return new DecisionFacts(appFact, applicantFact, empFact, creditFact,
+                eligibilityResult, pricingResult, null, incomeFact);
     }
 }

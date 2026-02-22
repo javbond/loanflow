@@ -7,6 +7,9 @@ import com.loanflow.loan.decision.service.DecisionEngineService;
 import com.loanflow.loan.decision.service.DecisionEngineService.DecisionResult;
 import com.loanflow.loan.domain.entity.LoanApplication;
 import com.loanflow.loan.domain.enums.LoanStatus;
+import com.loanflow.loan.incomeverification.dto.IncomeVerificationRequest;
+import com.loanflow.loan.incomeverification.dto.IncomeVerificationResponse;
+import com.loanflow.loan.incomeverification.service.IncomeVerificationService;
 import com.loanflow.loan.repository.LoanApplicationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +34,7 @@ public class CreditCheckDelegate implements JavaDelegate {
     private final LoanApplicationRepository repository;
     private final DecisionEngineService decisionEngineService;
     private final CreditBureauService creditBureauService;
+    private final IncomeVerificationService incomeVerificationService;
 
     @Override
     public void execute(DelegateExecution execution) {
@@ -66,9 +70,41 @@ public class CreditCheckDelegate implements JavaDelegate {
             log.warn("Workflow [CreditCheck]: No customerPan in process variables — using default bureau data");
         }
 
-        // 2. Execute Drools decision engine (eligibility + pricing rules)
+        // 2. Income verification (ITR, GST, bank statement analysis)
+        IncomeVerificationResponse incomeResponse = null;
+        if (customerPan != null && !customerPan.isBlank()) {
+            log.info("Workflow [CreditCheck]: Running income verification for PAN {}***",
+                    customerPan.substring(0, 3));
+            String employmentType = (String) execution.getVariable("employmentType");
+            String declaredIncomeStr = (String) execution.getVariable("declaredMonthlyIncome");
+            BigDecimal declaredIncome = declaredIncomeStr != null
+                    ? new BigDecimal(declaredIncomeStr) : null;
+
+            IncomeVerificationRequest incomeRequest = IncomeVerificationRequest.builder()
+                    .pan(customerPan)
+                    .employmentType(employmentType)
+                    .declaredMonthlyIncome(declaredIncome)
+                    .build();
+            incomeResponse = incomeVerificationService.verify(incomeRequest);
+
+            // Persist income verification metadata on the application
+            application.setIncomeVerified(incomeResponse.isIncomeVerified());
+            application.setVerifiedMonthlyIncome(incomeResponse.getVerifiedMonthlyIncome());
+            application.setDtiRatio(incomeResponse.getDtiRatio());
+            application.setIncomeDataSource(incomeResponse.getDataSource().name());
+
+            log.info("Workflow [CreditCheck]: Income verification — verified={}, income={}, DTI={}, source={}",
+                    incomeResponse.isIncomeVerified(),
+                    incomeResponse.getVerifiedMonthlyIncome(),
+                    incomeResponse.getDtiRatio(),
+                    incomeResponse.getDataSource());
+        }
+
+        // 3. Execute Drools decision engine (eligibility + pricing rules)
         DecisionResult result;
-        if (bureauResponse != null) {
+        if (bureauResponse != null && incomeResponse != null) {
+            result = decisionEngineService.evaluate(application, bureauResponse, incomeResponse);
+        } else if (bureauResponse != null) {
             result = decisionEngineService.evaluate(application, bureauResponse);
         } else {
             result = decisionEngineService.evaluate(application);
@@ -110,17 +146,27 @@ public class CreditCheckDelegate implements JavaDelegate {
             execution.setVariable("bureauControlNumber", bureauResponse.getControlNumber());
         }
 
+        // Store income verification metadata in process variables
+        if (incomeResponse != null) {
+            execution.setVariable("incomeVerified", incomeResponse.isIncomeVerified());
+            execution.setVariable("verifiedMonthlyIncome", incomeResponse.getVerifiedMonthlyIncome().toString());
+            execution.setVariable("dtiRatio", incomeResponse.getDtiRatio().toString());
+            execution.setVariable("incomeDataSource", incomeResponse.getDataSource().name());
+            execution.setVariable("incomeConsistencyScore", incomeResponse.getIncomeConsistencyScore());
+        }
+
         // Transition to UNDERWRITING after credit check
         application.transitionTo(LoanStatus.UNDERWRITING);
         repository.save(application);
 
-        log.info("Workflow [CreditCheck]: Application {} — Decision={}, CIBIL={}, Risk={}, Rate={}, Rules={}, Bureau={}",
+        log.info("Workflow [CreditCheck]: Application {} — Decision={}, CIBIL={}, Risk={}, Rate={}, Rules={}, Bureau={}, Income={}",
                 application.getApplicationNumber(),
                 result.decision(),
                 result.creditScore(),
                 result.riskCategory(),
                 result.interestRate(),
                 result.rulesFired(),
-                bureauResponse != null ? bureauResponse.getDataSource() : "N/A");
+                bureauResponse != null ? bureauResponse.getDataSource() : "N/A",
+                incomeResponse != null ? incomeResponse.getDataSource() : "N/A");
     }
 }

@@ -3,6 +3,7 @@ package com.loanflow.loan.workflow.delegate;
 import com.loanflow.loan.creditbureau.service.CreditBureauService;
 import com.loanflow.loan.decision.service.DecisionEngineService;
 import com.loanflow.loan.decision.service.DecisionEngineService.DecisionResult;
+import com.loanflow.loan.incomeverification.service.IncomeVerificationService;
 import com.loanflow.loan.domain.entity.LoanApplication;
 import com.loanflow.loan.domain.enums.LoanStatus;
 import com.loanflow.loan.domain.enums.LoanType;
@@ -84,6 +85,9 @@ class DelegateTests {
 
         @Mock
         private CreditBureauService creditBureauService;
+
+        @Mock
+        private IncomeVerificationService incomeVerificationService;
 
         @Mock
         private DelegateExecution execution;

@@ -4,6 +4,7 @@ import com.loanflow.loan.creditbureau.dto.CreditBureauResponse;
 import com.loanflow.loan.decision.model.*;
 import com.loanflow.loan.domain.entity.LoanApplication;
 import com.loanflow.loan.domain.enums.LoanType;
+import com.loanflow.loan.incomeverification.dto.IncomeVerificationResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
@@ -92,7 +93,8 @@ public class DecisionFactMapper {
                 creditFact,
                 eligibilityResult,
                 pricingResult,
-                null  // No collateral by default
+                null,  // No collateral by default
+                null   // No income verification by default
         );
     }
 
@@ -174,7 +176,120 @@ public class DecisionFactMapper {
                 creditFact,
                 eligibilityResult,
                 pricingResult,
+                null,
                 null
+        );
+    }
+
+    /**
+     * Map a JPA LoanApplication + real Credit Bureau + Income Verification data to Drools facts.
+     * Uses actual bureau and income data. Overrides employment income with verified income.
+     *
+     * @param application JPA LoanApplication entity
+     * @param bureauResponse Real credit bureau response from CIBIL
+     * @param incomeResponse Income verification response
+     */
+    public DecisionFacts mapToFacts(LoanApplication application, CreditBureauResponse bureauResponse,
+                                     IncomeVerificationResponse incomeResponse) {
+        String appId = application.getId().toString();
+        String applicantId = UUID.randomUUID().toString();
+
+        LoanApplicationFact appFact = LoanApplicationFact.builder()
+                .id(appId)
+                .applicationNumber(application.getApplicationNumber())
+                .productCode(mapLoanTypeToProductCode(application.getLoanType()))
+                .requestedAmount(application.getRequestedAmount().doubleValue())
+                .tenureMonths(application.getTenureMonths())
+                .propertyValue(0)
+                .build();
+
+        ApplicantFact applicantFact = ApplicantFact.builder()
+                .id(applicantId)
+                .applicationId(appId)
+                .applicantType("PRIMARY")
+                .age(35)
+                .gender("MALE")
+                .pan(bureauResponse.getPan())
+                .panVerified(true)
+                .politicallyExposed(false)
+                .existingEmi(0)
+                .hasSalaryAccount(false)
+                .existingCustomer(false)
+                .existingLoanDpd(0)
+                .build();
+
+        // Use verified income instead of default when available
+        double netMonthlyIncome = incomeResponse.isIncomeVerified()
+                ? incomeResponse.getVerifiedMonthlyIncome().doubleValue()
+                : 50000;
+
+        EmploymentDetailsFact employmentFact = EmploymentDetailsFact.builder()
+                .id(UUID.randomUUID().toString())
+                .applicantId(applicantId)
+                .employmentType(EmploymentType.SALARIED)
+                .employerCategory(EmployerCategory.PRIVATE)
+                .netMonthlyIncome(netMonthlyIncome)
+                .totalExperienceYears(5)
+                .yearsInCurrentJob(2)
+                .build();
+
+        CreditReportFact creditFact = CreditReportFact.builder()
+                .id(UUID.randomUUID().toString())
+                .applicantId(applicantId)
+                .creditScore(bureauResponse.getCreditScore())
+                .dpd90PlusCount(bureauResponse.getDpd90PlusCount())
+                .writtenOffAccounts(bureauResponse.getWrittenOffAccounts())
+                .enquiryCount30Days(bureauResponse.getEnquiryCount30Days())
+                .build();
+
+        // Build IncomeVerificationFact from response
+        IncomeVerificationFact incomeFact = IncomeVerificationFact.builder()
+                .applicationId(appId)
+                .incomeVerified(incomeResponse.isIncomeVerified())
+                .verifiedMonthlyIncome(incomeResponse.getVerifiedMonthlyIncome().doubleValue())
+                .dtiRatio(incomeResponse.getDtiRatio().doubleValue())
+                .incomeConsistencyScore(incomeResponse.getIncomeConsistencyScore())
+                .annualItrIncome(incomeResponse.getItrData() != null
+                        ? incomeResponse.getItrData().getGrossTotalIncome().doubleValue() : 0)
+                .annualGstTurnover(incomeResponse.getGstData() != null
+                        ? incomeResponse.getGstData().getAnnualTurnover().doubleValue() : 0)
+                .gstFilingCount12Months(incomeResponse.getGstData() != null
+                        ? incomeResponse.getGstData().getFilingCount() : 0)
+                .gstComplianceRating(incomeResponse.getGstData() != null
+                        ? incomeResponse.getGstData().getComplianceRating() : null)
+                .avgMonthlyBankBalance(incomeResponse.getBankStatementData() != null
+                        ? incomeResponse.getBankStatementData().getAvgMonthlyBalance().doubleValue() : 0)
+                .avgMonthlySalaryCredits(incomeResponse.getBankStatementData() != null
+                        ? incomeResponse.getBankStatementData().getAvgMonthlyCredits().doubleValue() : 0)
+                .chequeBounceCount(incomeResponse.getBankStatementData() != null
+                        ? incomeResponse.getBankStatementData().getBounceCount() : 0)
+                .build();
+
+        log.info("Mapped bureau+income data: score={}, verifiedIncome={}, DTI={}, consistency={}%",
+                bureauResponse.getCreditScore(),
+                incomeResponse.getVerifiedMonthlyIncome(),
+                incomeResponse.getDtiRatio(),
+                incomeResponse.getIncomeConsistencyScore());
+
+        EligibilityResultFact eligibilityResult = EligibilityResultFact.builder()
+                .applicationId(appId)
+                .build();
+
+        PricingResultFact pricingResult = PricingResultFact.builder()
+                .applicationId(appId)
+                .loanAmount(application.getRequestedAmount().doubleValue())
+                .tenureMonths(application.getTenureMonths())
+                .build();
+
+        return new DecisionFacts(
+                appFact,
+                applicantFact,
+                employmentFact,
+                creditFact,
+                eligibilityResult,
+                pricingResult,
+                null,       // No collateral
+                incomeFact  // Income verification data
         );
     }
 
@@ -207,7 +322,8 @@ public class DecisionFactMapper {
                 creditFact,
                 eligibilityResult,
                 pricingResult,
-                collateralFact
+                collateralFact,
+                null  // No income verification for ad-hoc evaluation
         );
     }
 
@@ -237,6 +353,7 @@ public class DecisionFactMapper {
             CreditReportFact creditReport,
             EligibilityResultFact eligibilityResult,
             PricingResultFact pricingResult,
-            CollateralFact collateral
+            CollateralFact collateral,
+            IncomeVerificationFact incomeVerification
     ) {}
 }

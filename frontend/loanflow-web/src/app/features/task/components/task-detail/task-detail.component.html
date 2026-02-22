@@ -248,7 +248,7 @@
                       </div>
                     </div>
 
-                    @if (bureauReport.scoreFactors?.length) {
+                    @if (bureauReport.scoreFactors && bureauReport.scoreFactors.length > 0) {
                       <mat-divider class="section-divider"></mat-divider>
                       <h4>Score Factors</h4>
                       <div class="score-factors">
@@ -258,7 +258,7 @@
                       </div>
                     }
 
-                    @if (bureauReport.accounts?.length) {
+                    @if (bureauReport.accounts && bureauReport.accounts.length > 0) {
                       <mat-divider class="section-divider"></mat-divider>
                       <h4>Account Summary ({{ bureauReport.accounts.length }})</h4>
                       <div class="account-list">
@@ -281,7 +281,7 @@
                       </div>
                     }
 
-                    @if (bureauReport.enquiries?.length) {
+                    @if (bureauReport.enquiries && bureauReport.enquiries.length > 0) {
                       <mat-divider class="section-divider"></mat-divider>
                       <h4>Recent Enquiries ({{ bureauReport.enquiries.length }})</h4>
                       <mat-list dense>
@@ -297,6 +297,231 @@
                   </div>
                 </mat-expansion-panel>
               </mat-accordion>
+            }
+
+            <!-- Income Verification Section -->
+            @if (loan) {
+              <mat-divider class="section-divider"></mat-divider>
+              <div class="income-header-row">
+                <h4>
+                  <mat-icon class="section-title-icon">account_balance</mat-icon>
+                  Income Verification
+                </h4>
+                @if (!incomeReport && !loan.incomeVerified) {
+                  <button mat-stroked-button color="primary" (click)="pullIncomeReport(task.customerEmail || '')"
+                          [disabled]="incomeLoading" class="pull-btn">
+                    @if (incomeLoading) {
+                      <mat-spinner diameter="18"></mat-spinner>
+                    } @else {
+                      <mat-icon>verified</mat-icon> Pull Income Data
+                    }
+                  </button>
+                }
+              </div>
+
+              <!-- Income Summary Cards -->
+              @if (loan.incomeVerified || incomeReport) {
+                <div class="income-summary-cards">
+                  <div class="income-card">
+                    <span class="income-card-label">Verified Monthly Income</span>
+                    <span class="income-card-value amount">
+                      {{ formatAmount(incomeReport?.verifiedMonthlyIncome || loan.verifiedMonthlyIncome) }}
+                    </span>
+                  </div>
+                  <div class="income-card">
+                    <span class="income-card-label">DTI Ratio</span>
+                    <span class="income-card-value"
+                          [class]="getDtiClass(incomeReport?.dtiRatio ?? loan.dtiRatio)">
+                      {{ formatPercent(incomeReport?.dtiRatio ?? loan.dtiRatio) }}
+                    </span>
+                  </div>
+                  @if (incomeReport?.incomeConsistencyScore !== undefined) {
+                    <div class="income-card">
+                      <span class="income-card-label">Consistency Score</span>
+                      <span class="income-card-value"
+                            [class]="getConsistencyClass(incomeReport?.incomeConsistencyScore)">
+                        {{ incomeReport?.incomeConsistencyScore }}%
+                      </span>
+                    </div>
+                  }
+                  <div class="income-card">
+                    <span class="income-card-label">Data Source</span>
+                    <mat-chip [color]="getIncomeSourceColor(incomeReport?.dataSource || loan.incomeDataSource)" selected class="bureau-chip">
+                      {{ getIncomeSourceLabel(incomeReport?.dataSource || loan.incomeDataSource) }}
+                    </mat-chip>
+                  </div>
+                </div>
+
+                <!-- Warning Flags -->
+                @if (incomeReport && incomeReport.flags && incomeReport.flags.length > 0) {
+                  <div class="income-flags">
+                    @for (flag of incomeReport!.flags; track flag) {
+                      <mat-chip color="warn" selected class="flag-chip">
+                        <mat-icon class="flag-icon">warning</mat-icon>
+                        {{ flag }}
+                      </mat-chip>
+                    }
+                  </div>
+                }
+
+                <!-- Income Details Expansion Panel -->
+                @if (incomeReport) {
+                  <mat-accordion class="income-accordion">
+                    <!-- ITR Data -->
+                    @if (incomeReport.itrData) {
+                      <mat-expansion-panel>
+                        <mat-expansion-panel-header>
+                          <mat-panel-title>
+                            <mat-icon class="panel-icon">receipt_long</mat-icon>
+                            ITR Data
+                          </mat-panel-title>
+                          <mat-panel-description>
+                            AY {{ incomeReport.itrData.assessmentYear }} | {{ incomeReport.itrData.itrFormType }}
+                          </mat-panel-description>
+                        </mat-expansion-panel-header>
+                        <div class="details-grid">
+                          <div class="detail-item">
+                            <span class="label">Gross Total Income</span>
+                            <span class="value amount">{{ formatAmount(incomeReport.itrData.grossTotalIncome) }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Salary Income</span>
+                            <span class="value">{{ formatAmount(incomeReport.itrData.salaryIncome) }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Business Income</span>
+                            <span class="value">{{ formatAmount(incomeReport.itrData.businessIncome) }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">ITR Form</span>
+                            <span class="value mono">{{ incomeReport.itrData.itrFormType }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Assessment Year</span>
+                            <span class="value">{{ incomeReport.itrData.assessmentYear }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Filed On Time</span>
+                            <span class="value" [class.cibil-good]="incomeReport.itrData.filedOnTime"
+                                  [class.cibil-poor]="!incomeReport.itrData.filedOnTime">
+                              {{ incomeReport.itrData.filedOnTime ? 'Yes' : 'No' }}
+                            </span>
+                          </div>
+                        </div>
+                      </mat-expansion-panel>
+                    }
+
+                    <!-- GST Data -->
+                    @if (incomeReport.gstData) {
+                      <mat-expansion-panel>
+                        <mat-expansion-panel-header>
+                          <mat-panel-title>
+                            <mat-icon class="panel-icon">store</mat-icon>
+                            GST Data
+                          </mat-panel-title>
+                          <mat-panel-description>
+                            {{ incomeReport.gstData.gstin }} |
+                            <mat-chip [color]="getGstComplianceColor(incomeReport.gstData.complianceRating)" selected class="bureau-chip">
+                              {{ incomeReport.gstData.complianceRating }}
+                            </mat-chip>
+                          </mat-panel-description>
+                        </mat-expansion-panel-header>
+                        <div class="details-grid">
+                          <div class="detail-item">
+                            <span class="label">GSTIN</span>
+                            <span class="value mono">{{ incomeReport.gstData.gstin }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Annual Turnover</span>
+                            <span class="value amount">{{ formatAmount(incomeReport.gstData.annualTurnover) }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Compliance Rating</span>
+                            <mat-chip [color]="getGstComplianceColor(incomeReport.gstData.complianceRating)" selected>
+                              {{ incomeReport.gstData.complianceRating }}
+                            </mat-chip>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Filing Count</span>
+                            <span class="value">{{ incomeReport.gstData.filingCount }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Status</span>
+                            <span class="value" [class.cibil-good]="incomeReport.gstData.active"
+                                  [class.cibil-poor]="!incomeReport.gstData.active">
+                              {{ incomeReport.gstData.active ? 'Active' : 'Inactive' }}
+                            </span>
+                          </div>
+                        </div>
+                      </mat-expansion-panel>
+                    }
+
+                    <!-- Bank Statement Data -->
+                    @if (incomeReport.bankStatementData) {
+                      <mat-expansion-panel>
+                        <mat-expansion-panel-header>
+                          <mat-panel-title>
+                            <mat-icon class="panel-icon">account_balance_wallet</mat-icon>
+                            Bank Statement Analysis
+                          </mat-panel-title>
+                          <mat-panel-description>
+                            {{ incomeReport.bankStatementData.monthsAnalyzed }} months analyzed
+                          </mat-panel-description>
+                        </mat-expansion-panel-header>
+                        <div class="details-grid">
+                          <div class="detail-item">
+                            <span class="label">Avg Monthly Balance</span>
+                            <span class="value amount">{{ formatAmount(incomeReport.bankStatementData.avgMonthlyBalance) }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Avg Monthly Credits</span>
+                            <span class="value amount">{{ formatAmount(incomeReport.bankStatementData.avgMonthlyCredits) }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Cheque Bounces</span>
+                            <span class="value" [class.negative-marker]="incomeReport.bankStatementData.bounceCount > 3">
+                              {{ incomeReport.bankStatementData.bounceCount }}
+                            </span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Min Balance</span>
+                            <span class="value">{{ formatAmount(incomeReport.bankStatementData.minBalance) }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Max Balance</span>
+                            <span class="value">{{ formatAmount(incomeReport.bankStatementData.maxBalance) }}</span>
+                          </div>
+                          <div class="detail-item">
+                            <span class="label">Months Analyzed</span>
+                            <span class="value">{{ incomeReport.bankStatementData.monthsAnalyzed }}</span>
+                          </div>
+                        </div>
+
+                        @if (incomeReport.bankStatementData.monthlyBalances && incomeReport.bankStatementData.monthlyBalances.length > 0) {
+                          <mat-divider class="section-divider"></mat-divider>
+                          <h4>Monthly Balance Trend</h4>
+                          <div class="balance-trend">
+                            @for (balance of incomeReport.bankStatementData.monthlyBalances; track $index) {
+                              <div class="balance-bar-container">
+                                <span class="balance-value">{{ formatBalance(balance) }}</span>
+                                <div class="balance-bar"
+                                     [style.height.%]="(balance / (incomeReport.bankStatementData.maxBalance || 1)) * 100">
+                                </div>
+                                <span class="balance-month">M{{ $index + 1 }}</span>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </mat-expansion-panel>
+                    }
+                  </mat-accordion>
+                }
+              } @else {
+                <div class="no-income-data">
+                  <mat-icon>verified_user</mat-icon>
+                  <p>Income verification not yet performed</p>
+                </div>
+              }
             }
 
             <!-- Credit Memo (printable summary) -->

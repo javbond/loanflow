@@ -15,6 +15,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTableModule } from '@angular/material/table';
 import { TaskService } from '../../services/task.service';
 import { CreditBureauService } from '../../services/credit-bureau.service';
+import { IncomeVerificationService } from '../../services/income-verification.service';
 import { LoanService } from '../../../loan/services/loan.service';
 import { LoanApplication, LOAN_STATUSES, LOAN_TYPES } from '../../../loan/models/loan.model';
 import { TaskResponse, getTaskLabel, formatLoanType, formatCurrency, CompleteTaskRequest } from '../../models/task.model';
@@ -24,6 +25,13 @@ import {
   BUREAU_SOURCE_COLORS,
   BUREAU_SOURCE_LABELS
 } from '../../models/credit-bureau.model';
+import {
+  IncomeVerificationResponse,
+  IncomeDataSource,
+  INCOME_SOURCE_COLORS,
+  INCOME_SOURCE_LABELS,
+  GST_COMPLIANCE_COLORS
+} from '../../models/income-verification.model';
 import { DecisionPanelComponent } from '../decision-panel/decision-panel.component';
 import { CreditMemoComponent } from '../credit-memo/credit-memo.component';
 
@@ -56,6 +64,8 @@ export class TaskDetailComponent implements OnInit {
   loan: LoanApplication | null = null;
   bureauReport: CreditBureauResponse | null = null;
   bureauLoading = false;
+  incomeReport: IncomeVerificationResponse | null = null;
+  incomeLoading = false;
   loading = true;
   actionLoading = false;
 
@@ -65,6 +75,7 @@ export class TaskDetailComponent implements OnInit {
     private taskService: TaskService,
     private loanService: LoanService,
     private creditBureauService: CreditBureauService,
+    private incomeVerificationService: IncomeVerificationService,
     private snackBar: MatSnackBar
   ) {}
 
@@ -258,5 +269,55 @@ export class TaskDetailComponent implements OnInit {
       currency: 'INR',
       maximumFractionDigits: 0
     }).format(amount);
+  }
+
+  // ==================== Income Verification Methods ====================
+
+  pullIncomeReport(pan: string): void {
+    this.incomeLoading = true;
+    this.incomeVerificationService.verify({ pan }).subscribe({
+      next: (response) => {
+        this.incomeReport = response;
+        this.incomeLoading = false;
+      },
+      error: () => {
+        this.snackBar.open('Failed to pull income verification', 'Close', { duration: 3000 });
+        this.incomeLoading = false;
+      }
+    });
+  }
+
+  getIncomeSourceColor(source?: string): string {
+    if (!source) return '';
+    return INCOME_SOURCE_COLORS[source as IncomeDataSource] || '';
+  }
+
+  getIncomeSourceLabel(source?: string): string {
+    if (!source) return '';
+    return INCOME_SOURCE_LABELS[source as IncomeDataSource] || source;
+  }
+
+  getDtiClass(dti?: number): string {
+    if (dti === undefined || dti === null) return '';
+    if (dti > 0.5) return 'cibil-poor';
+    if (dti > 0.4) return 'cibil-fair';
+    return 'cibil-good';
+  }
+
+  getConsistencyClass(score?: number): string {
+    if (score === undefined || score === null) return '';
+    if (score >= 90) return 'cibil-good';
+    if (score >= 70) return 'cibil-fair';
+    return 'cibil-poor';
+  }
+
+  getGstComplianceColor(rating?: string): string {
+    if (!rating) return '';
+    return GST_COMPLIANCE_COLORS[rating] || '';
+  }
+
+  formatPercent(value?: number): string {
+    if (value === undefined || value === null) return '-';
+    return (value * 100).toFixed(1) + '%';
   }
 }

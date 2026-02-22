@@ -81,6 +81,18 @@ public class LoanApplicationResponse {
     @Schema(description = "Credit bureau pull timestamp")
     private Instant bureauPullTimestamp;
 
+    @Schema(description = "Whether income was verified")
+    private Boolean incomeVerified;
+
+    @Schema(description = "Verified monthly income")
+    private BigDecimal verifiedMonthlyIncome;
+
+    @Schema(description = "Debt-to-Income ratio")
+    private BigDecimal dtiRatio;
+
+    @Schema(description = "Income data source", example = "REAL")
+    private String incomeDataSource;
+
     @Schema(description = "Expected disbursement date")
     private LocalDate expectedDisbursementDate;
 

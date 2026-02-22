@@ -104,6 +104,18 @@ public class LoanApplication {
     @Column(name = "bureau_pull_timestamp")
     private Instant bureauPullTimestamp;
 
+    @Column(name = "income_verified")
+    private Boolean incomeVerified;
+
+    @Column(name = "verified_monthly_income", precision = 15, scale = 2)
+    private BigDecimal verifiedMonthlyIncome;
+
+    @Column(name = "dti_ratio", precision = 5, scale = 4)
+    private BigDecimal dtiRatio;
+
+    @Column(name = "income_data_source", length = 20)
+    private String incomeDataSource;
+
     @Column(name = "workflow_instance_id", length = 50)
     private String workflowInstanceId;
 

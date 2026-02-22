@@ -78,6 +78,15 @@ loanflow:
     cache-ttl-hours: ${CIBIL_CACHE_TTL_HOURS:24}
     enabled: ${CIBIL_ENABLED:true}
 
+  # US-017: Income Verification (ITR, GST, Bank Statement)
+  income-verification:
+    base-url: ${INCOME_VERIFICATION_BASE_URL:https://uat-api.incometax.gov.in/v1}
+    timeout-ms: ${INCOME_VERIFICATION_TIMEOUT_MS:30000}
+    max-retries: ${INCOME_VERIFICATION_MAX_RETRIES:3}
+    retry-delay-ms: ${INCOME_VERIFICATION_RETRY_DELAY_MS:1000}
+    cache-ttl-hours: ${INCOME_VERIFICATION_CACHE_TTL_HOURS:48}
+    enabled: ${INCOME_VERIFICATION_ENABLED:true}
+
   # US-014: Task Assignment & Escalation
   assignment:
     enabled: true

@@ -5,6 +5,7 @@ import com.loanflow.loan.decision.model.ApplicantFact;
 import com.loanflow.loan.decision.model.EmploymentDetailsFact;
 import com.loanflow.loan.decision.model.CreditReportFact;
 import com.loanflow.loan.decision.model.CollateralFact;
+import com.loanflow.loan.decision.model.IncomeVerificationFact;
 import com.loanflow.loan.decision.model.PricingResultFact;
 import com.loanflow.loan.decision.model.EmploymentType;
 import com.loanflow.loan.decision.model.EmployerCategory;
@@ -292,6 +293,47 @@ rule "Existing Customer - Good Track Record"
         $result : PricingResultFact(applicationId == $app.id)
     then
         $result.addDiscount("EXISTING_CUSTOMER_GOOD", -0.20);
+        update($result);
+end
+
+// ==============================================================================
+// INCOME VERIFICATION PRICING ADJUSTMENTS (US-017)
+// ==============================================================================
+rule "Income - Verified Income Discount"
+    salience 550
+    no-loop true
+    lock-on-active true
+    when
+        $app : LoanApplicationFact()
+        $income : IncomeVerificationFact(
+            applicationId == $app.id,
+            incomeVerified == true,
+            incomeConsistencyScore >= 90
+        )
+        $result : PricingResultFact(applicationId == $app.id)
+    then
+        $result.addDiscount("VERIFIED_INCOME_GOOD", -0.15);
+        logger.info("Income verification discount: consistency={}% for {}",
+            $income.getIncomeConsistencyScore(), $app.getApplicationNumber());
+        update($result);
+end
+
+rule "Income - High DTI Premium"
+    salience 550
+    no-loop true
+    lock-on-active true
+    when
+        $app : LoanApplicationFact()
+        $income : IncomeVerificationFact(
+            applicationId == $app.id,
+            incomeVerified == true,
+            dtiRatio >= 0.40 && dtiRatio <= 0.50
+        )
+        $result : PricingResultFact(applicationId == $app.id)
+    then
+        $result.addPremium("HIGH_DTI_RATIO", 0.25);
+        logger.info("High DTI premium: DTI={}% for {}",
+            String.format("%.0f", $income.getDtiRatio() * 100), $app.getApplicationNumber());
         update($result);
 end
 

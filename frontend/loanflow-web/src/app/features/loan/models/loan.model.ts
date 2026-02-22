@@ -19,6 +19,10 @@ export interface LoanApplication {
   processingFee?: number;
   bureauDataSource?: 'REAL' | 'CACHED' | 'SIMULATED';
   bureauPullTimestamp?: string;
+  incomeVerified?: boolean;
+  verifiedMonthlyIncome?: number;
+  dtiRatio?: number;
+  incomeDataSource?: 'REAL' | 'CACHED' | 'SIMULATED';
   expectedDisbursementDate?: string;
   submittedAt?: string;
   createdAt?: string;

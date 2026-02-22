@@ -5,6 +5,7 @@ import com.loanflow.loan.decision.mapper.DecisionFactMapper;
 import com.loanflow.loan.decision.mapper.DecisionFactMapper.DecisionFacts;
 import com.loanflow.loan.decision.model.*;
 import com.loanflow.loan.domain.entity.LoanApplication;
+import com.loanflow.loan.incomeverification.dto.IncomeVerificationResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.kie.api.runtime.KieContainer;
@@ -54,6 +55,20 @@ public class DecisionEngineService {
     }
 
     /**
+     * Evaluate a loan application using real credit bureau + income verification data.
+     *
+     * @param application JPA LoanApplication entity
+     * @param bureauResponse Real credit bureau response from CIBIL
+     * @param incomeResponse Income verification response
+     * @return DecisionResult with eligibility status, interest rate, and pricing
+     */
+    public DecisionResult evaluate(LoanApplication application, CreditBureauResponse bureauResponse,
+                                    IncomeVerificationResponse incomeResponse) {
+        DecisionFacts facts = factMapper.mapToFacts(application, bureauResponse, incomeResponse);
+        return evaluateWithFacts(facts, application.getApplicationNumber());
+    }
+
+    /**
      * Evaluate with explicit facts (for ad-hoc REST evaluation).
      */
     public DecisionResult evaluateWithFacts(DecisionFacts facts, String applicationNumber) {
@@ -73,6 +88,9 @@ public class DecisionEngineService {
             session.insert(facts.pricingResult());
             if (facts.collateral() != null) {
                 session.insert(facts.collateral());
+            }
+            if (facts.incomeVerification() != null) {
+                session.insert(facts.incomeVerification());
             }
 
             // Fire all rules (max 200 to prevent infinite loops from rule re-triggering)

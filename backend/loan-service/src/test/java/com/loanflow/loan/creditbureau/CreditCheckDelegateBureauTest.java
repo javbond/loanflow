@@ -9,6 +9,10 @@ import com.loanflow.loan.decision.service.DecisionEngineService.DecisionResult;
 import com.loanflow.loan.domain.entity.LoanApplication;
 import com.loanflow.loan.domain.enums.LoanStatus;
 import com.loanflow.loan.domain.enums.LoanType;
+import com.loanflow.loan.incomeverification.dto.IncomeVerificationRequest;
+import com.loanflow.loan.incomeverification.dto.IncomeVerificationResponse;
+import com.loanflow.loan.incomeverification.dto.IncomeDataSource;
+import com.loanflow.loan.incomeverification.service.IncomeVerificationService;
 import com.loanflow.loan.repository.LoanApplicationRepository;
 import com.loanflow.loan.workflow.delegate.CreditCheckDelegate;
 import org.flowable.engine.delegate.DelegateExecution;
@@ -44,6 +48,7 @@ class CreditCheckDelegateBureauTest {
     @Mock private LoanApplicationRepository repository;
     @Mock private DecisionEngineService decisionEngineService;
     @Mock private CreditBureauService creditBureauService;
+    @Mock private IncomeVerificationService incomeVerificationService;
     @Mock private DelegateExecution execution;
 
     @InjectMocks
@@ -58,6 +63,7 @@ class CreditCheckDelegateBureauTest {
         LoanApplication app = buildApplication(appId, LoanStatus.DOCUMENT_VERIFICATION);
 
         CreditBureauResponse bureauResponse = buildBureauResponse(780, BureauDataSource.REAL);
+        IncomeVerificationResponse incomeResponse = buildIncomeResponse();
         DecisionResult result = buildApprovedResult(780);
 
         when(execution.getVariable("applicationId")).thenReturn(appId.toString());
@@ -65,7 +71,8 @@ class CreditCheckDelegateBureauTest {
         when(repository.findById(appId)).thenReturn(Optional.of(app));
         when(repository.save(any())).thenReturn(app);
         when(creditBureauService.pullReport(any(CreditBureauRequest.class))).thenReturn(bureauResponse);
-        when(decisionEngineService.evaluate(eq(app), eq(bureauResponse))).thenReturn(result);
+        when(incomeVerificationService.verify(any(IncomeVerificationRequest.class))).thenReturn(incomeResponse);
+        when(decisionEngineService.evaluate(eq(app), eq(bureauResponse), eq(incomeResponse))).thenReturn(result);
 
         delegate.execute(execution);
 
@@ -74,13 +81,17 @@ class CreditCheckDelegateBureauTest {
         verify(creditBureauService).pullReport(captor.capture());
         assertThat(captor.getValue().getPan()).isEqualTo(TEST_PAN);
 
-        // Verify decision engine used bureau overload
-        verify(decisionEngineService).evaluate(app, bureauResponse);
+        // Verify decision engine used 3-arg overload (bureau + income)
+        verify(decisionEngineService).evaluate(app, bureauResponse, incomeResponse);
         verify(decisionEngineService, never()).evaluate(app);
 
         // Verify bureau metadata persisted
         assertThat(app.getBureauDataSource()).isEqualTo("REAL");
         assertThat(app.getBureauPullTimestamp()).isNotNull();
+
+        // Verify income metadata persisted
+        assertThat(app.getIncomeVerified()).isTrue();
+        assertThat(app.getIncomeDataSource()).isEqualTo("SIMULATED");
 
         // Verify process variables set
         verify(execution).setVariable("bureauDataSource", "REAL");
@@ -121,6 +132,7 @@ class CreditCheckDelegateBureauTest {
         LoanApplication app = buildApplication(appId, LoanStatus.DOCUMENT_VERIFICATION);
 
         CreditBureauResponse cachedResponse = buildBureauResponse(720, BureauDataSource.CACHED);
+        IncomeVerificationResponse incomeResponse = buildIncomeResponse();
         DecisionResult result = buildApprovedResult(720);
 
         when(execution.getVariable("applicationId")).thenReturn(appId.toString());
@@ -128,7 +140,8 @@ class CreditCheckDelegateBureauTest {
         when(repository.findById(appId)).thenReturn(Optional.of(app));
         when(repository.save(any())).thenReturn(app);
         when(creditBureauService.pullReport(any())).thenReturn(cachedResponse);
-        when(decisionEngineService.evaluate(eq(app), eq(cachedResponse))).thenReturn(result);
+        when(incomeVerificationService.verify(any(IncomeVerificationRequest.class))).thenReturn(incomeResponse);
+        when(decisionEngineService.evaluate(eq(app), eq(cachedResponse), eq(incomeResponse))).thenReturn(result);
 
         delegate.execute(execution);
 
@@ -144,6 +157,7 @@ class CreditCheckDelegateBureauTest {
 
         CreditBureauResponse simulatedResponse = buildBureauResponse(700, BureauDataSource.SIMULATED);
         simulatedResponse.setControlNumber("SIM-FALLBACK");
+        IncomeVerificationResponse incomeResponse = buildIncomeResponse();
         DecisionResult result = buildApprovedResult(700);
 
         when(execution.getVariable("applicationId")).thenReturn(appId.toString());
@@ -151,7 +165,8 @@ class CreditCheckDelegateBureauTest {
         when(repository.findById(appId)).thenReturn(Optional.of(app));
         when(repository.save(any())).thenReturn(app);
         when(creditBureauService.pullReport(any())).thenReturn(simulatedResponse);
-        when(decisionEngineService.evaluate(eq(app), eq(simulatedResponse))).thenReturn(result);
+        when(incomeVerificationService.verify(any(IncomeVerificationRequest.class))).thenReturn(incomeResponse);
+        when(decisionEngineService.evaluate(eq(app), eq(simulatedResponse), eq(incomeResponse))).thenReturn(result);
 
         delegate.execute(execution);
 
@@ -191,6 +206,19 @@ class CreditCheckDelegateBureauTest {
                 .dataSource(source)
                 .pullTimestamp(Instant.now())
                 .controlNumber("MOCK-TEST")
+                .build();
+    }
+
+    private static IncomeVerificationResponse buildIncomeResponse() {
+        return IncomeVerificationResponse.builder()
+                .pan(TEST_PAN)
+                .incomeVerified(true)
+                .verifiedMonthlyIncome(new BigDecimal("75000"))
+                .dtiRatio(new BigDecimal("0.35"))
+                .incomeConsistencyScore(85)
+                .flags(new ArrayList<>())
+                .dataSource(IncomeDataSource.SIMULATED)
+                .verificationTimestamp(Instant.now())
                 .build();
     }
 

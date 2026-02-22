@@ -91,7 +91,7 @@ import { Document, DOCUMENT_TYPES, DOCUMENT_STATUSES } from '../../../document/m
                         {{ formatDate(doc.createdAt) }}
                       </span>
                     </div>
-                    <mat-chip [class]="'status-chip ' + doc.status?.toLowerCase()" size="small">
+                    <mat-chip [class]="'status-chip ' + (doc.status || '').toLowerCase()" size="small">
                       {{ getStatusLabel(doc.status) }}
                     </mat-chip>
                   </div>

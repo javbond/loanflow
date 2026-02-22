@@ -300,9 +300,10 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         log.info("Customer {} submitted loan application: {}",
                 customerEmail, saved.getApplicationNumber());
 
-        // Start Flowable workflow process (pass PAN for credit bureau pull)
+        // Start Flowable workflow process (pass PAN, employment type, income for credit/income checks)
         String processInstanceId = workflowService.startProcess(
-                saved.getId(), buildProcessVariables(saved, request.pan()));
+                saved.getId(), buildProcessVariables(saved, request.pan(),
+                        request.employmentType(), request.monthlyIncome()));
         saved.setWorkflowInstanceId(processInstanceId);
         repository.save(saved);
 
@@ -383,6 +384,11 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     }
 
     private Map<String, Object> buildProcessVariables(LoanApplication application, String customerPan) {
+        return buildProcessVariables(application, customerPan, null, null);
+    }
+
+    private Map<String, Object> buildProcessVariables(LoanApplication application, String customerPan,
+                                                        String employmentType, BigDecimal declaredMonthlyIncome) {
         Map<String, Object> variables = new HashMap<>();
         variables.put("applicationNumber", application.getApplicationNumber());
         variables.put("loanType", application.getLoanType().name());
@@ -392,6 +398,12 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
                 application.getCustomerEmail() != null ? application.getCustomerEmail() : "");
         if (customerPan != null && !customerPan.isBlank()) {
             variables.put("customerPan", customerPan);
+        }
+        if (employmentType != null && !employmentType.isBlank()) {
+            variables.put("employmentType", employmentType);
+        }
+        if (declaredMonthlyIncome != null) {
+            variables.put("declaredMonthlyIncome", declaredMonthlyIncome.toString());
         }
         return variables;
     }

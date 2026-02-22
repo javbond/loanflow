@@ -5,6 +5,7 @@ import com.loanflow.loan.decision.model.ApplicantFact;
 import com.loanflow.loan.decision.model.EmploymentDetailsFact;
 import com.loanflow.loan.decision.model.CreditReportFact;
 import com.loanflow.loan.decision.model.EligibilityResultFact;
+import com.loanflow.loan.decision.model.IncomeVerificationFact;
 import com.loanflow.loan.decision.model.LoanProduct;
 import com.loanflow.loan.decision.model.EmploymentType;
 import com.loanflow.loan.decision.model.EligibilityStatus;
@@ -274,6 +275,94 @@ rule "Credit Score - High Enquiry Count"
         $result.setStatus(EligibilityStatus.REFER);
         $result.setReferReason("High credit enquiry count in last 30 days (" +
             $credit.getEnquiryCount30Days() + "), indicates credit hungry behavior");
+        update($result);
+end
+
+// ==============================================================================
+// INCOME VERIFICATION RULES (US-017)
+// ==============================================================================
+rule "Income - DTI Ratio Exceeded"
+    salience 800
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $income : IncomeVerificationFact(
+            applicationId == $app.id,
+            incomeVerified == true,
+            dtiRatio > 0.50
+        )
+        $result : EligibilityResultFact(applicationId == $app.id)
+    then
+        logger.warn("Application {} rejected: DTI ratio {} exceeds 50%",
+            $app.getApplicationNumber(), $income.getDtiRatio());
+        $result.addRejectionReason("DTI_RATIO_EXCEEDED",
+            "Debt-to-Income ratio of " + String.format("%.0f%%", $income.getDtiRatio() * 100) +
+            " exceeds maximum 50%");
+        $result.setStatus(EligibilityStatus.REJECTED);
+        update($result);
+end
+
+rule "Income - Income Mismatch Refer"
+    salience 790
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $income : IncomeVerificationFact(
+            applicationId == $app.id,
+            incomeVerified == true,
+            incomeConsistencyScore < 70
+        )
+        $result : EligibilityResultFact(applicationId == $app.id, status != EligibilityStatus.REJECTED)
+    then
+        logger.info("Application {} referred: Income consistency score {} below 70%",
+            $app.getApplicationNumber(), $income.getIncomeConsistencyScore());
+        $result.setStatus(EligibilityStatus.REFER);
+        $result.setReferReason("Income consistency score of " + $income.getIncomeConsistencyScore() +
+            "% indicates significant mismatch between declared and verified income");
+        update($result);
+end
+
+rule "Income - Self-Employed GST Turnover Check"
+    salience 785
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $applicant : ApplicantFact(applicationId == $app.id, applicantType == "PRIMARY")
+        $emp : EmploymentDetailsFact(
+            applicantId == $applicant.id,
+            employmentType in (EmploymentType.SELF_EMPLOYED_PROFESSIONAL, EmploymentType.SELF_EMPLOYED_BUSINESS)
+        )
+        $income : IncomeVerificationFact(
+            applicationId == $app.id,
+            annualGstTurnover > 0 && annualGstTurnover < 1200000
+        )
+        $result : EligibilityResultFact(applicationId == $app.id, status != EligibilityStatus.REJECTED)
+    then
+        logger.info("Application {} referred: GST turnover Rs.{} below Rs.12L for self-employed",
+            $app.getApplicationNumber(), $income.getAnnualGstTurnover());
+        $result.setStatus(EligibilityStatus.REFER);
+        $result.setReferReason("Self-employed GST annual turnover of Rs." +
+            String.format("%.0f", $income.getAnnualGstTurnover()) +
+            " is below minimum threshold of Rs.12,00,000");
+        update($result);
+end
+
+rule "Income - Cheque Bounce Warning"
+    salience 780
+    no-loop true
+    when
+        $app : LoanApplicationFact()
+        $income : IncomeVerificationFact(
+            applicationId == $app.id,
+            chequeBounceCount > 3
+        )
+        $result : EligibilityResultFact(applicationId == $app.id, status != EligibilityStatus.REJECTED)
+    then
+        logger.info("Application {} referred: {} cheque bounces in 6 months",
+            $app.getApplicationNumber(), $income.getChequeBounceCount());
+        $result.setStatus(EligibilityStatus.REFER);
+        $result.setReferReason("High cheque/ECS bounce count: " + $income.getChequeBounceCount() +
+            " bounces in last 6 months indicates payment discipline concerns");
         update($result);
 end
 
