@@ -4,7 +4,7 @@
 **LoanFlow** - Loan Origination System for Indian Banks
 - Multi-tenant SaaS platform
 - Spring Boot 3.2 microservices + Angular 17 frontend
-- TDD approach with 344+ tests
+- TDD approach with 351+ tests
 
 ---
 
@@ -68,7 +68,7 @@
 
 ## 📊 CURRENT SPRINT STATUS
 
-### Sprint 8 (CIBIL + Income Verification + Document Upload) - 🔄 IN PROGRESS
+### Sprint 8 (CIBIL + Income Verification + Document Upload) - ✅ COMPLETED
 **Milestone**: [Sprint 8](https://github.com/javbond/loanflow/milestone/11)
 **Duration**: 2026-04-03 to 2026-04-17
 **Sprint Goal**: Integrate CIBIL credit bureau, add income verification pipeline (ITR/GST/bank statement), enhance document upload with virus scanning — Milestone 3 progress
@@ -77,11 +77,12 @@
 |-------|-------|--------|--------|
 | #44 | [US-016] Credit Bureau Integration (CIBIL API) | 8 | ✅ Complete |
 | #45 | [US-017] Income Verification (ITR, GST, Bank Stmt) | 5 | ✅ Complete |
-| #46 | [US-020] Document Upload Enhanced (Virus Scan) | 3 | ⏳ Pending |
+| #46 | [US-020] Document Upload Enhanced (Virus Scan) | 3 | ✅ Complete |
 
-**Total Story Points**: 16 | **Completed**: 13
+**Total Story Points**: 16 | **Completed**: 16
+**Velocity**: 16 pts/sprint (4th consecutive)
 
-**Progress:** `████████░░` 81%
+**Progress:** `██████████` 100%
 
 ---
 
@@ -243,13 +244,13 @@
 |---------|------|-------|---------|----------|
 | customer-service | 8082 | 45 | ✅ Done | ✅ Done |
 | loan-service | 8081 | 206 | ✅ Done (+ Flowable BPMN + Drools + Approval Hierarchy + CIBIL Bureau + Income Verification) | ✅ Done (+ Task Inbox + Risk Dashboard + Bureau Report + Income Panel) |
-| document-service | 8083 | 49 | ✅ Done | ✅ Done |
+| document-service | 8083 | 56 | ✅ Done (+ ClamAV Virus Scan) | ✅ Done (+ Scan Status Indicator) |
 | auth-service (Keycloak) | 8085 | 10 | ✅ Keycloak OAuth2/OIDC | ✅ Done (Login/Logout/Guards) |
 | policy-service | 8086 | 66 | ✅ Done (MongoDB + Redis + Evaluation Engine) | ✅ Done (Policy Builder UI) |
 | notification-service | 8084 | - | ⏳ Pending | ⏳ Pending |
 | api-gateway | 8080 | - | ⏳ Pending | - |
 
-**Total TDD Tests**: 344+ (auth-service: 10, customer: 45, loan: 206, document: 49, policy: 66, common: 8)
+**Total TDD Tests**: 351+ (auth-service: 10, customer: 45, loan: 206, document: 56, policy: 66, common: 8)
 
 ---
 
