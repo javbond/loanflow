@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -68,6 +69,13 @@ public class DocumentResponse {
     private Integer version;
 
     private String previousVersionId;
+
+    // OCR extraction data (US-022)
+    private Map<String, String> extractedData;
+
+    private String extractionStatus;
+
+    private String description;
 
     private LocalDateTime createdAt;
 

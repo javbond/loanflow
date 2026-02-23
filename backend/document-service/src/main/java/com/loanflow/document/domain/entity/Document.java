@@ -17,6 +17,7 @@ import org.springframework.data.mongodb.core.mapping.Field;
 
 import java.time.LocalDateTime;
 import java.time.Year;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicLong;
@@ -128,6 +129,16 @@ public class Document {
     @Field("password_protected")
     @Builder.Default
     private Boolean passwordProtected = false;
+
+    // OCR Extraction fields (US-022)
+    @Field("extracted_data")
+    private Map<String, String> extractedData;
+
+    @Field("extraction_status")
+    private String extractionStatus;
+
+    @Field("extracted_text")
+    private String extractedText;
 
     @CreatedDate
     @Field("created_at")
