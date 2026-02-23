@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: #2E7D32; color: #ffffff; padding: 24px 32px; }
+        .header h1 { margin: 0; font-size: 22px; }
+        .body { padding: 32px; color: #333333; line-height: 1.6; }
+        .highlight { background: #E8F5E9; border-left: 4px solid #2E7D32; padding: 16px; margin: 20px 0; border-radius: 4px; }
+        .highlight .label { font-size: 12px; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+        .highlight .value { font-size: 18px; font-weight: 600; color: #2E7D32; }
+        .approval-box { background: #F1F8E9; border: 2px solid #2E7D32; border-radius: 8px; padding: 20px; margin: 20px 0; text-align: center; }
+        .approval-box .icon { font-size: 40px; margin-bottom: 8px; }
+        .approval-box .title { font-size: 20px; font-weight: 700; color: #2E7D32; }
+        .details-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .details-table td { padding: 10px 0; border-bottom: 1px solid #eeeeee; }
+        .details-table td:first-child { color: #666; width: 40%; }
+        .details-table td:last-child { font-weight: 500; }
+        .footer { background: #f4f6f9; padding: 20px 32px; font-size: 12px; color: #999; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Application Approved!</h1>
+    </div>
+    <div class="body">
+        <p>Dear <span th:text="${recipientName}">Valued Customer</span>,</p>
+
+        <div class="approval-box">
+            <div class="title">Congratulations! Your Loan is Approved</div>
+        </div>
+
+        <p>We are pleased to inform you that your loan application has been approved. Please find the details below:</p>
+
+        <div class="highlight">
+            <div class="label">Application Number</div>
+            <div class="value" th:text="${applicationNumber}">APP-2026-000001</div>
+        </div>
+
+        <table class="details-table">
+            <tr th:if="${loanType}">
+                <td>Loan Type</td>
+                <td th:text="${loanType}">Home Loan</td>
+            </tr>
+            <tr th:if="${event.approvedAmount}">
+                <td>Approved Amount</td>
+                <td th:text="'INR ' + ${event.approvedAmount}">INR 50,00,000</td>
+            </tr>
+            <tr th:if="${event.interestRate}">
+                <td>Interest Rate</td>
+                <td th:text="${event.interestRate} + '% p.a.'">8.5% p.a.</td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td style="color: #2E7D32; font-weight: 600;">Approved</td>
+            </tr>
+        </table>
+
+        <p><strong>Next Steps:</strong></p>
+        <ul>
+            <li>Our team will contact you to schedule the loan agreement signing.</li>
+            <li>Please keep your original documents ready for verification.</li>
+            <li>Disbursement will be processed after agreement execution.</li>
+        </ul>
+
+        <p>Thank you for choosing LoanFlow for your financial needs.</p>
+
+        <p>Best regards,<br/>The LoanFlow Team</p>
+    </div>
+    <div class="footer">
+        &copy; 2026 LoanFlow. All rights reserved.<br/>
+        This is an automated notification. Please do not reply to this email.
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: #E65100; color: #ffffff; padding: 24px 32px; }
+        .header h1 { margin: 0; font-size: 22px; }
+        .body { padding: 32px; color: #333333; line-height: 1.6; }
+        .highlight { background: #FFF3E0; border-left: 4px solid #E65100; padding: 16px; margin: 20px 0; border-radius: 4px; }
+        .highlight .label { font-size: 12px; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+        .highlight .value { font-size: 18px; font-weight: 600; color: #E65100; }
+        .action-box { background: #FFFDE7; border: 2px solid #FBC02D; border-radius: 8px; padding: 20px; margin: 20px 0; }
+        .action-box .title { font-weight: 600; color: #F57F17; margin-bottom: 8px; font-size: 16px; }
+        .details-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .details-table td { padding: 10px 0; border-bottom: 1px solid #eeeeee; }
+        .details-table td:first-child { color: #666; width: 40%; }
+        .details-table td:last-child { font-weight: 500; }
+        .footer { background: #f4f6f9; padding: 20px 32px; font-size: 12px; color: #999; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Action Required - Application Returned</h1>
+    </div>
+    <div class="body">
+        <p>Dear <span th:text="${recipientName}">Valued Customer</span>,</p>
+
+        <p>Your loan application has been reviewed and returned for corrections. Please review the details below and take the necessary action.</p>
+
+        <div class="highlight">
+            <div class="label">Application Number</div>
+            <div class="value" th:text="${applicationNumber}">APP-2026-000001</div>
+        </div>
+
+        <table class="details-table">
+            <tr th:if="${loanType}">
+                <td>Loan Type</td>
+                <td th:text="${loanType}">Home Loan</td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td style="color: #E65100; font-weight: 600;">Returned for Correction</td>
+            </tr>
+        </table>
+
+        <div class="action-box" th:if="${reason}">
+            <div class="title">Action Required:</div>
+            <p th:text="${reason}" style="margin: 0;">Please provide additional documentation.</p>
+        </div>
+
+        <p><strong>How to proceed:</strong></p>
+        <ul>
+            <li>Log in to the LoanFlow portal to view the detailed feedback.</li>
+            <li>Make the requested corrections or upload additional documents.</li>
+            <li>Resubmit your application once all corrections are made.</li>
+            <li>Your application will be reviewed again after resubmission.</li>
+        </ul>
+
+        <p>Please complete the requested changes at your earliest convenience to avoid any delays.</p>
+
+        <p>Best regards,<br/>The LoanFlow Team</p>
+    </div>
+    <div class="footer">
+        &copy; 2026 LoanFlow. All rights reserved.<br/>
+        This is an automated notification. Please do not reply to this email.
+    </div>
+</div>
+</body>
+</html>

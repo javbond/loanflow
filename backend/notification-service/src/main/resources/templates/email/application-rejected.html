@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .header { background: #C62828; color: #ffffff; padding: 24px 32px; }
+        .header h1 { margin: 0; font-size: 22px; }
+        .body { padding: 32px; color: #333333; line-height: 1.6; }
+        .highlight { background: #FFEBEE; border-left: 4px solid #C62828; padding: 16px; margin: 20px 0; border-radius: 4px; }
+        .highlight .label { font-size: 12px; color: #666; text-transform: uppercase; margin-bottom: 4px; }
+        .highlight .value { font-size: 18px; font-weight: 600; color: #C62828; }
+        .reason-box { background: #FFF3E0; border: 1px solid #FFB74D; border-radius: 6px; padding: 16px; margin: 20px 0; }
+        .reason-box .title { font-weight: 600; color: #E65100; margin-bottom: 8px; }
+        .details-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .details-table td { padding: 10px 0; border-bottom: 1px solid #eeeeee; }
+        .details-table td:first-child { color: #666; width: 40%; }
+        .details-table td:last-child { font-weight: 500; }
+        .footer { background: #f4f6f9; padding: 20px 32px; font-size: 12px; color: #999; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>Application Decision Update</h1>
+    </div>
+    <div class="body">
+        <p>Dear <span th:text="${recipientName}">Valued Customer</span>,</p>
+
+        <p>Thank you for your interest in LoanFlow. After careful review, we regret to inform you that your loan application could not be approved at this time.</p>
+
+        <div class="highlight">
+            <div class="label">Application Number</div>
+            <div class="value" th:text="${applicationNumber}">APP-2026-000001</div>
+        </div>
+
+        <table class="details-table">
+            <tr th:if="${loanType}">
+                <td>Loan Type</td>
+                <td th:text="${loanType}">Home Loan</td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td style="color: #C62828; font-weight: 600;">Not Approved</td>
+            </tr>
+        </table>
+
+        <div class="reason-box" th:if="${reason}">
+            <div class="title">Reason:</div>
+            <p th:text="${reason}" style="margin: 0;">Application did not meet the required criteria.</p>
+        </div>
+
+        <p><strong>What you can do:</strong></p>
+        <ul>
+            <li>You may reapply after addressing the above feedback.</li>
+            <li>Contact our support team for guidance on improving your eligibility.</li>
+            <li>Consider alternative loan products that may better suit your profile.</li>
+        </ul>
+
+        <p>We appreciate your trust in LoanFlow and encourage you to apply again in the future.</p>
+
+        <p>Best regards,<br/>The LoanFlow Team</p>
+    </div>
+    <div class="footer">
+        &copy; 2026 LoanFlow. All rights reserved.<br/>
+        This is an automated notification. Please do not reply to this email.
+    </div>
+</div>
+</body>
+</html>

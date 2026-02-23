@@ -6,9 +6,14 @@ import com.loanflow.loan.domain.entity.LoanApplication;
 import com.loanflow.loan.domain.enums.LoanStatus;
 import com.loanflow.loan.dto.CustomerLoanApplicationRequest;
 import com.loanflow.loan.mapper.LoanApplicationMapper;
+import com.loanflow.loan.notification.NotificationPublisher;
 import com.loanflow.loan.repository.LoanApplicationRepository;
 import com.loanflow.loan.service.LoanApplicationService;
 import com.loanflow.loan.workflow.WorkflowService;
+import com.loanflow.dto.notification.NotificationEvent;
+import com.loanflow.dto.notification.NotificationEventType;
+import com.loanflow.util.audit.Auditable;
+import com.loanflow.util.audit.AuditEventType;
 import com.loanflow.util.exception.BusinessException;
 import com.loanflow.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -32,8 +37,12 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     private final LoanApplicationRepository repository;
     private final LoanApplicationMapper mapper;
     private final WorkflowService workflowService;
+    private final NotificationPublisher notificationPublisher;
 
     @Override
+    @Auditable(eventType = AuditEventType.APPLICATION_CREATED,
+            description = "New loan application created",
+            resourceType = "LoanApplication")
     public LoanApplicationResponse create(LoanApplicationRequest request) {
         log.info("Creating loan application for customer: {}", request.getCustomerId());
 
@@ -93,6 +102,9 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     }
 
     @Override
+    @Auditable(eventType = AuditEventType.APPLICATION_UPDATED,
+            description = "Loan application details updated",
+            resourceType = "LoanApplication")
     public LoanApplicationResponse update(UUID id, LoanApplicationRequest request) {
         LoanApplication application = findById(id);
 
@@ -109,6 +121,9 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     }
 
     @Override
+    @Auditable(eventType = AuditEventType.APPLICATION_SUBMITTED,
+            description = "Loan application submitted for processing",
+            resourceType = "LoanApplication")
     public LoanApplicationResponse submit(UUID id) {
         LoanApplication application = findById(id);
         application.submit();
@@ -121,12 +136,17 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         saved.setWorkflowInstanceId(processInstanceId);
         repository.save(saved);
 
-        // TODO: Send notification to assigned officer
+        // US-031: Publish notification event
+        notificationPublisher.publish(buildNotificationEvent(
+                NotificationEventType.APPLICATION_SUBMITTED, saved, null));
 
         return mapper.toResponse(saved);
     }
 
     @Override
+    @Auditable(eventType = AuditEventType.APPROVAL_GRANTED,
+            description = "Loan application approved",
+            resourceType = "LoanApplication")
     public LoanApplicationResponse approve(UUID id, BigDecimal approvedAmount, BigDecimal interestRate) {
         LoanApplication application = findById(id);
         application.approve(approvedAmount, interestRate);
@@ -135,8 +155,20 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         log.info("Approved loan application: {} for amount: {}",
                 saved.getApplicationNumber(), approvedAmount);
 
-        // TODO: Send approval notification
-        // TODO: Generate sanction letter
+        // US-031: Publish approval notification
+        notificationPublisher.publish(NotificationEvent.builder()
+                .eventType(NotificationEventType.APPLICATION_APPROVED)
+                .applicationId(saved.getId())
+                .applicationNumber(saved.getApplicationNumber())
+                .customerId(saved.getCustomerId())
+                .recipientEmail(saved.getCustomerEmail())
+                .loanType(saved.getLoanType().name())
+                .approvedAmount(approvedAmount)
+                .interestRate(interestRate)
+                .newStatus(LoanStatus.APPROVED.name())
+                .sourceName("loan-service")
+                .timestamp(java.time.Instant.now())
+                .build());
 
         return mapper.toResponse(saved);
     }
@@ -163,6 +195,9 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     }
 
     @Override
+    @Auditable(eventType = AuditEventType.APPLICATION_REJECTED,
+            description = "Loan application rejected",
+            resourceType = "LoanApplication")
     public LoanApplicationResponse reject(UUID id, String reason) {
         LoanApplication application = findById(id);
         application.reject(reason);
@@ -171,7 +206,19 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         log.info("Rejected loan application: {} - Reason: {}",
                 saved.getApplicationNumber(), reason);
 
-        // TODO: Send rejection notification
+        // US-031: Publish rejection notification
+        notificationPublisher.publish(NotificationEvent.builder()
+                .eventType(NotificationEventType.APPLICATION_REJECTED)
+                .applicationId(saved.getId())
+                .applicationNumber(saved.getApplicationNumber())
+                .customerId(saved.getCustomerId())
+                .recipientEmail(saved.getCustomerEmail())
+                .loanType(saved.getLoanType().name())
+                .reason(reason)
+                .newStatus(LoanStatus.REJECTED.name())
+                .sourceName("loan-service")
+                .timestamp(java.time.Instant.now())
+                .build());
 
         return mapper.toResponse(saved);
     }
@@ -191,7 +238,9 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         LoanApplication saved = repository.save(application);
         log.info("Returned loan application for correction: {}", saved.getApplicationNumber());
 
-        // TODO: Send notification to customer
+        // US-031: Publish return notification
+        notificationPublisher.publish(buildNotificationEvent(
+                NotificationEventType.APPLICATION_RETURNED, saved, reason));
 
         return mapper.toResponse(saved);
     }
@@ -225,12 +274,17 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         log.info("Assigned officer {} to application: {}",
                 officerId, saved.getApplicationNumber());
 
-        // TODO: Send notification to officer
+        // US-031: Publish task assignment notification
+        notificationPublisher.publish(buildNotificationEvent(
+                NotificationEventType.TASK_ASSIGNED, saved, null));
 
         return mapper.toResponse(saved);
     }
 
     @Override
+    @Auditable(eventType = AuditEventType.STATUS_CHANGED,
+            description = "Loan application status changed",
+            resourceType = "LoanApplication")
     public LoanApplicationResponse transitionStatus(UUID id, LoanStatus newStatus) {
         LoanApplication application = findById(id);
         application.transitionTo(newStatus);
@@ -243,6 +297,9 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
     }
 
     @Override
+    @Auditable(eventType = AuditEventType.CREDIT_CHECK_COMPLETED,
+            description = "CIBIL credit score updated",
+            resourceType = "LoanApplication")
     public LoanApplicationResponse updateCibilScore(UUID id, Integer cibilScore, String riskCategory) {
         LoanApplication application = findById(id);
         application.setCibilScore(cibilScore);
@@ -308,7 +365,9 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
         repository.save(saved);
 
         // TODO: Create/update customer record in customer-service
-        // TODO: Send confirmation notification to customer
+        // US-031: Publish submission notification
+        notificationPublisher.publish(buildNotificationEvent(
+                NotificationEventType.APPLICATION_SUBMITTED, saved, null));
 
         return mapper.toResponse(saved);
     }
@@ -406,5 +465,22 @@ public class LoanApplicationServiceImpl implements LoanApplicationService {
             variables.put("declaredMonthlyIncome", declaredMonthlyIncome.toString());
         }
         return variables;
+    }
+
+    private NotificationEvent buildNotificationEvent(String eventType,
+                                                      LoanApplication application,
+                                                      String reason) {
+        return NotificationEvent.builder()
+                .eventType(eventType)
+                .applicationId(application.getId())
+                .applicationNumber(application.getApplicationNumber())
+                .customerId(application.getCustomerId())
+                .recipientEmail(application.getCustomerEmail())
+                .loanType(application.getLoanType() != null ? application.getLoanType().name() : null)
+                .newStatus(application.getStatus() != null ? application.getStatus().name() : null)
+                .reason(reason)
+                .sourceName("loan-service")
+                .timestamp(java.time.Instant.now())
+                .build();
     }
 }
