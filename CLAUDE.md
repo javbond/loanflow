@@ -4,7 +4,7 @@
 **LoanFlow** - Loan Origination System for Indian Banks
 - Multi-tenant SaaS platform
 - Spring Boot 3.2 microservices + Angular 17 frontend
-- TDD approach with 351+ tests
+- TDD approach with 376+ tests
 
 ---
 
@@ -67,6 +67,26 @@
 ---
 
 ## 📊 CURRENT SPRINT STATUS
+
+### Sprint 9 (Document Lifecycle — EPIC-006 Completion) - ✅ COMPLETED
+**Milestone**: [Sprint 9](https://github.com/javbond/loanflow/milestone/12)
+**Duration**: 2026-02-23
+**Sprint Goal**: Complete EPIC-006 (Document Management) — verification workflow, OCR data extraction, sanction letter generation
+
+| Issue | Title | Points | Status |
+|-------|-------|--------|--------|
+| #47 | [US-021] Document Verification Workflow | 5 | ✅ Complete |
+| #48 | [US-022] OCR & Data Extraction | 8 | ✅ Complete |
+| #49 | [US-023] Document Generation (Sanction Letter) | 3 | ✅ Complete |
+
+**Total Story Points**: 16 | **Completed**: 16
+**Velocity**: 16 pts/sprint (5th consecutive)
+**PR Merged**: #50
+**Review**: `docs/sprints/sprint-9-review.md`
+
+**Progress:** `██████████` 100%
+
+---
 
 ### Sprint 8 (CIBIL + Income Verification + Document Upload) - ✅ COMPLETED
 **Milestone**: [Sprint 8](https://github.com/javbond/loanflow/milestone/11)
@@ -217,10 +237,10 @@
 
 | Issue | Title | Priority | Sprint |
 |-------|-------|----------|--------|
-| US-016 | Credit Bureau Integration (CIBIL) | P1 | Sprint 8 |
-| US-017 | Income Verification (ITR, GST, bank stmt) | P1 | Sprint 8 |
-| US-020 | Document Upload (enhanced with virus scan) | P2 | Sprint 8-9 |
-| US-024 | e-KYC Integration (UIDAI) | P2 | Sprint 9 |
+| - | e-KYC Integration (UIDAI) | P1 | Sprint 10+ |
+| - | Notification Service (RabbitMQ) | P1 | Sprint 10+ |
+| - | API Gateway | P2 | Sprint 10+ |
+| - | Elasticsearch Integration | P2 | Sprint 11+ |
 | #4 | [US-003] RBAC Admin UI (remaining) | P2 | Deferred |
 
 ---
@@ -243,14 +263,14 @@
 | Service | Port | Tests | Backend | Frontend |
 |---------|------|-------|---------|----------|
 | customer-service | 8082 | 45 | ✅ Done | ✅ Done |
-| loan-service | 8081 | 206 | ✅ Done (+ Flowable BPMN + Drools + Approval Hierarchy + CIBIL Bureau + Income Verification) | ✅ Done (+ Task Inbox + Risk Dashboard + Bureau Report + Income Panel) |
-| document-service | 8083 | 56 | ✅ Done (+ ClamAV Virus Scan) | ✅ Done (+ Scan Status Indicator) |
+| loan-service | 8081 | 213 | ✅ Done (+ Flowable BPMN + Drools + Approval Hierarchy + CIBIL Bureau + Income Verification + Sanction Letter PDF) | ✅ Done (+ Task Inbox + Risk Dashboard + Bureau Report + Income Panel + Sanction Letter Download) |
+| document-service | 8083 | 74 | ✅ Done (+ ClamAV Virus Scan + OCR Extraction + Verification Checklist + Batch Verify) | ✅ Done (+ Scan Status + Document Panel + Extraction Review) |
 | auth-service (Keycloak) | 8085 | 10 | ✅ Keycloak OAuth2/OIDC | ✅ Done (Login/Logout/Guards) |
 | policy-service | 8086 | 66 | ✅ Done (MongoDB + Redis + Evaluation Engine) | ✅ Done (Policy Builder UI) |
 | notification-service | 8084 | - | ⏳ Pending | ⏳ Pending |
 | api-gateway | 8080 | - | ⏳ Pending | - |
 
-**Total TDD Tests**: 351+ (auth-service: 10, customer: 45, loan: 206, document: 56, policy: 66, common: 8)
+**Total TDD Tests**: 376+ (auth-service: 10, customer: 45, loan: 213, document: 74, policy: 66, common: 8)
 
 ---
 
@@ -465,6 +485,20 @@ cat docs/hld/architecture.md  # if exists
 ### ⚠️ VIOLATION CONSEQUENCES
 Implementing non-PRD-compliant code wastes development time and requires rework.
 **When in doubt, ASK the user before implementing.**
+
+---
+
+## 🚨 CRITICAL: Local Main Branch Sync
+
+**Local `main` may be stale** — PRs are merged via GitHub, not locally.
+
+**AT EVERY SESSION START, Claude MUST:**
+1. Run `git fetch origin` to see remote state
+2. Run `git pull origin main` (or `git checkout main && git pull`) before assessing any file state
+3. **Never trust local file contents** (e.g., CLAUDE.md, application.yml) without checking `origin/main` first
+4. Compare `git log --oneline main` vs `git log --oneline origin/main` to detect drift
+
+**RCA (Sprint 9)**: Session incorrectly assessed CLAUDE.md as "severely outdated at Sprint 3" because local main hadn't been pulled since Sprint 3. Remote main was actually at Sprint 8. This led to overstated update scope and wasted analysis time.
 
 ---
 
