@@ -42,6 +42,8 @@ class VirusScanServiceTest {
         @Mock private DocumentMapper mapper;
         @Mock private StorageService storageService;
         @Mock private VirusScanService virusScanService;
+        @Mock private OcrService ocrService;
+        @Mock private com.loanflow.document.config.DocumentRequirementsConfig requirementsConfig;
 
         @InjectMocks
         private DocumentServiceImpl service;
@@ -78,7 +80,7 @@ class VirusScanServiceTest {
             assertThat(result).isNotNull();
             verify(virusScanService).scan(file);
             verify(storageService).upload(any(MultipartFile.class), anyString());
-            verify(repository).save(any(Document.class));
+            verify(repository, atLeastOnce()).save(any(Document.class));
         }
 
         @Test

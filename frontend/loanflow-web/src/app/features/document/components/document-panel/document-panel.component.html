@@ -1,0 +1,132 @@
+<!-- Document Panel (US-021): Shows documents with verification, completeness, and batch actions -->
+
+@if (loading) {
+  <div class="loading-panel">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Loading documents...</p>
+  </div>
+} @else {
+
+  <!-- Completeness Progress Bar -->
+  @if (completeness) {
+    <mat-card class="completeness-card">
+      <mat-card-content>
+        <div class="completeness-header">
+          <div class="completeness-title">
+            <mat-icon>fact_check</mat-icon>
+            <span>Document Completeness</span>
+          </div>
+          <span class="completeness-pct">{{ completeness.completionPercentage }}%</span>
+        </div>
+        <mat-progress-bar
+          [mode]="'determinate'"
+          [value]="completeness.completionPercentage"
+          [color]="completeness.complete ? 'accent' : 'primary'">
+        </mat-progress-bar>
+        <div class="completeness-stats">
+          <span>{{ completeness.totalVerified }} / {{ completeness.totalRequired }} verified</span>
+          <span>{{ completeness.totalUploaded }} uploaded</span>
+          @if (completeness.totalRejected > 0) {
+            <span class="rejected-count">{{ completeness.totalRejected }} rejected</span>
+          }
+        </div>
+
+        <!-- Checklist -->
+        @if (completeness.checklist.length > 0) {
+          <div class="checklist">
+            @for (item of completeness.checklist; track item.documentType) {
+              <div class="checklist-item">
+                <mat-icon [style.color]="getChecklistColor(item)">{{ getChecklistIcon(item) }}</mat-icon>
+                <span class="checklist-label">{{ item.label }}</span>
+                <span class="checklist-status" [style.color]="getChecklistColor(item)">{{ item.status }}</span>
+              </div>
+            }
+          </div>
+        }
+      </mat-card-content>
+    </mat-card>
+  }
+
+  <!-- Batch Action Bar -->
+  @if (uploadedCount > 0) {
+    <div class="batch-actions">
+      <button mat-raised-button color="primary"
+              (click)="batchVerifyAll()"
+              [disabled]="verifyLoading">
+        <mat-icon>done_all</mat-icon>
+        Verify All Uploaded ({{ uploadedCount }})
+      </button>
+    </div>
+  }
+
+  <!-- Document Cards -->
+  @if (documents.length > 0) {
+    <div class="document-grid">
+      @for (doc of documents; track doc.id) {
+        <mat-card class="document-card">
+          <mat-card-content>
+            <div class="doc-header">
+              <mat-icon class="doc-icon" [style.color]="getStatusColor(doc.status)">
+                {{ getStatusIcon(doc.status) }}
+              </mat-icon>
+              <div class="doc-info">
+                <div class="doc-name" [matTooltip]="doc.originalFileName">
+                  {{ doc.originalFileName }}
+                </div>
+                <div class="doc-meta">
+                  {{ getTypeLabel(doc.documentType) }} &middot; {{ doc.formattedFileSize || '' }}
+                </div>
+              </div>
+              <mat-chip [style.background-color]="getStatusColor(doc.status)"
+                        style="color: white; font-size: 11px;">
+                {{ doc.status }}
+              </mat-chip>
+            </div>
+
+            <!-- Extracted Data Preview (US-022) -->
+            @if (doc.extractedData && doc.extractionStatus) {
+              <mat-expansion-panel class="extraction-panel">
+                <mat-expansion-panel-header>
+                  <mat-panel-title>
+                    <mat-icon style="font-size: 16px; margin-right: 4px;">text_snippet</mat-icon>
+                    Extracted Data ({{ doc.extractionStatus }})
+                  </mat-panel-title>
+                </mat-expansion-panel-header>
+                <div class="extracted-fields">
+                  @for (entry of doc.extractedData | keyvalue; track entry.key) {
+                    <div class="field-row">
+                      <span class="field-key">{{ entry.key }}:</span>
+                      <span class="field-value">{{ entry.value }}</span>
+                    </div>
+                  }
+                </div>
+              </mat-expansion-panel>
+            }
+
+            <!-- Action Buttons -->
+            <div class="doc-actions">
+              <button mat-icon-button matTooltip="Download" (click)="downloadDocument(doc)">
+                <mat-icon>download</mat-icon>
+              </button>
+              @if (isVerifiable(doc.status)) {
+                <button mat-icon-button matTooltip="Verify" color="primary"
+                        (click)="verifyDocument(doc, true)" [disabled]="verifyLoading">
+                  <mat-icon>check_circle</mat-icon>
+                </button>
+                <button mat-icon-button matTooltip="Reject" color="warn"
+                        (click)="verifyDocument(doc, false)" [disabled]="verifyLoading">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+  } @else {
+    <div class="no-documents">
+      <mat-icon>folder_open</mat-icon>
+      <p>No documents uploaded for this application</p>
+    </div>
+  }
+}

@@ -56,6 +56,12 @@ class DocumentServiceTest {
     @Mock
     private VirusScanService virusScanService;
 
+    @Mock
+    private OcrService ocrService;
+
+    @Mock
+    private com.loanflow.document.config.DocumentRequirementsConfig requirementsConfig;
+
     @InjectMocks
     private DocumentServiceImpl service;
 
@@ -132,8 +138,8 @@ class DocumentServiceTest {
             assertThat(result.getDocumentNumber()).startsWith("DOC-");
 
             ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
-            verify(repository).save(captor.capture());
-            assertThat(captor.getValue().getApplicationId()).isEqualTo(applicationId);
+            verify(repository, atLeastOnce()).save(captor.capture());
+            assertThat(captor.getAllValues().get(0).getApplicationId()).isEqualTo(applicationId);
         }
 
         @Test
@@ -225,8 +231,8 @@ class DocumentServiceTest {
 
             // Then
             ArgumentCaptor<Document> captor = ArgumentCaptor.forClass(Document.class);
-            verify(repository).save(captor.capture());
-            assertThat(captor.getValue().getCategory()).isEqualTo(DocumentCategory.INCOME);
+            verify(repository, atLeastOnce()).save(captor.capture());
+            assertThat(captor.getAllValues().get(0).getCategory()).isEqualTo(DocumentCategory.INCOME);
         }
     }
 

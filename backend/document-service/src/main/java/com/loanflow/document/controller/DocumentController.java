@@ -3,9 +3,11 @@ package com.loanflow.document.controller;
 import com.loanflow.document.domain.enums.DocumentCategory;
 import com.loanflow.document.domain.enums.DocumentStatus;
 import com.loanflow.document.service.DocumentService;
+import com.loanflow.dto.request.BatchVerificationRequest;
 import com.loanflow.dto.request.DocumentUploadRequest;
 import com.loanflow.dto.request.DocumentVerificationRequest;
 import com.loanflow.dto.response.ApiResponse;
+import com.loanflow.dto.response.DocumentCompletenessResponse;
 import com.loanflow.dto.response.DocumentResponse;
 import com.loanflow.dto.response.PageResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +27,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -179,6 +183,58 @@ public class DocumentController {
             @PathVariable UUID applicationId) {
         long count = documentService.getPendingVerificationCount(applicationId);
         return ResponseEntity.ok(ApiResponse.success(count));
+    }
+
+    // ==================== US-021: VERIFICATION COMPLETENESS & BATCH ====================
+
+    @GetMapping("/application/{applicationId}/completeness")
+    @Operation(summary = "Get document completeness checklist for application")
+    @PreAuthorize("hasAnyRole('LOAN_OFFICER', 'UNDERWRITER', 'SENIOR_UNDERWRITER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<DocumentCompletenessResponse>> getCompleteness(
+            @PathVariable UUID applicationId,
+            @RequestParam String loanType) {
+        DocumentCompletenessResponse response = documentService.getCompleteness(applicationId, loanType);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @PostMapping("/batch-verify")
+    @Operation(summary = "Batch verify or reject multiple documents")
+    @PreAuthorize("hasAnyRole('UNDERWRITER', 'SENIOR_UNDERWRITER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<List<DocumentResponse>>> batchVerify(
+            @RequestBody @Valid BatchVerificationRequest request) {
+        log.info("Batch verifying {} documents by {}", request.getDocumentIds().size(), request.getVerifierId());
+        List<DocumentResponse> responses = documentService.batchVerify(request);
+        String message = request.getApproved() ? "Documents verified successfully" : "Documents rejected";
+        return ResponseEntity.ok(ApiResponse.success(message, responses));
+    }
+
+    @GetMapping("/application/{applicationId}/verification-summary")
+    @Operation(summary = "Get verification status summary for application")
+    @PreAuthorize("hasAnyRole('LOAN_OFFICER', 'UNDERWRITER', 'SENIOR_UNDERWRITER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Map<String, Long>>> getVerificationSummary(
+            @PathVariable UUID applicationId) {
+        Map<String, Long> summary = documentService.getVerificationSummary(applicationId);
+        return ResponseEntity.ok(ApiResponse.success(summary));
+    }
+
+    // ==================== US-022: OCR EXTRACTION ENDPOINTS ====================
+
+    @GetMapping("/{id}/extracted-data")
+    @Operation(summary = "Get OCR extracted data for a document")
+    @PreAuthorize("hasAnyRole('LOAN_OFFICER', 'UNDERWRITER', 'SENIOR_UNDERWRITER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<Map<String, String>>> getExtractedData(@PathVariable String id) {
+        Map<String, String> data = documentService.getExtractedData(id);
+        return ResponseEntity.ok(ApiResponse.success(data));
+    }
+
+    @PutMapping("/{id}/extracted-data")
+    @Operation(summary = "Update extracted data after manual review")
+    @PreAuthorize("hasAnyRole('UNDERWRITER', 'SENIOR_UNDERWRITER', 'ADMIN')")
+    public ResponseEntity<ApiResponse<DocumentResponse>> updateExtractedData(
+            @PathVariable String id,
+            @RequestBody Map<String, String> data) {
+        DocumentResponse response = documentService.updateExtractedData(id, data);
+        return ResponseEntity.ok(ApiResponse.success("Extracted data updated", response));
     }
 
     // ==================== CUSTOMER PORTAL ENDPOINTS ====================
