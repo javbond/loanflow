@@ -1,0 +1,34 @@
+# Integration test configuration for notification-service
+# Uses Testcontainers RabbitMQ — connection properties overridden dynamically
+
+spring:
+  mail:
+    host: localhost
+    port: 25
+    test-connection: false
+
+  # Disable security and mail health indicator for integration tests
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
+      - org.springframework.boot.actuate.autoconfigure.mail.MailHealthContributorAutoConfiguration
+
+# Notification channels
+notification:
+  enabled: true
+  email:
+    enabled: true
+    from-email: noreply@loanflow-test.com
+    from-name: LoanFlow Test
+  sms:
+    enabled: false
+
+server:
+  port: 0
+
+logging:
+  level:
+    com.loanflow: DEBUG
+    org.springframework.amqp: DEBUG
+    org.testcontainers: INFO

@@ -1,0 +1,24 @@
+# Integration test configuration for policy-service
+# Uses Flapdoodle embedded MongoDB — DO NOT specify a URI; let Flapdoodle auto-configure
+
+spring:
+  data:
+    mongodb:
+      auto-index-creation: true
+
+  # Disable security, RabbitMQ, and Redis for integration tests
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
+      - org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration
+
+server:
+  port: 0
+
+logging:
+  level:
+    com.loanflow: DEBUG
+    org.springframework.test: INFO
+    de.flapdoodle: INFO

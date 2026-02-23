@@ -1,0 +1,39 @@
+# Integration test configuration for customer-service
+# Uses Testcontainers PostgreSQL — datasource URL overridden dynamically
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: identity
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    schemas: identity
+    baseline-on-migrate: true
+
+  # Disable security for integration tests
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:18180/realms/loanflow
+          jwk-set-uri: http://localhost:18180/realms/loanflow/protocol/openid-connect/certs
+
+  # Disable RabbitMQ auto-configuration for integration tests
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+
+server:
+  port: 0  # Random port for tests
+
+logging:
+  level:
+    com.loanflow: DEBUG
+    org.springframework.test: INFO
+    org.testcontainers: INFO

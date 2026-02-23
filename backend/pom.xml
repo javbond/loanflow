@@ -31,7 +31,7 @@
         <module>auth-service</module>
         <module>policy-service</module>
         <module>notification-service</module>
-        <!-- <module>api-gateway</module> -->
+        <module>api-gateway</module>
     </modules>
 
     <properties>
@@ -40,7 +40,7 @@
         <mapstruct.version>1.6.3</mapstruct.version>
         <lombok.version>1.18.32</lombok.version>
         <springdoc.version>2.3.0</springdoc.version>
-        <testcontainers.version>1.19.3</testcontainers.version>
+        <testcontainers.version>1.21.0</testcontainers.version>
         <keycloak.version>23.0.3</keycloak.version>
         <flowable.version>7.1.0</flowable.version>
         <drools.version>9.44.0.Final</drools.version>

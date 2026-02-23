@@ -1,0 +1,240 @@
+# docker-compose.services.yml
+# Full-stack deployment: all backend microservices + API Gateway + Angular frontend
+# Depends on infrastructure in docker-compose.yml
+#
+# Usage:
+#   1. Build JARs first:  ./scripts/build-all.sh
+#   2. Start infra:       docker compose -f infrastructure/docker-compose.yml up -d
+#   3. Start services:    docker compose -f infrastructure/docker-compose.services.yml up -d
+#
+# Or run everything:
+#   docker compose -f infrastructure/docker-compose.yml -f infrastructure/docker-compose.services.yml up -d
+
+version: '3.8'
+
+services:
+
+  # ─── API Gateway (port 8080) ────────────────────────────────────
+  gateway:
+    build:
+      context: ../backend/api-gateway
+      dockerfile: ../../infrastructure/dockerfiles/backend/Dockerfile
+    container_name: loanflow-gateway
+    environment:
+      SERVER_PORT: 8080
+      KEYCLOAK_ISSUER_URI: http://keycloak:8080/realms/loanflow
+      KEYCLOAK_JWK_URI: http://keycloak:8080/realms/loanflow/protocol/openid-connect/certs
+      AUTH_SERVICE_URL: http://auth-service:8085
+      CUSTOMER_SERVICE_URL: http://customer-service:8082
+      LOAN_SERVICE_URL: http://loan-service:8081
+      DOCUMENT_SERVICE_URL: http://document-service:8083
+      NOTIFICATION_SERVICE_URL: http://notification-service:8084
+      POLICY_SERVICE_URL: http://policy-service:8086
+    ports:
+      - "8080:8080"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # ─── Auth Service (port 8085) ───────────────────────────────────
+  auth-service:
+    build:
+      context: ../backend/auth-service
+      dockerfile: ../../infrastructure/dockerfiles/backend/Dockerfile
+    container_name: loanflow-auth-service
+    environment:
+      SERVER_PORT: 8085
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/loanflow
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/loanflow/protocol/openid-connect/certs
+      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
+    ports:
+      - "8085:8085"
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # ─── Customer Service (port 8082) ──────────────────────────────
+  customer-service:
+    build:
+      context: ../backend/customer-service
+      dockerfile: ../../infrastructure/dockerfiles/backend/Dockerfile
+    container_name: loanflow-customer-service
+    environment:
+      SERVER_PORT: 8082
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/customer_db
+      SPRING_DATASOURCE_USERNAME: loanflow
+      SPRING_DATASOURCE_PASSWORD: loanflow_secret
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/loanflow
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/loanflow/protocol/openid-connect/certs
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: loanflow
+      SPRING_RABBITMQ_PASSWORD: loanflow_secret
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8082/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # ─── Loan Service (port 8081) ──────────────────────────────────
+  loan-service:
+    build:
+      context: ../backend/loan-service
+      dockerfile: ../../infrastructure/dockerfiles/backend/Dockerfile
+    container_name: loanflow-loan-service
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/loan_db
+      SPRING_DATASOURCE_USERNAME: loanflow
+      SPRING_DATASOURCE_PASSWORD: loanflow_secret
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/loanflow
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/loanflow/protocol/openid-connect/certs
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: loanflow
+      SPRING_RABBITMQ_PASSWORD: loanflow_secret
+      SPRING_DATA_REDIS_HOST: redis
+      CUSTOMER_SERVICE_URL: http://customer-service:8082
+      DOCUMENT_SERVICE_URL: http://document-service:8083
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ─── Document Service (port 8083) ──────────────────────────────
+  document-service:
+    build:
+      context: ../backend/document-service
+      dockerfile: ../../infrastructure/dockerfiles/backend/Dockerfile
+    container_name: loanflow-document-service
+    environment:
+      SERVER_PORT: 8083
+      SPRING_DATA_MONGODB_URI: mongodb://loanflow:loanflow_secret@mongodb:27017/document_db?authSource=admin
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/loanflow
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/loanflow/protocol/openid-connect/certs
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: loanflow
+      MINIO_SECRET_KEY: loanflow_secret
+      CLAMAV_HOST: clamav
+      CLAMAV_PORT: 3310
+    ports:
+      - "8083:8083"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      clamav:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # ─── Policy Service (port 8086) ────────────────────────────────
+  policy-service:
+    build:
+      context: ../backend/policy-service
+      dockerfile: ../../infrastructure/dockerfiles/backend/Dockerfile
+    container_name: loanflow-policy-service
+    environment:
+      SERVER_PORT: 8086
+      SPRING_DATA_MONGODB_URI: mongodb://loanflow:loanflow_secret@mongodb:27017/policy_db?authSource=admin
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI: http://keycloak:8080/realms/loanflow
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/loanflow/protocol/openid-connect/certs
+      SPRING_DATA_REDIS_HOST: redis
+    ports:
+      - "8086:8086"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      keycloak:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8086/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # ─── Notification Service (port 8084) ──────────────────────────
+  notification-service:
+    build:
+      context: ../backend/notification-service
+      dockerfile: ../../infrastructure/dockerfiles/backend/Dockerfile
+    container_name: loanflow-notification-service
+    environment:
+      SERVER_PORT: 8084
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: loanflow
+      SPRING_RABBITMQ_PASSWORD: loanflow_secret
+      SPRING_MAIL_HOST: mailhog
+      SPRING_MAIL_PORT: 1025
+    ports:
+      - "8084:8084"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 45s
+
+  # ─── Angular Frontend (port 80 -> mapped to 4200) ─────────────
+  frontend:
+    build:
+      context: ../frontend/loanflow-web
+      dockerfile: ../../infrastructure/dockerfiles/frontend/Dockerfile
+    container_name: loanflow-frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

@@ -1,0 +1,67 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      # Global defaults for all routes
+      default-filters:
+        - PreserveHostHeader
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowed-origins:
+              - "http://localhost:4200"
+              - "http://localhost:8080"
+            allowed-methods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowed-headers: "*"
+            exposed-headers:
+              - Authorization
+              - Content-Disposition
+            allow-credentials: true
+            max-age: 3600
+
+  # JWT validation against Keycloak
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:8180/realms/loanflow}
+          jwk-set-uri: ${KEYCLOAK_JWK_URI:http://localhost:8180/realms/loanflow/protocol/openid-connect/certs}
+
+# Service URLs — overridable via environment variables for Docker/K8s
+loanflow:
+  services:
+    auth-url: ${AUTH_SERVICE_URL:http://localhost:8085}
+    customer-url: ${CUSTOMER_SERVICE_URL:http://localhost:8082}
+    loan-url: ${LOAN_SERVICE_URL:http://localhost:8081}
+    document-url: ${DOCUMENT_SERVICE_URL:http://localhost:8083}
+    notification-url: ${NOTIFICATION_SERVICE_URL:http://localhost:8084}
+    policy-url: ${POLICY_SERVICE_URL:http://localhost:8086}
+
+# Actuator — health checks and monitoring
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus,gateway
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+
+logging:
+  level:
+    com.loanflow.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO
+    org.springframework.security: INFO
