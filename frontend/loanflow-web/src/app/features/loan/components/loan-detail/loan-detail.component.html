@@ -199,6 +199,19 @@
                 <p class="no-actions">No actions available for current status</p>
               }
             </div>
+
+            <!-- US-023: Sanction Letter Generation -->
+            @if (loan.status === 'APPROVED' || loan.status === 'DISBURSED') {
+              <div class="sanction-letter-section">
+                <h4>Document Generation</h4>
+                <button mat-raised-button color="primary"
+                        (click)="generateSanctionLetter()"
+                        [disabled]="actionLoading">
+                  <mat-icon>picture_as_pdf</mat-icon>
+                  Generate Sanction Letter
+                </button>
+              </div>
+            }
           </div>
         </mat-tab>
       </mat-tab-group>

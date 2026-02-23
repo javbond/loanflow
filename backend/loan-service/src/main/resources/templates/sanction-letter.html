@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            line-height: 1.6;
+            padding: 40px 60px;
+            font-size: 12px;
+        }
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #1565c0;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #1565c0;
+            font-size: 28px;
+            margin: 0 0 5px 0;
+            letter-spacing: 2px;
+        }
+        .header p {
+            color: #666;
+            margin: 2px 0;
+            font-size: 11px;
+        }
+        .title {
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: #1565c0;
+            margin: 30px 0 20px 0;
+            text-decoration: underline;
+        }
+        .ref-section {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            font-size: 11px;
+        }
+        .greeting {
+            margin: 20px 0;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .details-table th, .details-table td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .details-table th {
+            background-color: #e3f2fd;
+            color: #1565c0;
+            width: 40%;
+            font-weight: 600;
+        }
+        .details-table td {
+            font-weight: 500;
+        }
+        .conditions {
+            margin: 20px 0;
+        }
+        .conditions h3 {
+            color: #1565c0;
+            margin-bottom: 10px;
+        }
+        .conditions ol {
+            padding-left: 20px;
+        }
+        .conditions ol li {
+            margin-bottom: 6px;
+        }
+        .signature-section {
+            margin-top: 60px;
+        }
+        .signature-line {
+            border-top: 1px solid #333;
+            width: 200px;
+            margin-top: 50px;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 10px;
+            border-top: 1px solid #ccc;
+            font-size: 9px;
+            color: #999;
+            text-align: center;
+        }
+        .amount {
+            font-weight: bold;
+            color: #1b5e20;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>LOANFLOW</h1>
+        <p>Financial Services Platform</p>
+        <p>CIN: U65999MH2025PTC123456 | RBI Reg No: N-05.04XXX</p>
+    </div>
+
+    <div class="title">LOAN SANCTION LETTER</div>
+
+    <div class="ref-section">
+        <div>
+            <strong>Ref:</strong> <span th:text="${applicationNumber}">LN-2026-00001</span><br/>
+            <strong>Date:</strong> <span th:text="${sanctionDate}">February 23, 2026</span>
+        </div>
+    </div>
+
+    <div class="greeting">
+        <p>Dear <strong th:text="${customerName ?: 'Valued Customer'}">Customer Name</strong>,</p>
+        <p>
+            We are pleased to inform you that your loan application bearing reference number
+            <strong th:text="${applicationNumber}">LN-2026-00001</strong> has been sanctioned.
+            The details of the sanctioned loan are as follows:
+        </p>
+    </div>
+
+    <table class="details-table">
+        <tr>
+            <th>Loan Reference Number</th>
+            <td th:text="${applicationNumber}">LN-2026-00001</td>
+        </tr>
+        <tr>
+            <th>Loan Type</th>
+            <td th:text="${loanType}">Home Loan</td>
+        </tr>
+        <tr>
+            <th>Sanctioned Amount</th>
+            <td class="amount" th:text="'&#x20B9; ' + ${#numbers.formatDecimal(approvedAmount, 1, 'COMMA', 2, 'POINT')}">10,00,000.00</td>
+        </tr>
+        <tr>
+            <th>Rate of Interest</th>
+            <td th:text="${interestRate} + '% per annum'">8.50% per annum</td>
+        </tr>
+        <tr>
+            <th>Tenure</th>
+            <td th:text="${tenureMonths} + ' months'">240 months</td>
+        </tr>
+        <tr>
+            <th>Monthly EMI</th>
+            <td class="amount" th:text="'&#x20B9; ' + ${#numbers.formatDecimal(emiAmount, 1, 'COMMA', 2, 'POINT')}">8,678.00</td>
+        </tr>
+        <tr>
+            <th>Processing Fee</th>
+            <td th:text="${processingFee != null} ? '&#x20B9; ' + ${#numbers.formatDecimal(processingFee, 1, 'COMMA', 2, 'POINT')} : 'Nil'">5,000.00</td>
+        </tr>
+        <tr>
+            <th>Purpose</th>
+            <td th:text="${purpose ?: 'General Purpose'}">Purchase of residential property</td>
+        </tr>
+        <tr>
+            <th>CIBIL Score</th>
+            <td th:text="${cibilScore ?: 'N/A'}">750</td>
+        </tr>
+        <tr>
+            <th>Branch</th>
+            <td th:text="${branchCode ?: 'Head Office'}">HO001</td>
+        </tr>
+    </table>
+
+    <div class="conditions">
+        <h3>Terms and Conditions:</h3>
+        <ol>
+            <li>The sanctioned loan is subject to execution of all required loan documents.</li>
+            <li>All original property documents (if applicable) must be submitted for verification.</li>
+            <li>The borrower must maintain a minimum monthly income sufficient to service the EMI.</li>
+            <li>Insurance coverage (if applicable) must be obtained and maintained throughout the loan tenure.</li>
+            <li>The interest rate is subject to periodic review as per RBI guidelines.</li>
+            <li>Disbursement is subject to completion of all pre-disbursement conditions.</li>
+            <li>This sanction letter is valid for 90 days from the date of issue.</li>
+            <li>Pre-closure and part-payment are permitted as per the prevailing policy.</li>
+            <li>Any misrepresentation of facts may result in cancellation of the sanction.</li>
+        </ol>
+    </div>
+
+    <p>
+        Please visit our branch with all required documents for disbursement.
+        We look forward to a long and fruitful banking relationship.
+    </p>
+
+    <div class="signature-section">
+        <p>Yours sincerely,</p>
+        <div class="signature-line"></div>
+        <p><strong>Authorized Signatory</strong><br/>LoanFlow Financial Services</p>
+    </div>
+
+    <div class="footer">
+        <p>This is a system-generated document. For any queries, contact support@loanflow.com</p>
+        <p>LoanFlow Financial Services | www.loanflow.com</p>
+    </div>
+</body>
+</html>

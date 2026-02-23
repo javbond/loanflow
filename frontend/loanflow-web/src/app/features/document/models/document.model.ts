@@ -27,6 +27,8 @@ export interface Document {
   version: number;
   previousVersionId?: string;
   description?: string;
+  extractedData?: { [key: string]: string };
+  extractionStatus?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -45,6 +47,40 @@ export interface DocumentVerificationRequest {
   verifierId: string;
   approved: boolean;
   remarks?: string;
+}
+
+// US-021: Batch Verification
+export interface BatchVerificationRequest {
+  documentIds: string[];
+  verifierId: string;
+  approved: boolean;
+  remarks?: string;
+}
+
+// US-021: Verification Checklist Item
+export interface VerificationChecklistItem {
+  documentType: string;
+  label: string;
+  category: string;
+  mandatory: boolean;
+  uploaded: boolean;
+  verified: boolean;
+  rejected: boolean;
+  documentId?: string;
+  status: string;
+}
+
+// US-021: Document Completeness Response
+export interface DocumentCompletenessResponse {
+  applicationId: string;
+  loanType: string;
+  totalRequired: number;
+  totalUploaded: number;
+  totalVerified: number;
+  totalRejected: number;
+  complete: boolean;
+  completionPercentage: number;
+  checklist: VerificationChecklistItem[];
 }
 
 // Document Type Definition

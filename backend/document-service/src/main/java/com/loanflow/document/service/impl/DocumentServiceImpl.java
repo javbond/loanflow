@@ -1,5 +1,6 @@
 package com.loanflow.document.service.impl;
 
+import com.loanflow.document.config.DocumentRequirementsConfig;
 import com.loanflow.document.domain.entity.Document;
 import com.loanflow.document.domain.enums.DocumentCategory;
 import com.loanflow.document.domain.enums.DocumentStatus;
@@ -7,25 +8,29 @@ import com.loanflow.document.domain.enums.DocumentType;
 import com.loanflow.document.mapper.DocumentMapper;
 import com.loanflow.document.repository.DocumentRepository;
 import com.loanflow.document.service.DocumentService;
+import com.loanflow.document.service.OcrExtractionResult;
+import com.loanflow.document.service.OcrService;
 import com.loanflow.document.service.StorageService;
 import com.loanflow.document.service.VirusScanResult;
 import com.loanflow.document.service.VirusScanService;
+import com.loanflow.dto.request.BatchVerificationRequest;
 import com.loanflow.dto.request.DocumentUploadRequest;
 import com.loanflow.dto.request.DocumentVerificationRequest;
+import com.loanflow.dto.response.DocumentCompletenessResponse;
 import com.loanflow.dto.response.DocumentResponse;
+import com.loanflow.dto.response.VerificationChecklistItem;
 import com.loanflow.util.exception.BusinessException;
 import com.loanflow.util.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -53,6 +58,8 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentMapper mapper;
     private final StorageService storageService;
     private final VirusScanService virusScanService;
+    private final OcrService ocrService;
+    private final DocumentRequirementsConfig requirementsConfig;
 
     @Override
     @Transactional
@@ -114,6 +121,23 @@ public class DocumentServiceImpl implements DocumentService {
 
         // Save document
         Document saved = repository.save(document);
+
+        // Trigger OCR extraction (US-022) — non-blocking, best-effort
+        try {
+            byte[] content = file.getBytes();
+            OcrExtractionResult ocrResult = ocrService.extract(
+                    saved.getId(), content, file.getContentType(), request.getDocumentType());
+            saved.setExtractedData(ocrResult.getExtractedFields());
+            saved.setExtractionStatus(ocrResult.getStatus().name());
+            saved.setExtractedText(truncateText(ocrResult.getExtractedText(), 5000));
+            saved = repository.save(saved);
+            log.info("OCR extraction completed for {}: status={}, fields={}",
+                    saved.getId(), ocrResult.getStatus(), ocrResult.getExtractedFields().size());
+        } catch (Exception e) {
+            log.warn("OCR extraction failed for document {}: {}", saved.getId(), e.getMessage());
+            saved.setExtractionStatus("FAILED");
+            saved = repository.save(saved);
+        }
 
         log.info("Document uploaded successfully: {}", saved.getDocumentNumber());
         return mapper.toResponse(saved);
@@ -246,7 +270,160 @@ public class DocumentServiceImpl implements DocumentService {
         return repository.countByApplicationIdAndStatus(applicationId, DocumentStatus.UPLOADED);
     }
 
+    // ==================== US-021: Batch Verification & Completeness ====================
+
+    @Override
+    @Transactional
+    public List<DocumentResponse> batchVerify(BatchVerificationRequest request) {
+        log.info("Batch verifying {} documents by {}", request.getDocumentIds().size(), request.getVerifierId());
+
+        List<DocumentResponse> results = new ArrayList<>();
+
+        for (String docId : request.getDocumentIds()) {
+            Document document = findDocumentById(docId);
+
+            if (document.getStatus() == DocumentStatus.VERIFIED) {
+                log.warn("Skipping already verified document: {}", docId);
+                results.add(mapper.toResponse(document));
+                continue;
+            }
+
+            if (request.getApproved()) {
+                document.verify(request.getVerifierId(), request.getRemarks());
+            } else {
+                document.reject(request.getVerifierId(), request.getRemarks());
+            }
+
+            Document saved = repository.save(document);
+            results.add(mapper.toResponse(saved));
+        }
+
+        log.info("Batch verification complete: {} documents processed", results.size());
+        return results;
+    }
+
+    @Override
+    public DocumentCompletenessResponse getCompleteness(UUID applicationId, String loanType) {
+        log.debug("Checking document completeness for application {} (type: {})", applicationId, loanType);
+
+        List<String> requiredDocTypes = requirementsConfig.getRequiredDocuments(loanType);
+
+        // Get all documents for this application (unpaginated — small result set)
+        List<Document> allDocs = repository.findByApplicationId(applicationId, PageRequest.of(0, 100))
+                .getContent();
+
+        // Build a map: documentType -> best document (prefer VERIFIED > UPLOADED > others)
+        Map<String, Document> bestDocByType = new HashMap<>();
+        for (Document doc : allDocs) {
+            String type = doc.getDocumentType().name();
+            Document existing = bestDocByType.get(type);
+            if (existing == null || getBestStatusPriority(doc.getStatus()) > getBestStatusPriority(existing.getStatus())) {
+                bestDocByType.put(type, doc);
+            }
+        }
+
+        // Build checklist
+        List<VerificationChecklistItem> checklist = new ArrayList<>();
+        int totalUploaded = 0;
+        int totalVerified = 0;
+        int totalRejected = 0;
+
+        for (String docTypeStr : requiredDocTypes) {
+            Document doc = bestDocByType.get(docTypeStr);
+            DocumentType docType;
+            try {
+                docType = DocumentType.valueOf(docTypeStr);
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+
+            boolean uploaded = doc != null && (doc.getStatus() == DocumentStatus.UPLOADED || doc.getStatus() == DocumentStatus.VERIFIED);
+            boolean verified = doc != null && doc.getStatus() == DocumentStatus.VERIFIED;
+            boolean rejected = doc != null && doc.getStatus() == DocumentStatus.REJECTED;
+
+            if (uploaded || verified) totalUploaded++;
+            if (verified) totalVerified++;
+            if (rejected) totalRejected++;
+
+            checklist.add(VerificationChecklistItem.builder()
+                    .documentType(docTypeStr)
+                    .label(formatDocumentTypeLabel(docTypeStr))
+                    .category(docType.getCategory().name())
+                    .mandatory(true)
+                    .uploaded(uploaded || verified)
+                    .verified(verified)
+                    .rejected(rejected)
+                    .documentId(doc != null ? doc.getId() : null)
+                    .status(doc != null ? doc.getStatus().name() : "MISSING")
+                    .build());
+        }
+
+        int totalRequired = requiredDocTypes.size();
+        boolean complete = totalVerified >= totalRequired;
+        int completionPct = totalRequired > 0 ? (totalVerified * 100 / totalRequired) : 0;
+
+        return DocumentCompletenessResponse.builder()
+                .applicationId(applicationId)
+                .loanType(loanType)
+                .totalRequired(totalRequired)
+                .totalUploaded(totalUploaded)
+                .totalVerified(totalVerified)
+                .totalRejected(totalRejected)
+                .complete(complete)
+                .completionPercentage(completionPct)
+                .checklist(checklist)
+                .build();
+    }
+
+    @Override
+    public Map<String, Long> getVerificationSummary(UUID applicationId) {
+        log.debug("Getting verification summary for application {}", applicationId);
+
+        Map<String, Long> summary = new LinkedHashMap<>();
+        summary.put("UPLOADED", repository.countByApplicationIdAndStatus(applicationId, DocumentStatus.UPLOADED));
+        summary.put("VERIFIED", repository.countByApplicationIdAndStatus(applicationId, DocumentStatus.VERIFIED));
+        summary.put("REJECTED", repository.countByApplicationIdAndStatus(applicationId, DocumentStatus.REJECTED));
+        summary.put("PENDING", repository.countByApplicationIdAndStatus(applicationId, DocumentStatus.PENDING));
+        summary.put("TOTAL", repository.countByApplicationId(applicationId));
+
+        return summary;
+    }
+
+    // ==================== US-022: OCR Extracted Data ====================
+
+    @Override
+    public Map<String, String> getExtractedData(String documentId) {
+        Document document = findDocumentById(documentId);
+        return document.getExtractedData() != null ? document.getExtractedData() : Map.of();
+    }
+
+    @Override
+    @Transactional
+    public DocumentResponse updateExtractedData(String documentId, Map<String, String> data) {
+        Document document = findDocumentById(documentId);
+        document.setExtractedData(data);
+        document.setExtractionStatus("REVIEWED");
+        Document saved = repository.save(document);
+        log.info("Updated extracted data for document {}: {} fields", documentId, data.size());
+        return mapper.toResponse(saved);
+    }
+
     // ==================== Private Methods ====================
+
+    private int getBestStatusPriority(DocumentStatus status) {
+        return switch (status) {
+            case VERIFIED -> 3;
+            case UPLOADED -> 2;
+            case PENDING -> 1;
+            default -> 0;
+        };
+    }
+
+    private String formatDocumentTypeLabel(String type) {
+        return Arrays.stream(type.split("_"))
+                .map(word -> word.charAt(0) + word.substring(1).toLowerCase())
+                .collect(Collectors.joining(" "));
+    }
 
     private Document findDocumentById(String id) {
         return repository.findById(id)
@@ -264,5 +441,10 @@ public class DocumentServiceImpl implements DocumentService {
         if (file.getSize() > MAX_FILE_SIZE) {
             throw new IllegalArgumentException("File size exceeds maximum limit of 10MB");
         }
+    }
+
+    private String truncateText(String text, int maxLength) {
+        if (text == null) return null;
+        return text.length() <= maxLength ? text : text.substring(0, maxLength);
     }
 }

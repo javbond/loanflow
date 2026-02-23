@@ -34,6 +34,7 @@ import {
 } from '../../models/income-verification.model';
 import { DecisionPanelComponent } from '../decision-panel/decision-panel.component';
 import { CreditMemoComponent } from '../credit-memo/credit-memo.component';
+import { DocumentPanelComponent } from '../../../document/components/document-panel/document-panel.component';
 
 @Component({
   selector: 'app-task-detail',
@@ -54,7 +55,8 @@ import { CreditMemoComponent } from '../credit-memo/credit-memo.component';
     MatExpansionModule,
     MatTableModule,
     DecisionPanelComponent,
-    CreditMemoComponent
+    CreditMemoComponent,
+    DocumentPanelComponent
   ],
   templateUrl: './task-detail.component.html',
   styleUrls: ['./task-detail.component.scss']

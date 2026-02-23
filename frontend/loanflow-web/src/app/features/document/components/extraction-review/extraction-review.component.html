@@ -1,0 +1,39 @@
+<!-- Extraction Review (US-022): Displays and allows editing of OCR-extracted data -->
+
+@if (document && document.extractedData) {
+  <mat-card class="extraction-card">
+    <mat-card-header>
+      <mat-icon mat-card-avatar [style.color]="statusColor">{{ statusIcon }}</mat-icon>
+      <mat-card-title>OCR Extracted Data</mat-card-title>
+      <mat-card-subtitle>
+        Status: {{ document.extractionStatus }}
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      @if (fields.length > 0) {
+        <div class="fields-form">
+          @for (field of fields; track field.key; let i = $index) {
+            <mat-form-field appearance="outline" class="field-input">
+              <mat-label>{{ formatFieldKey(field.key) }}</mat-label>
+              <input matInput [(ngModel)]="fields[i].value" />
+            </mat-form-field>
+          }
+        </div>
+      } @else {
+        <p class="no-data">No data extracted from this document.</p>
+      }
+    </mat-card-content>
+
+    @if (fields.length > 0) {
+      <mat-card-actions align="end">
+        <button mat-raised-button color="primary"
+                (click)="saveCorrections()"
+                [disabled]="saving">
+          <mat-icon>save</mat-icon>
+          Save Corrections
+        </button>
+      </mat-card-actions>
+    }
+  </mat-card>
+}

@@ -1,0 +1,153 @@
+.loading-panel {
+  text-align: center;
+  padding: 24px;
+  p { color: #666; margin-top: 12px; }
+}
+
+.completeness-card {
+  margin-bottom: 16px;
+
+  .completeness-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .completeness-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    font-size: 14px;
+  }
+
+  .completeness-pct {
+    font-size: 20px;
+    font-weight: 600;
+    color: #1565c0;
+  }
+
+  .completeness-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 8px;
+    font-size: 12px;
+    color: #666;
+
+    .rejected-count { color: #f44336; }
+  }
+
+  .checklist {
+    margin-top: 12px;
+    border-top: 1px solid #eee;
+    padding-top: 8px;
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 13px;
+
+    mat-icon { font-size: 18px; width: 18px; height: 18px; }
+    .checklist-label { flex: 1; }
+    .checklist-status { font-size: 11px; text-transform: uppercase; }
+  }
+}
+
+.batch-actions {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+}
+
+.document-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+.document-card {
+  .doc-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .doc-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    margin-top: 4px;
+  }
+
+  .doc-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .doc-name {
+    font-weight: 500;
+    font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .doc-meta {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  .extraction-panel {
+    margin-top: 8px;
+    font-size: 12px;
+
+    ::ng-deep .mat-expansion-panel-header {
+      height: 36px;
+      font-size: 12px;
+    }
+  }
+
+  .extracted-fields {
+    .field-row {
+      display: flex;
+      gap: 8px;
+      padding: 2px 0;
+      font-size: 12px;
+    }
+    .field-key {
+      color: #666;
+      text-transform: capitalize;
+      min-width: 100px;
+    }
+    .field-value {
+      font-weight: 500;
+    }
+  }
+
+  .doc-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;
+    gap: 4px;
+    border-top: 1px solid #eee;
+    padding-top: 8px;
+  }
+}
+
+.no-documents {
+  text-align: center;
+  padding: 48px 24px;
+  color: #999;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 8px;
+  }
+}

@@ -559,30 +559,17 @@
           </div>
         </mat-tab>
 
-        <!-- Documents Tab -->
+        <!-- Documents Tab (US-021: Enhanced with Document Panel) -->
         <mat-tab>
           <ng-template mat-tab-label>
             <mat-icon class="tab-icon">folder</mat-icon>
             Documents
           </ng-template>
           <div class="tab-content">
-            @if (loan?.documents?.length) {
-              <mat-list>
-                @for (doc of loan!.documents!; track doc.documentId) {
-                  <mat-list-item>
-                    <mat-icon matListItemIcon>description</mat-icon>
-                    <div matListItemTitle>{{ doc.fileName }}</div>
-                    <div matListItemLine>{{ doc.documentType }} - {{ doc.status }}</div>
-                  </mat-list-item>
-                  <mat-divider></mat-divider>
-                }
-              </mat-list>
-            } @else {
-              <div class="no-data">
-                <mat-icon>folder_open</mat-icon>
-                <p>No documents uploaded for this application</p>
-              </div>
-            }
+            <app-document-panel
+              [applicationId]="loan?.id"
+              [loanType]="loan?.loanType">
+            </app-document-panel>
           </div>
         </mat-tab>
 

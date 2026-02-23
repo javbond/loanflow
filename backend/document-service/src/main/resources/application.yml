@@ -52,6 +52,45 @@ document:
     - application/vnd.openxmlformats-officedocument.wordprocessingml.document
   presigned-url-expiry-minutes: 15
 
+# Required documents per loan type (US-021)
+loanflow:
+  documents:
+    required:
+      HOME_LOAN:
+        - PAN_CARD
+        - AADHAAR_CARD
+        - SALARY_SLIP
+        - BANK_STATEMENT
+        - PROPERTY_DEED
+        - SALE_AGREEMENT
+      PERSONAL_LOAN:
+        - PAN_CARD
+        - AADHAAR_CARD
+        - SALARY_SLIP
+        - BANK_STATEMENT
+      VEHICLE_LOAN:
+        - PAN_CARD
+        - AADHAAR_CARD
+        - SALARY_SLIP
+        - BANK_STATEMENT
+        - VEHICLE_RC
+        - QUOTATION
+      BUSINESS_LOAN:
+        - PAN_CARD
+        - AADHAAR_CARD
+        - GST_REGISTRATION
+        - BALANCE_SHEET
+        - PROFIT_LOSS
+        - BANK_STATEMENT
+      GOLD_LOAN:
+        - PAN_CARD
+        - AADHAAR_CARD
+      EDUCATION_LOAN:
+        - PAN_CARD
+        - AADHAAR_CARD
+        - SALARY_SLIP
+        - BANK_STATEMENT
+
 # Actuator
 management:
   endpoints:

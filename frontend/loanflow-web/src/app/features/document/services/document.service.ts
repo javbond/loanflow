@@ -1,7 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpEvent, HttpEventType } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-import { Document, DocumentUploadRequest, DocumentVerificationRequest } from '../models/document.model';
+import {
+  Document,
+  DocumentUploadRequest,
+  DocumentVerificationRequest,
+  BatchVerificationRequest,
+  DocumentCompletenessResponse
+} from '../models/document.model';
 
 export interface PageResponse<T> {
   content: T[];
@@ -271,6 +277,57 @@ export class DocumentService {
       return event.body?.data || null;
     }
     return null;
+  }
+
+  // ==================== US-021: BATCH VERIFICATION & COMPLETENESS ====================
+
+  /**
+   * Batch verify/reject multiple documents (US-021)
+   */
+  batchVerify(request: BatchVerificationRequest): Observable<Document[]> {
+    return this.http.post<Document[]>(`${this.apiUrl}/batch-verify`, request);
+  }
+
+  /**
+   * Get document completeness for an application (US-021)
+   */
+  getCompleteness(applicationId: string, loanType: string): Observable<DocumentCompletenessResponse> {
+    const params = new HttpParams().set('loanType', loanType);
+    return this.http.get<DocumentCompletenessResponse>(
+      `${this.apiUrl}/application/${applicationId}/completeness`,
+      { params }
+    );
+  }
+
+  /**
+   * Get verification summary counts for an application (US-021)
+   */
+  getVerificationSummary(applicationId: string): Observable<{ [key: string]: number }> {
+    return this.http.get<{ [key: string]: number }>(
+      `${this.apiUrl}/application/${applicationId}/verification-summary`
+    );
+  }
+
+  // ==================== US-022: OCR EXTRACTED DATA ====================
+
+  /**
+   * Get extracted data for a document (US-022)
+   */
+  getExtractedData(documentId: string): Observable<{ [key: string]: string }> {
+    return this.http.get<{ [key: string]: string }>(
+      `${this.apiUrl}/${documentId}/extracted-data`
+    );
+  }
+
+  /**
+   * Update extracted data after manual review (US-022)
+   */
+  updateExtractedData(documentId: string, data: { [key: string]: string }): Observable<Document> {
+    return this.http.put<ApiResponse<Document>>(
+      `${this.apiUrl}/${documentId}/extracted-data`, data
+    ).pipe(
+      map(response => response.data)
+    );
   }
 
   // ==================== CUSTOMER PORTAL METHODS ====================
