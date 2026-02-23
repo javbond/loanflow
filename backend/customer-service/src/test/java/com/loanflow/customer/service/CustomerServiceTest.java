@@ -104,11 +104,11 @@ class CustomerServiceTest {
         @Test
         @DisplayName("Should create customer successfully")
         void shouldCreateCustomer() {
-            // Given
-            when(repository.existsByPanNumber(createRequest.getPanNumber())).thenReturn(false);
-            when(repository.existsByAadhaarNumber(createRequest.getAadhaarNumber())).thenReturn(false);
-            when(repository.existsByEmail(createRequest.getEmail())).thenReturn(false);
-            when(repository.existsByMobileNumber(createRequest.getMobileNumber())).thenReturn(false);
+            // Given - validateUniqueness uses findBy* (returns Optional)
+            when(repository.findByPanNumber(createRequest.getPanNumber())).thenReturn(Optional.empty());
+            when(repository.findByAadhaarNumber(createRequest.getAadhaarNumber())).thenReturn(Optional.empty());
+            when(repository.findByEmail(createRequest.getEmail())).thenReturn(Optional.empty());
+            when(repository.findByMobileNumber(createRequest.getMobileNumber())).thenReturn(Optional.empty());
             when(mapper.toEntity(createRequest)).thenReturn(customer);
             when(repository.save(any(Customer.class))).thenReturn(customer);
             when(mapper.toResponse(customer)).thenReturn(expectedResponse);
@@ -128,8 +128,9 @@ class CustomerServiceTest {
         @Test
         @DisplayName("Should throw exception for duplicate PAN")
         void shouldThrowForDuplicatePan() {
-            // Given
-            when(repository.existsByPanNumber(createRequest.getPanNumber())).thenReturn(true);
+            // Given - findByPanNumber returns existing customer → duplicate
+            Customer existingCustomer = Customer.builder().id(UUID.randomUUID()).panNumber("ABCDE1234F").build();
+            when(repository.findByPanNumber(createRequest.getPanNumber())).thenReturn(Optional.of(existingCustomer));
 
             // When/Then
             assertThatThrownBy(() -> service.create(createRequest))
@@ -141,8 +142,9 @@ class CustomerServiceTest {
         @DisplayName("Should throw exception for duplicate Aadhaar")
         void shouldThrowForDuplicateAadhaar() {
             // Given
-            when(repository.existsByPanNumber(any())).thenReturn(false);
-            when(repository.existsByAadhaarNumber(createRequest.getAadhaarNumber())).thenReturn(true);
+            Customer existingCustomer = Customer.builder().id(UUID.randomUUID()).aadhaarNumber("123456789012").build();
+            when(repository.findByPanNumber(any())).thenReturn(Optional.empty());
+            when(repository.findByAadhaarNumber(createRequest.getAadhaarNumber())).thenReturn(Optional.of(existingCustomer));
 
             // When/Then
             assertThatThrownBy(() -> service.create(createRequest))
@@ -154,9 +156,10 @@ class CustomerServiceTest {
         @DisplayName("Should throw exception for duplicate email")
         void shouldThrowForDuplicateEmail() {
             // Given
-            when(repository.existsByPanNumber(any())).thenReturn(false);
-            when(repository.existsByAadhaarNumber(any())).thenReturn(false);
-            when(repository.existsByEmail(createRequest.getEmail())).thenReturn(true);
+            Customer existingCustomer = Customer.builder().id(UUID.randomUUID()).email("rahul.sharma@email.com").build();
+            when(repository.findByPanNumber(any())).thenReturn(Optional.empty());
+            when(repository.findByAadhaarNumber(any())).thenReturn(Optional.empty());
+            when(repository.findByEmail(createRequest.getEmail())).thenReturn(Optional.of(existingCustomer));
 
             // When/Then
             assertThatThrownBy(() -> service.create(createRequest))
@@ -168,10 +171,11 @@ class CustomerServiceTest {
         @DisplayName("Should throw exception for duplicate mobile")
         void shouldThrowForDuplicateMobile() {
             // Given
-            when(repository.existsByPanNumber(any())).thenReturn(false);
-            when(repository.existsByAadhaarNumber(any())).thenReturn(false);
-            when(repository.existsByEmail(any())).thenReturn(false);
-            when(repository.existsByMobileNumber(createRequest.getMobileNumber())).thenReturn(true);
+            Customer existingCustomer = Customer.builder().id(UUID.randomUUID()).mobileNumber("9876543210").build();
+            when(repository.findByPanNumber(any())).thenReturn(Optional.empty());
+            when(repository.findByAadhaarNumber(any())).thenReturn(Optional.empty());
+            when(repository.findByEmail(any())).thenReturn(Optional.empty());
+            when(repository.findByMobileNumber(createRequest.getMobileNumber())).thenReturn(Optional.of(existingCustomer));
 
             // When/Then
             assertThatThrownBy(() -> service.create(createRequest))
@@ -201,10 +205,9 @@ class CustomerServiceTest {
                     .mobileNumber("9876543211")
                     .build();
 
-            when(repository.existsByPanNumber(any())).thenReturn(false);
-            when(repository.existsByAadhaarNumber(any())).thenReturn(false);
-            when(repository.existsByEmail(any())).thenReturn(false);
-            when(repository.existsByMobileNumber(any())).thenReturn(false);
+            // minorRequest has no PAN/Aadhaar, so only email/mobile uniqueness checked
+            when(repository.findByEmail(any())).thenReturn(Optional.empty());
+            when(repository.findByMobileNumber(any())).thenReturn(Optional.empty());
             when(mapper.toEntity(minorRequest)).thenReturn(minorCustomer);
 
             // When/Then

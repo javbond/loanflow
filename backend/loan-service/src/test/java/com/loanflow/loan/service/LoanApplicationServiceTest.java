@@ -6,6 +6,7 @@ import com.loanflow.loan.domain.entity.LoanApplication;
 import com.loanflow.loan.domain.enums.LoanStatus;
 import com.loanflow.loan.domain.enums.LoanType;
 import com.loanflow.loan.mapper.LoanApplicationMapper;
+import com.loanflow.loan.notification.NotificationPublisher;
 import com.loanflow.loan.repository.LoanApplicationRepository;
 import com.loanflow.loan.service.impl.LoanApplicationServiceImpl;
 import com.loanflow.loan.workflow.WorkflowService;
@@ -48,6 +49,9 @@ class LoanApplicationServiceTest {
 
     @Mock
     private WorkflowService workflowService;
+
+    @Mock
+    private NotificationPublisher notificationPublisher;
 
     @InjectMocks
     private LoanApplicationServiceImpl service;
