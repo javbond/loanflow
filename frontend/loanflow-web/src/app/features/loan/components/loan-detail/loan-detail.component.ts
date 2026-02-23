@@ -219,4 +219,32 @@ export class LoanDetailComponent implements OnInit {
 
     return transitions[this.loan?.status || ''] || [];
   }
+
+  // US-023: Generate Sanction Letter PDF
+  generateSanctionLetter(): void {
+    if (!this.loan?.id) return;
+
+    this.actionLoading = true;
+    this.loanService.generateSanctionLetter(this.loan.id).subscribe({
+      next: (blob) => {
+        // Download the PDF
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `sanction-letter-${this.loan!.applicationNumber || this.loan!.id}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+        this.snackBar.open('Sanction letter downloaded', 'Close', { duration: 3000 });
+        this.actionLoading = false;
+      },
+      error: (error) => {
+        this.snackBar.open(
+          error.error?.message || 'Failed to generate sanction letter',
+          'Close',
+          { duration: 3000 }
+        );
+        this.actionLoading = false;
+      }
+    });
+  }
 }

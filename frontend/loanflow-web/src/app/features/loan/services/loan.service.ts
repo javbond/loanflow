@@ -149,6 +149,17 @@ export class LoanService {
     return Math.round((numerator / denominator) * 100) / 100;
   }
 
+  // ==================== US-023: DOCUMENT GENERATION ====================
+
+  /**
+   * Generate sanction letter PDF for an approved/disbursed loan (US-023)
+   */
+  generateSanctionLetter(id: string): Observable<Blob> {
+    return this.http.get(`${this.apiUrl}/${id}/generate/sanction-letter`, {
+      responseType: 'blob'
+    });
+  }
+
   // ==================== CUSTOMER PORTAL METHODS ====================
   // Issue: #26 [US-024] Customer Loan Application Form
 
