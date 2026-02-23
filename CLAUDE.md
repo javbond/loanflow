@@ -68,6 +68,25 @@
 
 ## 📊 CURRENT SPRINT STATUS
 
+### Sprint 10 (Regulatory Compliance — EPIC-007 Launch) - 🔄 IN PROGRESS
+**Milestone**: [Sprint 10](https://github.com/javbond/loanflow/milestone/13)
+**Duration**: 2026-02-23 to 2026-03-09
+**Sprint Goal**: Launch EPIC-007 (Regulatory Compliance) — e-KYC verification, audit trail, event-driven notifications via RabbitMQ
+
+| Issue | Title | Points | Status |
+|-------|-------|--------|--------|
+| #51 | [EPIC-007] Regulatory Compliance | - | 🔄 Parent |
+| #52 | [US-029] e-KYC Integration (UIDAI) | 8 | ⏳ Pending |
+| #53 | [US-030] Audit Trail & Activity Logging | 5 | ⏳ Pending |
+| #54 | [US-031] Event-Driven Notifications (RabbitMQ) | 3 | ⏳ Pending |
+
+**Total Story Points**: 16 | **Completed**: 0
+**Plan**: `docs/sprints/sprint-10-plan.md`
+
+**Progress:** `░░░░░░░░░░` 0%
+
+---
+
 ### Sprint 9 (Document Lifecycle — EPIC-006 Completion) - ✅ COMPLETED
 **Milestone**: [Sprint 9](https://github.com/javbond/loanflow/milestone/12)
 **Duration**: 2026-02-23
@@ -237,9 +256,9 @@
 
 | Issue | Title | Priority | Sprint |
 |-------|-------|----------|--------|
-| - | e-KYC Integration (UIDAI) | P1 | Sprint 10+ |
-| - | Notification Service (RabbitMQ) | P1 | Sprint 10+ |
-| - | API Gateway | P2 | Sprint 10+ |
+| - | CERSAI Integration | P1 | Sprint 11 |
+| - | RBI Reporting | P1 | Sprint 11 |
+| - | API Gateway | P2 | Sprint 11+ |
 | - | Elasticsearch Integration | P2 | Sprint 11+ |
 | #4 | [US-003] RBAC Admin UI (remaining) | P2 | Deferred |
 
