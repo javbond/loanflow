@@ -4,7 +4,7 @@
 **LoanFlow** - Loan Origination System for Indian Banks
 - Multi-tenant SaaS platform
 - Spring Boot 3.2 microservices + Angular 17 frontend
-- TDD approach with 525+ tests
+- TDD approach with 597+ tests
 
 ---
 
@@ -67,6 +67,26 @@
 ---
 
 ## 📊 CURRENT SPRINT STATUS
+
+### Sprint 11 (Hardening & Production Readiness — EPIC-008) - 🔄 IN PROGRESS
+**Milestone**: [Sprint 11](https://github.com/javbond/loanflow/milestone/14)
+**Duration**: 2026-02-23 to 2026-03-09
+**Sprint Goal**: Harden the platform — integration tests with Testcontainers, API Gateway (Spring Cloud Gateway), Docker Compose full-stack, documentation debt closure
+
+| Issue | Title | Points | Status |
+|-------|-------|--------|--------|
+| #56 | [EPIC-008] Production Readiness | - | 🔄 In Progress |
+| #57 | [US-032] Integration Tests (Testcontainers) | 8 | ✅ Complete |
+| #58 | [US-033] API Gateway (Spring Cloud Gateway) | 5 | ✅ Complete |
+| #59 | [US-034] Docker Compose + Doc Debt | 3 | ✅ Complete |
+
+**Total Story Points**: 16 | **Completed**: 16
+**Velocity Target**: 16 pts/sprint (7th consecutive at 16)
+**Plan**: `docs/sprints/sprint-11-plan.md`
+
+**Progress:** `██████████` 100%
+
+---
 
 ### Sprint 10 (Regulatory Compliance — EPIC-007 Launch) - ✅ COMPLETED
 **Milestone**: [Sprint 10](https://github.com/javbond/loanflow/milestone/13)
@@ -259,10 +279,9 @@
 
 | Issue | Title | Priority | Sprint |
 |-------|-------|----------|--------|
-| - | CERSAI Integration | P1 | Sprint 11 |
-| - | RBI Reporting | P1 | Sprint 11 |
-| - | API Gateway | P2 | Sprint 11+ |
-| - | Elasticsearch Integration | P2 | Sprint 11+ |
+| - | CERSAI Integration | P1 | Sprint 12+ |
+| - | RBI Reporting | P1 | Sprint 12+ |
+| - | Elasticsearch Integration | P2 | Sprint 12+ |
 | #4 | [US-003] RBAC Admin UI (remaining) | P2 | Deferred |
 
 ---
@@ -290,9 +309,9 @@
 | auth-service (Keycloak) | 8085 | 10 | ✅ Keycloak OAuth2/OIDC | ✅ Done (Login/Logout/Guards) |
 | policy-service | 8086 | 115 | ✅ Done (MongoDB + Redis + Evaluation Engine) | ✅ Done (Policy Builder UI) |
 | notification-service | 8084 | 18 | ✅ Done (RabbitMQ Consumer + Email Thymeleaf + SMS Stub + DLQ) | N/A (backend-only service) |
-| api-gateway | 8080 | - | ⏳ Pending | - |
+| api-gateway | 8080 | 13 | ✅ Done (Spring Cloud Gateway, JWT relay, route management, CORS) | - |
 
-**Total TDD Tests**: 525+ (customer: 74, loan: 224, document: 84, auth: 10, policy: 115, notification: 18)
+**Total TDD Tests**: 597+ (loan: 239, policy: 126, document: 96, customer: 91, notification: 22, api-gateway: 13, auth: 10)
 
 ---
 
