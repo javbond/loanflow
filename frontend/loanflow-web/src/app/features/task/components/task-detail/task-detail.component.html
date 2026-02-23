@@ -573,6 +573,17 @@
           </div>
         </mat-tab>
 
+        <!-- e-KYC Tab (US-029) -->
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tab-icon">fingerprint</mat-icon>
+            e-KYC
+          </ng-template>
+          <div class="tab-content">
+            <app-ekyc-panel [customerId]="loan?.customerId"></app-ekyc-panel>
+          </div>
+        </mat-tab>
+
         <!-- Timeline Tab -->
         <mat-tab>
           <ng-template mat-tab-label>

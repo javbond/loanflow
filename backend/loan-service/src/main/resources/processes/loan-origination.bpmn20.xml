@@ -26,6 +26,10 @@
             </extensionElements>
         </userTask>
 
+        <!-- ===== SERVICE TASK: KYC Check (auto) — US-029 ===== -->
+        <serviceTask id="kycCheck" name="KYC Check"
+                     flowable:delegateExpression="${kycCheckDelegate}"/>
+
         <!-- ===== SERVICE TASK: Credit Check (auto) ===== -->
         <serviceTask id="creditCheck" name="Credit Check"
                      flowable:delegateExpression="${creditCheckDelegate}"/>
@@ -80,8 +84,11 @@
         <!-- Submit Application -> Document Verification -->
         <sequenceFlow id="flow2" sourceRef="submitApplication" targetRef="documentVerification"/>
 
-        <!-- Document Verification -> Credit Check -->
-        <sequenceFlow id="flow3" sourceRef="documentVerification" targetRef="creditCheck"/>
+        <!-- Document Verification -> KYC Check (US-029) -->
+        <sequenceFlow id="flow3" sourceRef="documentVerification" targetRef="kycCheck"/>
+
+        <!-- KYC Check -> Credit Check (US-029) -->
+        <sequenceFlow id="flow3b" sourceRef="kycCheck" targetRef="creditCheck"/>
 
         <!-- Credit Check -> Underwriting Review -->
         <sequenceFlow id="flow4" sourceRef="creditCheck" targetRef="underwritingReview"/>

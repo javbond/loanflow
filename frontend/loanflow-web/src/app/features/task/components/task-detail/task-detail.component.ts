@@ -35,6 +35,7 @@ import {
 import { DecisionPanelComponent } from '../decision-panel/decision-panel.component';
 import { CreditMemoComponent } from '../credit-memo/credit-memo.component';
 import { DocumentPanelComponent } from '../../../document/components/document-panel/document-panel.component';
+import { EkycPanelComponent } from '../../../customer/components/ekyc-panel/ekyc-panel.component';
 
 @Component({
   selector: 'app-task-detail',
@@ -56,7 +57,8 @@ import { DocumentPanelComponent } from '../../../document/components/document-pa
     MatTableModule,
     DecisionPanelComponent,
     CreditMemoComponent,
-    DocumentPanelComponent
+    DocumentPanelComponent,
+    EkycPanelComponent
   ],
   templateUrl: './task-detail.component.html',
   styleUrls: ['./task-detail.component.scss']

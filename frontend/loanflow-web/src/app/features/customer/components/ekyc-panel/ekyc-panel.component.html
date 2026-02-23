@@ -1,0 +1,180 @@
+<div class="ekyc-panel">
+  @if (loading) {
+    <div class="loading-container">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Loading KYC status...</p>
+    </div>
+  } @else {
+
+    <!-- Status Header -->
+    @if (kycStatus) {
+      <div class="status-header">
+        <mat-icon class="status-icon" [class.verified]="kycStatus.status === 'VERIFIED'"
+                  [class.failed]="kycStatus.status === 'FAILED'">
+          {{ kycStatus.status === 'VERIFIED' ? 'verified_user' : 'security' }}
+        </mat-icon>
+        <div class="status-info">
+          <h3>e-KYC Verification</h3>
+          <mat-chip [color]="getStatusColor(kycStatus.status)" selected>
+            {{ getStatusLabel(kycStatus.status) }}
+          </mat-chip>
+        </div>
+      </div>
+      @if (kycStatus.maskedAadhaar) {
+        <p class="masked-aadhaar">Aadhaar: {{ kycStatus.maskedAadhaar }}</p>
+      }
+    }
+
+    <!-- IDLE State: Enter Aadhaar -->
+    @if (state === 'IDLE') {
+      <mat-card class="step-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>fingerprint</mat-icon>
+          <mat-card-title>Initiate Aadhaar e-KYC</mat-card-title>
+          <mat-card-subtitle>Enter 12-digit Aadhaar number to start OTP verification</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Aadhaar Number</mat-label>
+            <input matInput [(ngModel)]="aadhaarNumber" maxlength="12"
+                   placeholder="Enter 12-digit Aadhaar number"
+                   pattern="[0-9]{12}" inputmode="numeric">
+            <mat-icon matSuffix>badge</mat-icon>
+            <mat-hint>{{ aadhaarNumber.length }}/12 digits</mat-hint>
+          </mat-form-field>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" (click)="initiateEkyc()"
+                  [disabled]="aadhaarNumber.length !== 12">
+            <mat-icon>send</mat-icon> Send OTP
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
+
+    <!-- INITIATING State -->
+    @if (state === 'INITIATING') {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Sending OTP to Aadhaar-linked mobile...</p>
+      </div>
+    }
+
+    <!-- OTP_INPUT State -->
+    @if (state === 'OTP_INPUT') {
+      <mat-card class="step-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>sms</mat-icon>
+          <mat-card-title>Enter OTP</mat-card-title>
+          <mat-card-subtitle>
+            OTP sent to {{ maskedMobile || 'Aadhaar-linked mobile' }}
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>6-digit OTP</mat-label>
+            <input matInput [(ngModel)]="otp" maxlength="6"
+                   placeholder="Enter OTP" pattern="[0-9]{6}" inputmode="numeric">
+            <mat-icon matSuffix>lock</mat-icon>
+            <mat-hint>{{ otp.length }}/6 digits</mat-hint>
+          </mat-form-field>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" (click)="verifyOtp()"
+                  [disabled]="otp.length !== 6">
+            <mat-icon>verified</mat-icon> Verify OTP
+          </button>
+          <button mat-stroked-button (click)="retry()">
+            <mat-icon>refresh</mat-icon> Resend OTP
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
+
+    <!-- VERIFYING State -->
+    @if (state === 'VERIFYING') {
+      <div class="loading-container">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>Verifying OTP and fetching e-KYC data...</p>
+      </div>
+    }
+
+    <!-- VERIFIED State -->
+    @if (state === 'VERIFIED' && ekycData) {
+      <mat-card class="step-card verified-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="verified-icon">check_circle</mat-icon>
+          <mat-card-title>e-KYC Verified</mat-card-title>
+          <mat-card-subtitle>
+            @if (ckycNumber) {
+              CKYC: {{ ckycNumber }}
+            }
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-divider></mat-divider>
+          <div class="ekyc-data-grid">
+            <div class="data-item">
+              <span class="data-label">Name</span>
+              <span class="data-value">{{ ekycData.name }}</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">Date of Birth</span>
+              <span class="data-value">{{ ekycData.dateOfBirth }}</span>
+            </div>
+            <div class="data-item">
+              <span class="data-label">Gender</span>
+              <span class="data-value">{{ ekycData.gender }}</span>
+            </div>
+            <div class="data-item full-width">
+              <span class="data-label">Address</span>
+              <span class="data-value">{{ ekycData.address }}</span>
+            </div>
+            @if (ekycData.state) {
+              <div class="data-item">
+                <span class="data-label">State</span>
+                <span class="data-value">{{ ekycData.state }}</span>
+              </div>
+            }
+            @if (ekycData.district) {
+              <div class="data-item">
+                <span class="data-label">District</span>
+                <span class="data-value">{{ ekycData.district }}</span>
+              </div>
+            }
+            @if (ekycData.pinCode) {
+              <div class="data-item">
+                <span class="data-label">PIN Code</span>
+                <span class="data-value">{{ ekycData.pinCode }}</span>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+
+    <!-- FAILED State -->
+    @if (state === 'FAILED') {
+      <mat-card class="step-card failed-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="failed-icon">error</mat-icon>
+          <mat-card-title>Verification Failed</mat-card-title>
+          <mat-card-subtitle>{{ errorMessage }}</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" (click)="retry()">
+            <mat-icon>refresh</mat-icon> Try Again
+          </button>
+        </mat-card-actions>
+      </mat-card>
+    }
+
+    <!-- No Customer ID -->
+    @if (!customerId) {
+      <div class="no-data">
+        <mat-icon>info</mat-icon>
+        <p>No customer associated with this loan application</p>
+      </div>
+    }
+  }
+</div>
