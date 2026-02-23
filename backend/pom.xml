@@ -30,8 +30,7 @@
         <module>document-service</module>
         <module>auth-service</module>
         <module>policy-service</module>
-        <!-- TODO: Add when implemented -->
-        <!-- <module>notification-service</module> -->
+        <module>notification-service</module>
         <!-- <module>api-gateway</module> -->
     </modules>
 

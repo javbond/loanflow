@@ -159,6 +159,20 @@
           </div>
         </mat-tab>
 
+        <!-- Audit Trail Tab (US-030) -->
+        <mat-tab label="Audit Trail">
+          <div class="tab-content">
+            @if (loan && loan.id) {
+              <app-audit-timeline [applicationId]="$any(loan.id)"></app-audit-timeline>
+            } @else {
+              <div class="no-data">
+                <mat-icon>history</mat-icon>
+                <p>No audit trail available</p>
+              </div>
+            }
+          </div>
+        </mat-tab>
+
         <!-- Documents Tab -->
         <mat-tab label="Documents">
           <div class="tab-content">

@@ -62,6 +62,14 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+loanflow:
+  ekyc:
+    uidai-base-url: ${UIDAI_BASE_URL:https://uat-api.uidai.gov.in/v1}
+    timeout-ms: ${EKYC_TIMEOUT_MS:30000}
+    max-retries: ${EKYC_MAX_RETRIES:3}
+    max-otp-attempts: ${EKYC_MAX_OTP_ATTEMPTS:3}
+    otp-expiry-minutes: ${EKYC_OTP_EXPIRY_MINUTES:10}
+
 logging:
   level:
     root: INFO

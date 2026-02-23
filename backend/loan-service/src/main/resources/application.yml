@@ -78,6 +78,11 @@ loanflow:
     cache-ttl-hours: ${CIBIL_CACHE_TTL_HOURS:24}
     enabled: ${CIBIL_ENABLED:true}
 
+  # US-029/030: Inter-service communication
+  services:
+    customer-url: ${CUSTOMER_SERVICE_URL:http://localhost:8082}
+    document-url: ${DOCUMENT_SERVICE_URL:http://localhost:8083}
+
   # US-017: Income Verification (ITR, GST, Bank Statement)
   income-verification:
     base-url: ${INCOME_VERIFICATION_BASE_URL:https://uat-api.incometax.gov.in/v1}

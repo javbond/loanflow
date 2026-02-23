@@ -16,6 +16,7 @@ import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { LoanService } from '../../services/loan.service';
 import { LoanApplication, LOAN_STATUSES, LOAN_TYPES } from '../../models/loan.model';
+import { AuditTimelineComponent } from '../../../audit/components/audit-timeline/audit-timeline.component';
 
 @Component({
   selector: 'app-loan-detail',
@@ -35,7 +36,8 @@ import { LoanApplication, LOAN_STATUSES, LOAN_TYPES } from '../../models/loan.mo
     MatDividerModule,
     MatDialogModule,
     MatFormFieldModule,
-    MatInputModule
+    MatInputModule,
+    AuditTimelineComponent
   ],
   templateUrl: './loan-detail.component.html',
   styleUrl: './loan-detail.component.scss'
