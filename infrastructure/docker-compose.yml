@@ -115,6 +115,19 @@ services:
       retries: 5
       start_period: 60s
 
+  # MailHog for email testing (US-031)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: loanflow-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8025"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
   # ClamAV for document virus scanning (US-020)
   clamav:
     image: clamav/clamav:1.2
