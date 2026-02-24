@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL for Customer and Loan services
   postgres:
@@ -130,7 +128,7 @@ services:
 
   # ClamAV for document virus scanning (US-020)
   clamav:
-    image: clamav/clamav:1.2
+    image: clamav/clamav:stable
     container_name: loanflow-clamav
     ports:
       - "3310:3310"
